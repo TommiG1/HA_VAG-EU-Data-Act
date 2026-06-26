@@ -48,7 +48,10 @@ def _make_coordinator(hass, client) -> EudaCoordinator:
         unique_id="WVWZZZTESTVIN0001",
     )
     entry.add_to_hass(hass)
-    return EudaCoordinator(hass, entry, client)
+    coordinator = EudaCoordinator(hass, entry, client)
+    for cached in coordinator._cache.list_entries(coordinator.vin):
+        coordinator._cache.delete(coordinator.vin, cached.name)
+    return coordinator
 
 
 async def test_auth_error_while_listing_raises_reauth(hass) -> None:
@@ -278,6 +281,8 @@ async def test_corrupt_cache_is_skipped_and_deleted_on_restore(hass) -> None:
     assert points["key-1"].value == 72
     assert coordinator.latest_dataset_name == good_name
     assert coordinator._cache.read(coordinator.vin, bad_name) is None
+    for entry in coordinator._cache.list_entries(coordinator.vin):
+        coordinator._cache.delete(coordinator.vin, entry.name)
 
 
 async def test_http_503_listing_sets_listing_failed_and_backoff(hass) -> None:

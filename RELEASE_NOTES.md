@@ -1,5 +1,54 @@
 # Release notes
 
+## v0.6.27 — Climate time, combined range & maintenance due dates (2026-06-27)
+
+### Summary
+
+Integrates community PRs from Pulpyyyy: flat **Remaining climate time** in
+minutes ([#32](https://github.com/TommiG1/HA_VAG-EU-Data-Act/pull/32)),
+**combined cruising range** fallback for PHEVs
+([#30](https://github.com/TommiG1/HA_VAG-EU-Data-Act/pull/30)), and
+**maintenance due date** sensors with preserved interval sign
+([#35](https://github.com/TommiG1/HA_VAG-EU-Data-Act/pull/35)).
+
+### Flat remaining climate time (#32)
+
+- Flat PHEVs deliver `remaining_climatisation_time` as **minutes**, not seconds.
+  The curated sensor now uses unit `min` without the dotted `duration_s`
+  transform.
+- Entity registry migration resets stale `s` → `min` overrides on existing
+  `remaining_climate_time` entities.
+
+### Combined cruising range (#30)
+
+- When `cruising_range_combined` is empty but per-engine components are present,
+  the sensor sums `cruising_range_primary_engine` +
+  `cruising_range_secondary_engine`. A usable portal value always wins.
+
+### Maintenance intervals (#35)
+
+- Drops `abs()` on maintenance interval sensors so **negative = remaining**,
+  **positive = overdue** (portal countdown semantics).
+- Adds **Inspection due** and **Oil change due** timestamp sensors derived from
+  the signed day countdown.
+- Raw day counters are **disabled by default** in favour of the due-date
+  sensors; distance counters stay enabled with raw sign.
+
+### Note for existing installs
+
+- **Remaining climate time:** reload the integration or reset the entity unit if
+  it still shows seconds.
+- **Maintenance day counters:** values flip from always-positive to signed;
+  use the new due-date sensors for dashboards.
+
+### Tests
+
+- Offline checks for climate units, maintenance due-date math, and combined
+  range fallback registration.
+- Harness: corrupt-cache test cleans up disk cache to avoid cross-test leakage.
+
+---
+
 ## v0.6.26 — Corrupt cache no longer blocks setup (#33) (2026-06-27)
 
 ### Summary
