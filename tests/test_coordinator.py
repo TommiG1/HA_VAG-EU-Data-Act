@@ -245,6 +245,41 @@ async def test_http_503_listing_restores_from_cache_when_no_memory_data(hass) ->
     assert coordinator.latest_dataset_name == dataset_name
 
 
+async def test_corrupt_cache_is_skipped_and_deleted_on_restore(hass) -> None:
+    # A truncated download or portal error body saved as a ZIP must not block
+    # restore: the unreadable file is dropped and the next-newest readable
+    # dataset is used instead (regression for setup crash on BadZipFile).
+    client = MagicMock()
+    client.parse_dataset_zip = EudaApiClient.parse_dataset_zip
+    coordinator = _make_coordinator(hass, client)
+    good_name = "WVWZZZTESTVIN0001_20260101000000.zip"
+    bad_name = "WVWZZZTESTVIN0001_20260102000000.zip"
+    coordinator._cache.store(
+        coordinator.vin,
+        good_name,
+        _zip_bytes(
+            {
+                "user_id": "u1",
+                "Data": [
+                    {
+                        "key": "key-1",
+                        "dataFieldName": "battery_state_report.soc",
+                        "value": "72",
+                    }
+                ],
+            }
+        ),
+    )
+    coordinator._cache.store(coordinator.vin, bad_name, b"not a zip file")
+
+    points = await coordinator.async_restore_from_cache()
+
+    assert points is not None
+    assert points["key-1"].value == 72
+    assert coordinator.latest_dataset_name == good_name
+    assert coordinator._cache.read(coordinator.vin, bad_name) is None
+
+
 async def test_http_503_listing_sets_listing_failed_and_backoff(hass) -> None:
     client = MagicMock()
     client.async_list_datasets = AsyncMock(

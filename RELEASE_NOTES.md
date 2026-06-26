@@ -1,5 +1,31 @@
 # Release notes
 
+## v0.6.26 — Corrupt cache no longer blocks setup (#33) (2026-06-27)
+
+### Summary
+
+Fixes a startup crash when the newest local dataset ZIP is unreadable (truncated
+download or portal error body saved as a `.zip`). Reported for a VW ID.3 after
+HA restart ([#33](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/33)).
+
+### Cache restore
+
+- **`async_restore_from_cache`** now walks cached ZIPs newest-first, drops
+  unreadable files, and tries the next older dataset instead of failing setup.
+- Corrupt cache entries are **deleted** automatically with a warning in the log.
+
+### Download path
+
+- Portal ZIPs are **parsed before** they are written to the local cache, so
+  invalid bytes never poison `/config/cupra_eu_data_act_cache/`.
+
+### Tests
+
+- Harness test `test_corrupt_cache_is_skipped_and_deleted_on_restore` covers the
+  BadZipFile regression from #33.
+
+---
+
 ## v0.6.25 — Passat PHEV flat charge rate (#27) (2026-06-25)
 
 ### Summary

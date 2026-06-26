@@ -88,6 +88,17 @@ class DatasetCache:
             return None
         return entries[0].name, path.read_bytes()
 
+    def read(self, vin: str, name: str) -> bytes | None:
+        """Return the raw bytes of one cached ZIP, or None if missing."""
+        path = self._vin_dir(vin) / name
+        if not path.is_file():
+            return None
+        return path.read_bytes()
+
+    def delete(self, vin: str, name: str) -> None:
+        """Remove a cached ZIP (e.g. when it turned out to be unreadable)."""
+        (self._vin_dir(vin) / name).unlink(missing_ok=True)
+
     def _rotate(self, target_dir: Path) -> None:
         """Drop oldest ZIPs when count or total size exceeds limits."""
         files = sorted(

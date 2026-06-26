@@ -201,22 +201,41 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         return stamp_source_dataset(points, name)
 
     async def async_restore_from_cache(self) -> dict[str, DataPoint] | None:
-        """Load the newest local ZIP when memory was cleared (e.g. after HA restart)."""
-        cached = await self.hass.async_add_executor_job(self._cache.read_latest, self.vin)
-        if not cached:
+        """Load the newest readable local ZIP when memory was cleared (e.g. after HA restart).
+
+        Unreadable cache files (truncated downloads, portal error bodies saved as
+        ZIPs) are dropped and older datasets are tried, so a corrupt cache never
+        blocks setup.
+        """
+
+        def _restore() -> tuple[str, dict[str, DataPoint]] | None:
+            for entry in self._cache.list_entries(self.vin):
+                raw = self._cache.read(self.vin, entry.name)
+                if raw is None:
+                    continue
+                try:
+                    points = self._parse_cached_zip(entry.name, raw)
+                except ApiError as err:
+                    _LOGGER.warning(
+                        "Discarding unreadable cached dataset %s: %s",
+                        entry.name,
+                        err,
+                    )
+                    self._cache.delete(self.vin, entry.name)
+                    continue
+                if points:
+                    return entry.name, points
             return None
-        name, raw = cached
 
-        def _parse() -> dict[str, DataPoint] | None:
-            return self._parse_cached_zip(name, raw)
-
-        points = await self.hass.async_add_executor_job(_parse)
-        if points:
-            _LOGGER.info(
-                "Restored vehicle data from local cache (%s, %d fields)",
-                name,
-                len(points),
-            )
+        result = await self.hass.async_add_executor_job(_restore)
+        if not result:
+            return None
+        name, points = result
+        _LOGGER.info(
+            "Restored vehicle data from local cache (%s, %d fields)",
+            name,
+            len(points),
+        )
         return points
 
     def _record_download_attempt(
@@ -393,10 +412,12 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
                     raw = await self.client.async_download_dataset_raw(
                         self.vin, self.identifier, dataset_name
                     )
+                    # Parse before caching so invalid bytes (truncated download,
+                    # portal error body) never get written to the local cache.
+                    payload = self.client.parse_dataset_zip(raw, dataset_name)
                     self._cached_dataset_meta = await self.hass.async_add_executor_job(
                         self._store_in_cache, dataset_name, raw
                     )
-                    payload = self.client.parse_dataset_zip(raw, dataset_name)
                     self.latest_dataset = Dataset.from_json(payload)
                     self.latest_dataset_name = dataset_name
                     self.dataset_created_at = (
