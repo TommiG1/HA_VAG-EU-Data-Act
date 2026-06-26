@@ -93,6 +93,15 @@ def main() -> int:
         data.find_by_field(terramar.points, "plug_state") is not None,
         True,
     )
+    flat_climate = next(
+        s for s in data.CURATED_SENSORS_FLAT if s.field_name == "remaining_climate_time"
+    )
+    check("flat climate time unit = minutes (issue #18)", flat_climate.unit, "min")
+    check("flat climate time has no duration transform", flat_climate.transform, None)
+    dotted_climate = next(
+        s for s in data.CURATED_SENSORS_DOTTED if s.field_name == "remaining_climate_time"
+    )
+    check("dotted climate time unit = seconds", dotted_climate.unit, "s")
     check(
         "charging_power in dataset",
         data.find_by_field(terramar.points, "charging_power").value,

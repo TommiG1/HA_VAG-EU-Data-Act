@@ -1500,13 +1500,17 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "max_temperature", "Battery max temperature", "temperature", "°C", "measurement"
     ),
     # === Climate ===
+    # Flat PHEV format (issue #18) delivers remaining_climatisation_time as an
+    # integer count of MINUTES, aliased to remaining_climate_time. The dotted
+    # format instead sends a "<seconds>s" string (see the dotted registry entry,
+    # which keeps unit "s"/duration_s). Declare minutes here and skip duration_s
+    # so a flat value of 10 renders as "10 min" rather than "10 s".
     CuratedSensor(
         "remaining_climate_time",
         "Remaining climate time",
         "duration",
-        "s",
+        "min",
         "measurement",
-        transform="duration_s",
     ),
     CuratedSensor(
         "residual_energy_in_percent",
