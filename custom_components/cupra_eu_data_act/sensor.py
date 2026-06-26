@@ -228,6 +228,29 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
 
         return value
 
+    def _sum_fallback_value(self) -> float | int | None:
+        """Sum the curated sensor's ``sum_fallback_fields`` into a total.
+
+        Used when the sensor's own field carries no usable reading. Only usable
+        numeric components contribute; returns ``None`` when none are present so
+        the sensor stays unknown rather than reporting a misleading zero.
+        """
+        points = self.coordinator.data or {}
+        total = 0.0
+        found = False
+        for fname in self._curated.sum_fallback_fields:
+            dp = find_by_field(points, fname)
+            if dp is None or not is_usable_reading(dp.value, fname):
+                continue
+            try:
+                total += float(dp.value)
+            except (TypeError, ValueError):
+                continue
+            found = True
+        if not found:
+            return None
+        return int(total) if total.is_integer() else total
+
     def _source_datapoint(self) -> DataPoint | None:
         """Return the portal data point backing ``native_value``."""
         points = self.coordinator.data or {}
@@ -294,6 +317,16 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             field_name,
             prefer_max_value=self._curated.monotonic,
         )
+
+        # When the portal sends this field empty (e.g. combined cruising range on
+        # PHEVs) but still reports its components, reconstruct the total from the
+        # declared fallback fields. A usable portal value always takes precedence.
+        if self._curated.sum_fallback_fields and (
+            dp is None or not is_usable_reading(dp.value, field_name)
+        ):
+            summed = self._sum_fallback_value()
+            if summed is not None:
+                return self._sticky(summed)
 
         if not dp:
             return self._sticky(None)

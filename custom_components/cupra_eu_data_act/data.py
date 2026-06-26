@@ -854,6 +854,12 @@ class CuratedSensor:
     # duplicate value slots via find_by_field(prefer_max_value=...), so a lagging
     # report snapshot in the same dataset can't make mileage read low.
     monotonic: bool = False
+    # fields to sum as a fallback when this sensor's own field carries no usable
+    # reading. Some vehicles report a curated total (e.g. combined cruising
+    # range) as an empty slot while still sending its per-engine components, so
+    # the sum of these fields reconstructs the total. The portal value, when
+    # present, always wins over the computed sum.
+    sum_fallback_fields: tuple[str, ...] = ()
 
 
 def curated_translation_key(field_name: str, translation_key: str | None = None) -> str:
@@ -1351,6 +1357,10 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "measurement",
         icon="mdi:map-marker-distance",
         suggested_display_precision=0,
+        sum_fallback_fields=(
+            "cruising_range_primary_engine",
+            "cruising_range_secondary_engine",
+        ),
     ),
     CuratedSensor(
         "cruising_range_primary_engine",
