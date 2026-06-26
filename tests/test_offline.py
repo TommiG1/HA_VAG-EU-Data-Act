@@ -102,6 +102,29 @@ def main() -> int:
         s for s in data.CURATED_SENSORS_DOTTED if s.field_name == "remaining_climate_time"
     )
     check("dotted climate time unit = seconds", dotted_climate.unit, "s")
+    print("maintenance intervals:")
+    from datetime import datetime, timezone
+    _flat = {s.field_name: s for s in data.CURATED_SENSORS_FLAT}
+    _insp = _flat["maintenance_interval__time_until_inspection"]
+    check("inspection interval keeps raw sign (no abs)", _insp.transform, None)
+    check("inspection day counter disabled by default", _insp.enabled_by_default, False)
+    _insp_dist = _flat["maintenance_interval_distance_until_inspection"]
+    check("inspection distance keeps raw sign (no abs)", _insp_dist.transform, None)
+    _due = _flat["maintenance_interval__time_until_inspection.due_date"]
+    check("inspection due is a timestamp", _due.device_class, "timestamp")
+    check("inspection due enabled by default", _due.enabled_by_default, True)
+    _now = datetime(2026, 6, 26, 11, 0, tzinfo=timezone.utc)
+    check(
+        "remaining -127 d -> due date +127 d",
+        data.maintenance_due_datetime(-127, _now).date().isoformat(),
+        "2026-10-31",
+    )
+    check(
+        "overdue +5 d -> due date 5 d ago",
+        data.maintenance_due_datetime(5, _now).date().isoformat(),
+        "2026-06-21",
+    )
+    check("non-numeric due date -> None", data.maintenance_due_datetime("x", _now), None)
     check(
         "charging_power in dataset",
         data.find_by_field(terramar.points, "charging_power").value,

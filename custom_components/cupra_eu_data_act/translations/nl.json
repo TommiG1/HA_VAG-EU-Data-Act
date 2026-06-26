@@ -320,6 +320,12 @@
       "maintenance_interval_distance_until_oil_change": {
         "name": "Oliebeurt (afstand)"
       },
+      "inspection_due_date": {
+        "name": "Volgende inspectie"
+      },
+      "oil_change_due_date": {
+        "name": "Volgende oliebeurt"
+      },
       "long_term_data_mileage": {
         "name": "Afstand rit (lang)"
       },

@@ -320,6 +320,12 @@
       "maintenance_interval_distance_until_oil_change": {
         "name": "Oil change distance"
       },
+      "inspection_due_date": {
+        "name": "Inspection due"
+      },
+      "oil_change_due_date": {
+        "name": "Oil change due"
+      },
       "long_term_data_mileage": {
         "name": "Trip distance (long)"
       },

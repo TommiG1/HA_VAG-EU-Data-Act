@@ -320,6 +320,12 @@
       "maintenance_interval_distance_until_oil_change": {
         "name": "Distance vidange"
       },
+      "inspection_due_date": {
+        "name": "Prochaine inspection"
+      },
+      "oil_change_due_date": {
+        "name": "Prochaine vidange"
+      },
       "long_term_data_mileage": {
         "name": "Distance trajet (long)"
       },

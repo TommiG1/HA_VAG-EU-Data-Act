@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 
@@ -860,6 +860,8 @@ class CuratedSensor:
     # the sum of these fields reconstructs the total. The portal value, when
     # present, always wins over the computed sum.
     sum_fallback_fields: tuple[str, ...] = ()
+    # create the entity disabled in the registry (the user can enable it)
+    enabled_by_default: bool = True
 
 
 def curated_translation_key(field_name: str, translation_key: str | None = None) -> str:
@@ -867,6 +869,27 @@ def curated_translation_key(field_name: str, translation_key: str | None = None)
     if translation_key:
         return translation_key
     return field_name.replace(".", "_")
+
+
+def maintenance_due_datetime(days_value, now):
+    """Service due date from a signed "days until service" countdown.
+
+    The portal encodes maintenance intervals as a countdown that rises toward 0:
+    a negative value is the number of days remaining (e.g. -127 = due in 127
+    days), zero is the due date, and a positive value is days overdue. Turning it
+    into a timestamp removes the sign ambiguity (HA shows "in 4 months" vs "5
+    days ago") that abs() used to hide.
+
+    ``now`` is a timezone-aware datetime (HA local time); the result is anchored
+    to local midnight so it stays stable between daily portal updates. Returns
+    ``None`` for non-numeric input.
+    """
+    try:
+        days = int(days_value)
+    except (TypeError, ValueError):
+        return None
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return midnight - timedelta(days=days)
 
 
 @dataclass(frozen=True)
@@ -1694,6 +1717,13 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         icon="mdi:car-convertible",
     ),
     # === Maintenance ===
+    # The portal encodes these intervals as a countdown that rises toward 0:
+    # negative = remaining (e.g. -127 d / -23500 km until service), 0 = due,
+    # positive = overdue. The previous abs() collapsed both states to a positive
+    # number, so an overdue service was indistinguishable from a remaining one.
+    # Keep the raw sign here; the *_due_date sensors below re-express the
+    # time-based intervals as an unambiguous timestamp, so the raw day counters
+    # are disabled by default in favour of those dates.
     CuratedSensor(
         "maintenance_interval__time_until_inspection",
         "Inspection interval",
@@ -1701,8 +1731,8 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "d",
         "measurement",
         icon="mdi:calendar-clock",
-        transform="abs",
         suggested_display_precision=0,
+        enabled_by_default=False,
     ),
     CuratedSensor(
         "maintenance_interval__time_until_oil_change",
@@ -1711,8 +1741,8 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "d",
         "measurement",
         icon="mdi:oil",
-        transform="abs",
         suggested_display_precision=0,
+        enabled_by_default=False,
     ),
     CuratedSensor(
         "maintenance_interval_distance_until_inspection",
@@ -1721,7 +1751,6 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "km",
         "measurement",
         icon="mdi:car-wrench",
-        transform="abs",
         suggested_display_precision=0,
     ),
     CuratedSensor(
@@ -1731,8 +1760,24 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "km",
         "measurement",
         icon="mdi:oil",
-        transform="abs",
         suggested_display_precision=0,
+    ),
+    # Time-based intervals re-expressed as a concrete due date, derived from the
+    # signed day countdown above (see maintenance_due_datetime and the
+    # ".due_date" handling in sensor.py).
+    CuratedSensor(
+        "maintenance_interval__time_until_inspection.due_date",
+        "Inspection due",
+        "timestamp",
+        translation_key="inspection_due_date",
+        icon="mdi:calendar-clock",
+    ),
+    CuratedSensor(
+        "maintenance_interval__time_until_oil_change.due_date",
+        "Oil change due",
+        "timestamp",
+        translation_key="oil_change_due_date",
+        icon="mdi:oil",
     ),
     # === Trip Statistics - Long Term ===
     CuratedSensor(

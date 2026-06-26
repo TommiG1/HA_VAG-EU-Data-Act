@@ -58,6 +58,7 @@ _MINUTE_DURATION_FIELDS = frozenset(
     {
         "battery_state_report.remaining_charging_time_complete",
         "battery_state_report.remaining_charging_time_bulk",
+        "remaining_climate_time",
     }
 )
 

@@ -35,6 +35,7 @@ from .data import (
     is_usable_reading,
     last_connected_time,
     latest_captured_time,
+    maintenance_due_datetime,
     resolve_distance_unit,
     resolve_distance_unit_from_companion_fields,
     resolve_primary_range_unit,
@@ -150,6 +151,15 @@ async def async_setup_entry(
                     new_entities.append(EudaCuratedSensor(coordinator, curated))
                     added_curated.add(curated.field_name)
                 continue
+            # Due-date sensors derive a timestamp from a ".due_date" base field
+            # (e.g. maintenance_interval__time_until_inspection.due_date); create
+            # once the base day-countdown field is present.
+            if curated.field_name.endswith(".due_date"):
+                base_field = curated.field_name[: -len(".due_date")]
+                if find_by_field(points, base_field) is not None:
+                    new_entities.append(EudaCuratedSensor(coordinator, curated))
+                    added_curated.add(curated.field_name)
+                continue
             # Timestamp sensors track ".timestamp" on a base field (e.g.
             # mileage.value.timestamp). Create once the base mileage field is
             # present — timestampUtc is often missing on Cupra/MEB payloads.
@@ -198,6 +208,8 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             self._attr_state_class = SensorStateClass(curated.state_class)
         if curated.suggested_display_precision is not None:
             self._attr_suggested_display_precision = curated.suggested_display_precision
+        if not curated.enabled_by_default:
+            self._attr_entity_registry_enabled_default = False
 
     def _apply_transform(self, value):
         """Apply configured transform to the raw value."""
@@ -285,6 +297,13 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
 
     @property
     def native_value(self):
+        if self._curated.field_name.endswith(".due_date"):
+            base_field = self._curated.field_name[: -len(".due_date")]
+            dp = find_by_field(self.coordinator.data or {}, base_field)
+            if dp is None or not is_usable_reading(dp.value, base_field):
+                return self._sticky(None)
+            return self._sticky(maintenance_due_datetime(dp.value, dt_util.now()))
+
         if ".timestamp" in self._curated.field_name:
             base_field = self._curated.field_name.replace(".timestamp", "")
             dp = find_by_field(self.coordinator.data or {}, base_field)

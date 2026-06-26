@@ -320,6 +320,12 @@
       "maintenance_interval_distance_until_oil_change": {
         "name": "Distanza cambio olio"
       },
+      "inspection_due_date": {
+        "name": "Prossima ispezione"
+      },
+      "oil_change_due_date": {
+        "name": "Prossimo cambio olio"
+      },
       "long_term_data_mileage": {
         "name": "Distanza viaggio (lungo)"
       },
