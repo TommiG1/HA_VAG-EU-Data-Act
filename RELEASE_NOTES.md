@@ -1,5 +1,30 @@
 # Release notes
 
+## v0.6.28 — Tyre pressure 0/1 sentinel for all families (#29) (2026-06-27)
+
+### Summary
+
+Widens the tyre-pressure validity filter from `tyre_pressure_actual_*` only to
+all `tyre_pressure_*` families (actual, required, differential), per the vendor
+data dictionary and community evidence in
+[#29](https://github.com/TommiG1/HA_VAG-EU-Data-Act/pull/29).
+
+### Tyre pressure (#14 / #29)
+
+- **`0` / `1`** are now treated as unavailable on **required** and
+  **differential** sensors too, not only actual readings.
+- Fixes misleading **1 bar** on required/differential when the portal sends the
+  invalid status code (common on indirect TPMS / no live reading).
+- Reverts the v0.6.24 scope limit that kept `required` at raw `1` as a plausible
+  1.0 bar — the data dictionary defines the same `0/1/valid(int)` encoding for
+  all three families; scaled pressures arrive as e.g. `10` for 1.0 bar.
+
+### Tests
+
+- Offline sentinel check updated for `tyre_pressure_required_*`.
+
+---
+
 ## v0.6.27 — Climate time, combined range & maintenance due dates (2026-06-27)
 
 ### Summary
