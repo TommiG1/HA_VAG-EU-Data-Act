@@ -751,7 +751,10 @@ _FIELD_SENTINELS: dict[str, frozenset[float]] = {
 }
 
 # VW tyre-pressure fields encode validity, not pressure: 0 = unsupported,
-# 1 = invalid, otherwise the reading is a pressure value (issue #14).
+# 1 = invalid, otherwise the reading is a pressure value (issue #14). This
+# applies to every tyre-pressure family (actual / required / differential),
+# not just the actual reading. A "required" or "differential" of 0/1 bar is
+# the same unsupported/invalid sentinel, never a real pressure.
 _TYRE_PRESSURE_STATUS_CODES: frozenset[float] = frozenset({0, 1})
 
 
@@ -773,7 +776,7 @@ def is_sentinel(value, field_name: str | None = None) -> bool:
         return True
     if (
         field_name
-        and field_name.startswith("tyre_pressure_actual_")
+        and field_name.startswith("tyre_pressure_")
         and as_float in _TYRE_PRESSURE_STATUS_CODES
     ):
         return True

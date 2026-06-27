@@ -656,9 +656,12 @@ def main() -> int:
         False,
     )
     check(
-        "required tyre pressure 1 bar plausible (issue #33)",
+        # Fork override of issue #33: the portal encodes 0/1 as status codes (0=unsupported,
+        # 1=invalid) for every tyre-pressure family, not just actual. Real pressures are
+        # scaled (e.g. 24 = 2.4 bar), so a "required" of 1 is the invalid sentinel, not 1 bar.
+        "required tyre pressure 1 = invalid sentinel (fork override of issue #33)",
         data.is_sentinel(1, "tyre_pressure_required_front_left"),
-        False,
+        True,
     )
     check(
         "tyre pressure 1 not sentinel without field name",
