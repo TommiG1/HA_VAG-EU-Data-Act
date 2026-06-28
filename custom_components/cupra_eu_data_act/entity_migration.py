@@ -62,6 +62,17 @@ _MINUTE_DURATION_FIELDS = frozenset(
     }
 )
 
+# Curated distance sensors whose unit comes from a companion *.unit field at
+# runtime. Early releases fell back to the static default "km" before sticky
+# confirmation, which HA then locked in the entity registry (issue #11).
+_DYNAMIC_DISTANCE_UNIT_FIELDS = frozenset(
+    {
+        "mileage.value",
+        "range.value",
+        "value_of_the_primary_range",
+    }
+)
+
 
 def entity_registry_updates(
     reg_entry: er.RegistryEntry,
@@ -126,6 +137,11 @@ def entity_registry_updates(
         )
     ):
         updates["unit_of_measurement"] = "min"
+    if (
+        field in _DYNAMIC_DISTANCE_UNIT_FIELDS
+        and getattr(reg_entry, "unit_of_measurement", None) == "km"
+    ):
+        updates["unit_of_measurement"] = None
     key = translation_key_for_unique_id(reg_entry.unique_id, vin)
     if not key:
         return updates or None

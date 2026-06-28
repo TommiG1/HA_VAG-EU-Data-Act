@@ -1,5 +1,43 @@
 # Release notes
 
+## v0.6.29 — Distance unit resolution for miles vehicles (#11) (2026-06-28)
+
+### Summary
+
+Fixes mileage and range sensors showing **km** on vehicles whose portal
+dataset reports **`mileage.unit = MILES`** (e.g. UK ID.4), even though the
+odometer value itself is already in miles
+([#11](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/11)).
+
+The integration never converted values — only the **unit label** was wrong.
+
+### Distance unit resolution (#11)
+
+- **First-poll adoption** for distance sensors: when `mileage.unit` /
+  `range.unit` resolves to `mi` or `km`, that unit is shown immediately instead
+  of falling back to the static default `km` while sticky confirmation is
+  pending.
+- **Entity registry migration** clears a stale `km` override on
+  `mileage.value`, `range.value`, and `value_of_the_primary_range` so
+  `native_unit_of_measurement` can drive the label again on upgraded installs.
+- Charge-rate sticky unit behaviour is unchanged (still requires two consecutive
+  polls to adopt a flip).
+
+### Note for existing installs
+
+- Reload the integration or restart Home Assistant after upgrading; the
+  migration runs on startup.
+- Vehicles that genuinely use kilometres are unaffected (default remains `km`
+  when the portal omits a unit field or sends `KM` / `KILOMETERS`).
+
+### Tests
+
+- Offline regression: `mileage.unit = MILES` on the first poll resolves to `mi`,
+  not the `km` fallback.
+- Harness: registry migration clears stale `km` on dynamic distance sensors.
+
+---
+
 ## v0.6.28 — Tyre pressure 0/1 sentinel for all families (#29) (2026-06-27)
 
 ### Summary

@@ -426,6 +426,17 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             now=dt_util.utcnow(),
         )
 
+    def _stable_dynamic_unit(
+        self, resolved: str | None, *, pending_ok: bool
+    ) -> str | None:
+        """Sticky unit with optional first-poll adoption while confirming."""
+        stable = self._sticky_unit(resolved)
+        if stable is not None:
+            return stable
+        if pending_ok and resolved is not None:
+            return resolved
+        return None
+
     @property
     def native_unit_of_measurement(self) -> str | None:
         # When a companion unit field is declared (e.g. mileage.unit), resolve
@@ -439,14 +450,15 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
         unit_candidates.extend(cur.unit_fields)
         if unit_candidates:
             resolver = UNIT_RESOLVERS.get(cur.unit_resolver, resolve_distance_unit)
+            pending_ok = cur.unit_resolver == "distance"
             if cur.unit_fields and cur.unit_resolver == "distance":
                 resolved = resolve_distance_unit_from_companion_fields(
                     points, *unit_candidates
                 )
                 if resolved:
-                    stable = self._sticky_unit(resolved)
-                    if stable is not None:
-                        return stable
+                    unit = self._stable_dynamic_unit(resolved, pending_ok=pending_ok)
+                    if unit is not None:
+                        return unit
             else:
                 for field in unit_candidates:
                     dp = find_by_field(points, field)
@@ -461,9 +473,11 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
                                 value_dp.value, cur.field_name
                             ):
                                 consider = None
-                        stable = self._sticky_unit(consider)
-                        if stable is not None:
-                            return stable
+                        unit = self._stable_dynamic_unit(
+                            consider, pending_ok=pending_ok
+                        )
+                        if unit is not None:
+                            return unit
         return cur.unit
 
 

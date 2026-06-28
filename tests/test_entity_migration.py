@@ -22,6 +22,8 @@ def _entry(**kwargs) -> SimpleNamespace:
         "original_name": "report_type",
         "disabled_by": None,
         "name": None,
+        "unit_of_measurement": None,
+        "options": {},
     }
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
@@ -188,3 +190,17 @@ def test_migration_keeps_non_metadata_raw() -> None:
         )
         is None
     )
+
+
+def test_migration_clears_stale_km_on_dynamic_distance_sensors() -> None:
+    vin = "WVWZZZTESTVIN0001"
+    updates = entity_registry_updates(
+        _entry(
+            unique_id=f"{vin}_mileage.value",
+            translation_key="mileage_value",
+            entity_category=None,
+            unit_of_measurement="km",
+        ),
+        vin,
+    )
+    assert updates == {"unit_of_measurement": None}

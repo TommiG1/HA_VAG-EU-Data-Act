@@ -1022,6 +1022,32 @@ def main() -> int:
     ]})
     unit_dp = ds_mi.by_field("mileage.unit")
     check("resolved unit from dataset", data.resolve_distance_unit(unit_dp.value), "mi")
+
+    def _distance_sensor_unit(sticky: _StickyUnitProbe, pts, curated) -> str | None:
+        """Inline gate matching EudaCuratedSensor.native_unit_of_measurement."""
+        if curated.unit_fields and curated.unit_resolver == "distance":
+            resolved = data.resolve_distance_unit_from_companion_fields(
+                pts, *curated.unit_fields
+            )
+        else:
+            resolved = None
+            if curated.unit_field:
+                unit_dp = data.find_by_field(pts, curated.unit_field)
+                if unit_dp is not None:
+                    resolved = data.resolve_distance_unit(unit_dp.value)
+        stable = sticky.sticky_unit(resolved)
+        if stable is not None:
+            return stable
+        if resolved is not None:
+            return resolved
+        return curated.unit
+
+    probe = _StickyUnitProbe()
+    check(
+        "mileage MILES on first poll -> mi not km fallback",
+        _distance_sensor_unit(probe, ds_mi.points, mileage),
+        "mi",
+    )
     primary = next(
         s for s in data.CURATED_SENSORS_DOTTED if s.field_name == "value_of_the_primary_range"
     )
