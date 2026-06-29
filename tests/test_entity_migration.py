@@ -8,6 +8,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.cupra_eu_data_act.entity_migration import (
+    distance_registry_unit_fix,
     entity_registry_updates,
     translation_key_for_unique_id,
 )
@@ -192,7 +193,27 @@ def test_migration_keeps_non_metadata_raw() -> None:
     )
 
 
-def test_migration_clears_stale_km_on_dynamic_distance_sensors() -> None:
+def test_distance_registry_unit_fix_miles_vehicle() -> None:
+    clear_private, new_unit = distance_registry_unit_fix("mi", "km", None)
+    assert clear_private is False
+    assert new_unit == "mi"
+
+
+def test_distance_registry_unit_fix_silent_portal() -> None:
+    assert distance_registry_unit_fix(None, "km", None) == (False, None)
+
+
+def test_distance_registry_unit_fix_already_correct() -> None:
+    assert distance_registry_unit_fix("km", "km", None) == (False, None)
+
+
+def test_distance_registry_unit_fix_clears_private_override() -> None:
+    clear_private, new_unit = distance_registry_unit_fix("mi", "mi", "km")
+    assert clear_private is True
+    assert new_unit is None
+
+
+def test_migration_does_not_blind_clear_km_at_setup() -> None:
     vin = "WVWZZZTESTVIN0001"
     updates = entity_registry_updates(
         _entry(
@@ -203,4 +224,4 @@ def test_migration_clears_stale_km_on_dynamic_distance_sensors() -> None:
         ),
         vin,
     )
-    assert updates == {"unit_of_measurement": None}
+    assert updates is None

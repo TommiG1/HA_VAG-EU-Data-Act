@@ -602,6 +602,35 @@ def resolve_primary_range_unit(points: dict[str, DataPoint]) -> str | None:
     )
 
 
+def resolve_curated_distance_unit(
+    curated: CuratedSensor, points: dict[str, DataPoint]
+) -> str | None:
+    """Portal distance unit for a curated sensor, or None when the dataset is silent.
+
+    Mirrors the resolution path in ``EudaCuratedSensor.native_unit_of_measurement``
+    but without sticky-unit state. Returns ``None`` when no companion ``*.unit``
+    field yields a mapped value so the static curated default (``km``) applies.
+    """
+    if curated.unit_resolver != "distance":
+        return None
+    unit_candidates: list[str] = []
+    if curated.unit_field:
+        unit_candidates.append(curated.unit_field)
+    unit_candidates.extend(curated.unit_fields)
+    if not unit_candidates:
+        return None
+    if curated.unit_fields:
+        return resolve_distance_unit_from_companion_fields(points, *unit_candidates)
+    for field in unit_candidates:
+        dp = find_by_field(points, field)
+        if dp is None:
+            continue
+        resolved = resolve_distance_unit(dp.value)
+        if resolved:
+            return resolved
+    return None
+
+
 # Charge-rate unit enums (battery_state_report.charge_rate_unit) -> HA unit.
 # The charge rate is expressed as range gained over time and the unit (km vs
 # miles, per hour vs per minute) varies by vehicle/region, so it is read from

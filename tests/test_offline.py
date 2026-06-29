@@ -1048,6 +1048,19 @@ def main() -> int:
         _distance_sensor_unit(probe, ds_mi.points, mileage),
         "mi",
     )
+    check(
+        "resolve_curated_distance_unit MILES -> mi",
+        data.resolve_curated_distance_unit(mileage, ds_mi.points),
+        "mi",
+    )
+    ds_km_only = data.Dataset.from_json({"vin": "V", "user_id": "u", "Data": [
+        {"key": "m1", "dataFieldName": "mileage.value", "value": "21227"},
+    ]})
+    check(
+        "silent portal unit leaves resolve_curated_distance_unit None",
+        data.resolve_curated_distance_unit(mileage, ds_km_only.points),
+        None,
+    )
     primary = next(
         s for s in data.CURATED_SENSORS_DOTTED if s.field_name == "value_of_the_primary_range"
     )

@@ -7,14 +7,17 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 
-from .const import CONF_VIN
+from .const import CONF_VIN, DOMAIN
 from .data import (
     CURATED_BINARY_DOTTED,
     CURATED_BINARY_FLAT,
     CURATED_SENSORS_DOTTED,
     CURATED_SENSORS_FLAT,
+    CuratedSensor,
+    DataPoint,
     curated_translation_key,
     is_raw_metadata_field,
+    resolve_curated_distance_unit,
 )
 
 _FIELD_TO_TRANSLATION_KEY: dict[str, str] = {
@@ -24,6 +27,12 @@ _FIELD_TO_TRANSLATION_KEY: dict[str, str] = {
 _BINARY_FIELD_TO_TRANSLATION_KEY: dict[str, str] = {
     b.field_name: curated_translation_key(b.field_name)
     for b in (*CURATED_BINARY_DOTTED, *CURATED_BINARY_FLAT)
+}
+
+_DYNAMIC_DISTANCE_CURATED: dict[str, CuratedSensor] = {
+    s.field_name: s
+    for s in (*CURATED_SENSORS_DOTTED, *CURATED_SENSORS_FLAT)
+    if s.unit_resolver == "distance" and (s.unit_field or s.unit_fields)
 }
 
 
@@ -62,16 +71,26 @@ _MINUTE_DURATION_FIELDS = frozenset(
     }
 )
 
-# Curated distance sensors whose unit comes from a companion *.unit field at
-# runtime. Early releases fell back to the static default "km" before sticky
-# confirmation, which HA then locked in the entity registry (issue #11).
-_DYNAMIC_DISTANCE_UNIT_FIELDS = frozenset(
-    {
-        "mileage.value",
-        "range.value",
-        "value_of_the_primary_range",
-    }
-)
+
+def distance_registry_unit_fix(
+    resolved: str | None,
+    registry_unit: str | None,
+    private_unit: str | None,
+) -> tuple[bool, str | None]:
+    """Return whether to clear sensor.private and the registry unit to set.
+
+    ``resolved`` is the portal-mapped unit (``mi`` / ``km``). When the dataset
+    carries no companion ``*.unit`` field, ``resolved`` is ``None`` and the
+    registry is left alone so the static curated default can apply.
+    """
+    if resolved is None:
+        return False, None
+    if registry_unit == resolved and private_unit in (None, resolved):
+        return False, None
+    clear_private = bool(private_unit and private_unit != resolved)
+    if registry_unit == resolved:
+        return clear_private, None
+    return clear_private, resolved
 
 
 def entity_registry_updates(
@@ -137,11 +156,6 @@ def entity_registry_updates(
         )
     ):
         updates["unit_of_measurement"] = "min"
-    if (
-        field in _DYNAMIC_DISTANCE_UNIT_FIELDS
-        and getattr(reg_entry, "unit_of_measurement", None) == "km"
-    ):
-        updates["unit_of_measurement"] = None
     key = translation_key_for_unique_id(reg_entry.unique_id, vin)
     if not key:
         return updates or None
@@ -201,4 +215,57 @@ async def async_migrate_entity_translations(
             registry.async_update_entity(
                 reg_entry.entity_id,
                 unit_of_measurement="min",
+            )
+
+
+@callback
+def async_sync_distance_registry_units(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    points: dict[str, DataPoint],
+) -> None:
+    """Align entity-registry distance units with the portal once data is available.
+
+    Setup-time migrations run before the first dataset arrives, so Home
+    Assistant can lock the static curated default (``km``) into the registry and
+    keep overriding the resolved native unit afterwards (issue #11). This runs
+    after coordinator data is present and only updates entities whose portal
+    companion ``*.unit`` field maps to a concrete unit.
+    """
+    if not points:
+        return
+
+    vin = entry.data[CONF_VIN]
+    prefix = f"{vin}_"
+    registry = er.async_get(hass)
+
+    for reg_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if reg_entry.domain != "sensor" or reg_entry.platform != DOMAIN:
+            continue
+        if not reg_entry.unique_id.startswith(prefix):
+            continue
+        field = reg_entry.unique_id[len(prefix) :]
+        curated = _DYNAMIC_DISTANCE_CURATED.get(field)
+        if curated is None:
+            continue
+
+        resolved = resolve_curated_distance_unit(curated, points)
+        private_unit = reg_entry.options.get("sensor.private", {}).get(
+            "suggested_unit_of_measurement"
+        )
+        clear_private, new_unit = distance_registry_unit_fix(
+            resolved,
+            getattr(reg_entry, "unit_of_measurement", None),
+            private_unit,
+        )
+        if clear_private:
+            registry.async_update_entity_options(
+                reg_entry.entity_id,
+                "sensor.private",
+                None,
+            )
+        if new_unit is not None:
+            registry.async_update_entity(
+                reg_entry.entity_id,
+                unit_of_measurement=new_unit,
             )

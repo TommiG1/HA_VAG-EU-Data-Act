@@ -1,5 +1,39 @@
 # Release notes
 
+## v0.6.30 — Distance registry sync after portal data (#11) (2026-06-29)
+
+### Summary
+
+Follow-up for miles vehicles still showing **km** after v0.6.29
+([#11](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/11)). The sensor
+logic was correct, but Home Assistant locked the static default `km` into the
+entity registry during setup — **before** the first dataset arrived — and kept
+overriding the resolved native unit afterwards.
+
+### Distance registry sync (#11)
+
+- **`async_sync_distance_registry_units()`** runs on every coordinator update
+  once portal data is present. When a companion `*.unit` field maps to `mi` or
+  `km`, the entity registry is updated to match (and stale
+  `sensor.private.suggested_unit_of_measurement` overrides are cleared).
+- **Silent datasets** (no `mileage.unit` / `range.unit`) are left alone so
+  kilometre vehicles keep the default `km` label.
+- Removed the ineffective setup-time blind `km → None` migration from
+  v0.6.29; registry fixes are now data-driven only.
+
+### After upgrading
+
+Reload the integration or restart Home Assistant. Miles vehicles should show
+`mi` on the next coordinator refresh after upgrade.
+
+### Tests
+
+- Offline: `resolve_curated_distance_unit()` and first-poll sensor unit path.
+- Harness: `distance_registry_unit_fix()` decision table and no blind setup
+  migration.
+
+---
+
 ## v0.6.29 — Distance unit resolution for miles vehicles (#11) (2026-06-28)
 
 ### Summary
