@@ -23,6 +23,7 @@ from .data import (
     UNIT_RESOLVERS,
     CuratedSensor,
     DataPoint,
+    charging_time_is_applicable,
     curated_translation_key,
     datapoint_freshness_attributes,
     detect_dataset_format,
@@ -59,31 +60,6 @@ _REMAINING_CHARGE_TIME_FIELDS = frozenset(
         "remaining_charging_time",
     }
 )
-
-
-def _charging_time_is_applicable(points: dict[str, DataPoint]) -> bool:
-    """Whether a remaining-charge-time value describes an active charge."""
-    scenario = find_by_field(points, "charging_state_report.charging_scenario")
-    if scenario and str(scenario.value).endswith("_OFF"):
-        return False
-
-    power = find_by_field(points, "battery_state_report.charge_power")
-    if power is None:
-        power = find_by_field(points, "charging_power")
-    if power is not None:
-        try:
-            if float(power.value) <= 0:
-                return False
-        except (TypeError, ValueError):
-            pass
-
-    state = find_by_field(points, "charging_state_report.current_charge_state")
-    if state and "CHARGING" in str(state.value):
-        return True
-
-    # Flat/PHEV payloads do not always expose the same companion fields. If no
-    # inactive signal exists, keep the portal's remaining time value.
-    return scenario is None and power is None and state is None
 
 
 async def async_setup_entry(
@@ -281,7 +257,7 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
                     return dp
             return None
 
-        if field_name in _REMAINING_CHARGE_TIME_FIELDS and not _charging_time_is_applicable(
+        if field_name in _REMAINING_CHARGE_TIME_FIELDS and not charging_time_is_applicable(
             points
         ):
             return None
@@ -326,7 +302,7 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             # Ignore resets / plateaus and keep the previous "last charge" value.
             return self._sticky(None)
 
-        if field_name in _REMAINING_CHARGE_TIME_FIELDS and not _charging_time_is_applicable(
+        if field_name in _REMAINING_CHARGE_TIME_FIELDS and not charging_time_is_applicable(
             self.coordinator.data or {}
         ):
             return None

@@ -630,6 +630,92 @@ def main() -> int:
     check("None is not sentinel", data.is_sentinel(None, "mileage"), False)
     check("string is not sentinel", data.is_sentinel("FOO", "state"), False)
     check("boolean True not sentinel", data.is_sentinel(True, "locked"), False)
+
+    # --- remaining charging time gating (#31) -----------------------------
+    print("remaining charging time gating (#31):")
+
+    def _pts(**fields):
+        return {k: data.DataPoint(k, k, v) for k, v in fields.items()}
+
+    check(
+        "flat Tayron charging",
+        data.charging_time_is_applicable(
+            _pts(
+                remaining_charging_time="40",
+                charging_power="3.5",
+                charging_state="charging",
+            )
+        ),
+        True,
+    )
+    check(
+        "flat PHEV power without dotted state",
+        data.charging_time_is_applicable(
+            _pts(remaining_charging_time="75", charging_power="7.2")
+        ),
+        True,
+    )
+    check(
+        "flat not charging (off)",
+        data.charging_time_is_applicable(
+            _pts(
+                remaining_charging_time="40",
+                charging_power="0",
+                charging_state="off",
+            )
+        ),
+        False,
+    )
+    check(
+        "flat zero power hides remaining time",
+        data.charging_time_is_applicable(
+            _pts(remaining_charging_time="40", charging_power="0")
+        ),
+        False,
+    )
+    check(
+        "dotted BEV actively charging",
+        data.charging_time_is_applicable(
+            _pts(
+                **{
+                    "battery_state_report.remaining_charging_time_complete": "3600",
+                    "battery_state_report.charge_power": "11",
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CHARGING_HV_BATTERY"
+                    ),
+                }
+            )
+        ),
+        True,
+    )
+    check(
+        "dotted scenario OFF",
+        data.charging_time_is_applicable(
+            _pts(
+                **{
+                    "remaining_charging_time": "30",
+                    "charging_state_report.charging_scenario": "CHARGING_SCENARIO_OFF",
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "flat conservation charging",
+        data.charging_time_is_applicable(
+            _pts(
+                remaining_charging_time="20",
+                charging_state="conservationCharging",
+            )
+        ),
+        True,
+    )
+    check(
+        "no companion fields keeps portal value",
+        data.charging_time_is_applicable(_pts(remaining_charging_time="40")),
+        True,
+    )
+
     check(
         "uint32 max without field name",
         data.is_sentinel(4294967295),

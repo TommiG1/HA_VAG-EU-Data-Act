@@ -444,6 +444,45 @@ def find_by_field(
     return max(tied, key=lambda dp: dp.sequence)
 
 
+_FLAT_CHARGING_INACTIVE = frozenset(
+    {"off", "completed", "error", "invalid", "unsupported"}
+)
+_FLAT_CHARGING_ACTIVE = frozenset({"charging", "conservationcharging"})
+
+
+def charging_time_is_applicable(points: dict[str, DataPoint]) -> bool:
+    """Whether a remaining-charge-time value describes an active charge."""
+    scenario = find_by_field(points, "charging_state_report.charging_scenario")
+    if scenario and str(scenario.value).endswith("_OFF"):
+        return False
+
+    flat_state = find_by_field(points, "charging_state")
+    if flat_state is not None:
+        flat_val = str(flat_state.value).strip().lower()
+        if flat_val in _FLAT_CHARGING_INACTIVE:
+            return False
+        if flat_val in _FLAT_CHARGING_ACTIVE:
+            return True
+
+    power = find_by_field(points, "battery_state_report.charge_power")
+    if power is None:
+        power = find_by_field(points, "charging_power")
+    if power is not None:
+        try:
+            if float(power.value) <= 0:
+                return False
+        except (TypeError, ValueError):
+            pass
+
+    state = find_by_field(points, "charging_state_report.current_charge_state")
+    if state and "CHARGING" in str(state.value).upper():
+        return True
+
+    # Flat/PHEV payloads do not always expose companion fields consistently.
+    # If no explicit inactive signal was found, trust the portal value.
+    return True
+
+
 # Field suffixes that carry when the vehicle last reported to the backend.
 _CAPTURED_TIME_SUFFIXES = frozenset(
     {"car_captured_time", "car_captured_utc_timestamp"}

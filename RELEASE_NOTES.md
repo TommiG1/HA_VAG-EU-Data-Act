@@ -1,5 +1,41 @@
 # Release notes
 
+## v0.6.31 — Flat remaining charging time for PHEV (#31) (2026-06-29)
+
+### Summary
+
+Fixes **Remaining charging time** staying **Unknown** on flat/PHEV vehicles
+(e.g. VW Tayron) even when the portal JSON contains values like
+`remaining_charging_time: 75`
+([#31](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/31)).
+
+The value was parsed correctly but hidden by an overly strict “actively
+charging” gate that only recognised dotted BEV companion fields, not flat
+`charging_state`.
+
+### Remaining charging time (#31)
+
+- **`charging_time_is_applicable()`** moved to `data.py` and extended for flat
+  payloads: `charging_state` values `charging` / `conservationCharging` count as
+  active; `off` / `completed` / etc. suppress the reading.
+- **Fallback** now trusts the portal value when no explicit inactive signal was
+  found (instead of requiring all companion fields to be absent).
+- Dotted BEV behaviour unchanged: scenario `_OFF` and charge power ≤ 0 still
+  hide the sensor.
+
+### After upgrading
+
+Reload the integration or restart Home Assistant. **Remaining charging time**
+should show minutes during the next charging session when the portal sends the
+field.
+
+### Tests
+
+- Offline regression suite for Tayron-like flat payloads, zero power, dotted
+  BEV charging, and scenario OFF.
+
+---
+
 ## v0.6.30 — Distance registry sync after portal data (#11) (2026-06-29)
 
 ### Summary
