@@ -746,6 +746,17 @@ def deci_kwh_to_kwh(value) -> float | None:
         return None
 
 
+def deci_kw_to_kw(value) -> float | None:
+    """Convert flat PHEV charging_power integers to kW (one implied decimal).
+
+    Tayron/Passat flat payloads send e.g. 99 for 9.9 kW, mirroring charged_energy.
+    """
+    try:
+        return round(float(value) / 10, 1)
+    except (ValueError, TypeError):
+        return None
+
+
 def total_charged_energy_kwh(points: dict[str, "DataPoint"]) -> float | None:
     """Return a cumulative charged-energy total in kWh from the dataset.
 
@@ -1516,6 +1527,7 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "power",
         "kW",
         "measurement",
+        transform="deci_kw",
         icon="mdi:flash",
     ),
     CuratedSensor(
@@ -1527,6 +1539,7 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         icon="mdi:speedometer",
         unit_field="charge_rate_unit",
         unit_resolver="charge_rate",
+        transform="deci_kw",
     ),
     CuratedSensor(
         "remaining_charging_time",

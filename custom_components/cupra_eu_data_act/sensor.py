@@ -374,6 +374,12 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
                 transformed = deci_kwh_to_kwh(raw_value)
                 return self._sticky(transformed)
 
+            elif self._curated.transform == "deci_kw":
+                from .data import deci_kw_to_kw
+
+                transformed = deci_kw_to_kw(raw_value)
+                return self._sticky(transformed)
+
             elif self._curated.transform == "iso_timestamp":
                 from .data import parse_timestamp
 

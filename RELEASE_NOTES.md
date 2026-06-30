@@ -1,5 +1,38 @@
 # Release notes
 
+## v0.6.32 — Flat PHEV charge power & charge rate scaling (#27) (2026-06-30)
+
+### Summary
+
+Fixes **Charge power** and **Charge rate** reading ten times too high on
+flat-format PHEVs (e.g. VW Tayron, Passat) when the portal sends integers with
+one implied decimal place
+([#27](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/27)).
+
+Examples from Tayron charging sessions: `charging_power: 99` → **9.9 kW** (not
+99 kW); `actual_charge_rate: 740` with `km_per_h` → **74 km/h** (not 740 km/h).
+Same encoding pattern as flat `charged_energy`, which already used a `/10`
+transform.
+
+### Flat PHEV scaling (#27)
+
+- **`deci_kw_to_kw()`** — converts flat `charging_power` portal integers to kW.
+- **`actual_charge_rate`** — same `/10` transform on the flat charge-rate sensor.
+- **Dotted BEV unchanged** — `battery_state_report.charge_power` and
+  `battery_state_report.charge_rate` still pass through as delivered.
+
+### After upgrading
+
+Reload the integration or restart Home Assistant. **Charge power** and **Charge
+rate** should show sensible values on the next charging session.
+
+### Tests
+
+- Offline checks for `deci_kw_to_kw`, flat sensor transforms, and dotted charge
+  power left unscaled.
+
+---
+
 ## v0.6.31 — Flat remaining charging time for PHEV (#31) (2026-06-29)
 
 ### Summary

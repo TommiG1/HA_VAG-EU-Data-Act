@@ -330,6 +330,8 @@ def main() -> int:
         data.electr_consumption_kwh_per_1000km_to_kwh_per_100km(180),
         18.0,
     )
+    check("flat PHEV charging_power deci-kW", data.deci_kw_to_kw(99), 9.9)
+    check("flat PHEV actual_charge_rate deci", data.deci_kw_to_kw(740), 74.0)
     check(
         "distance 100m -> km (issue #33)",
         data.hectometers_to_km(160),
@@ -1033,6 +1035,21 @@ def main() -> int:
         "charge_rate_unit",
     )
     check("flat charge_rate unit_resolver", flat_charge_rate.unit_resolver, "charge_rate")
+    check("flat charge_rate deci transform (#27)", flat_charge_rate.transform, "deci_kw")
+    flat_charge_power = next(
+        s for s in data.CURATED_SENSORS_FLAT if s.field_name == "charging_power"
+    )
+    check("flat charging_power deci transform (#27)", flat_charge_power.transform, "deci_kw")
+    dotted_charge_power = next(
+        s
+        for s in data.CURATED_SENSORS_DOTTED
+        if s.field_name == "battery_state_report.charge_power"
+    )
+    check(
+        "dotted charge_power keeps raw kW",
+        dotted_charge_power.transform,
+        None,
+    )
 
     def _charge_rate_unit(
         sticky: _StickyUnitProbe, value, unit_enum, *, usable_value=True
