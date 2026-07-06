@@ -92,3 +92,57 @@ async def test_user_step_shows_brand_selector(hass) -> None:
     # Brand field present in the schema.
     schema_keys = {str(k) for k in form["data_schema"].schema}
     assert CONF_BRAND in schema_keys
+
+
+async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
+    """Missing portal subscription must not block setup (issue #40)."""
+    flow = EudaConfigFlow()
+    flow.hass = hass
+    flow._brand = "volkswagen"
+    flow._email = "owner@example.com"
+    flow._password = "secret"
+    flow._vehicles = [{"vin": "WVWZZZTESTVIN0001", "nickname": "ID.4"}]
+
+    class _FakeClient:
+        def __init__(self, session, email, password, brand) -> None:
+            pass
+
+        async def async_login(self) -> None:
+            return None
+
+        async def async_get_metadata(self, vin: str) -> dict:
+            return {"Name": "ID.4"}
+
+    with patch(CLIENT_PATH, _FakeClient):
+        result = await flow.async_step_vehicle({CONF_VIN: "WVWZZZTESTVIN0001"})
+
+    assert result["type"] == "create_entry"
+    assert result["data"][CONF_IDENTIFIER] == ""
+    assert result["data"][CONF_VIN] == "WVWZZZTESTVIN0001"
+
+
+async def test_vehicle_step_creates_entry_when_metadata_fetch_fails(hass) -> None:
+    from custom_components.cupra_eu_data_act.api import ApiError
+
+    flow = EudaConfigFlow()
+    flow.hass = hass
+    flow._brand = "volkswagen"
+    flow._email = "owner@example.com"
+    flow._password = "secret"
+    flow._vehicles = [{"vin": "WVWZZZTESTVIN0001"}]
+
+    class _FakeClient:
+        def __init__(self, session, email, password, brand) -> None:
+            pass
+
+        async def async_login(self) -> None:
+            return None
+
+        async def async_get_metadata(self, vin: str) -> dict:
+            raise ApiError("GET metadata -> HTTP 500", status=500)
+
+    with patch(CLIENT_PATH, _FakeClient):
+        result = await flow.async_step_vehicle({CONF_VIN: "WVWZZZTESTVIN0001"})
+
+    assert result["type"] == "create_entry"
+    assert result["data"][CONF_IDENTIFIER] == ""

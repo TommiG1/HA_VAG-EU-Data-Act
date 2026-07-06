@@ -24,7 +24,7 @@ from custom_components.cupra_eu_data_act.const import (
     DOMAIN,
     SERVER_ERROR_BACKOFF_INTERVALS,
 )
-from custom_components.cupra_eu_data_act.coordinator import EudaCoordinator
+from custom_components.cupra_eu_data_act.coordinator import EudaCoordinator, EudaUpdateNotReady
 from custom_components.cupra_eu_data_act.data import DataPoint
 
 
@@ -359,3 +359,43 @@ async def test_successful_load_resets_server_error_backoff(hass) -> None:
 
     assert coordinator.consecutive_server_errors == 0
     assert coordinator.status_label == "ok"
+
+
+async def test_empty_identifier_waits_for_portal_subscription(hass) -> None:
+    client = MagicMock()
+    client.async_get_metadata = AsyncMock(return_value={})
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_VIN: "WVWZZZTESTVIN0001", CONF_IDENTIFIER: ""},
+        unique_id="WVWZZZTESTVIN0001",
+    )
+    entry.add_to_hass(hass)
+    coordinator = EudaCoordinator(hass, entry, client)
+
+    with pytest.raises(EudaUpdateNotReady) as exc:
+        await coordinator._async_update_data()
+
+    assert exc.value.translation_key == "delivery_not_ready"
+    client.async_list_datasets.assert_not_called()
+
+
+async def test_empty_identifier_refreshed_before_listing(hass) -> None:
+    client = MagicMock()
+    client.async_get_metadata = AsyncMock(return_value={"Identifier": "new-ident"})
+    client.async_list_datasets = AsyncMock(return_value=[])
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_VIN: "WVWZZZTESTVIN0001", CONF_IDENTIFIER: ""},
+        unique_id="WVWZZZTESTVIN0001",
+    )
+    entry.add_to_hass(hass)
+    coordinator = EudaCoordinator(hass, entry, client)
+
+    with pytest.raises(EudaUpdateNotReady):
+        await coordinator._async_update_data()
+
+    client.async_list_datasets.assert_called_once_with(
+        "WVWZZZTESTVIN0001", "new-ident"
+    )
+    assert coordinator.identifier == "new-ident"
+    assert entry.data[CONF_IDENTIFIER] == "new-ident"

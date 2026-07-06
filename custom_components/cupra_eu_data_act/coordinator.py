@@ -540,6 +540,21 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         identifier from the metadata endpoint and retry once before giving up —
         so it recovers on the next cycle without needing a manual reload.
         """
+        if not self.identifier:
+            if await self._refresh_identifier():
+                _LOGGER.info("Data-request identifier appeared during initial setup")
+            else:
+                self.status_label = "delivery_not_ready"
+                raise EudaUpdateNotReady(
+                    "delivery_not_ready",
+                    translation_placeholders={
+                        "portal_url": BASE_URL,
+                        "retry_minutes": str(
+                            int(RETRY_INTERVAL.total_seconds() // 60)
+                        ),
+                    },
+                )
+
         # Use fewer, faster retries during initial setup
         max_retries = 3 if self._is_initial_setup else 5
         retry_delay = 3 if self._is_initial_setup else 5

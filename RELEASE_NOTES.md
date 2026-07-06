@@ -1,5 +1,45 @@
 # Release notes
 
+## v0.6.33 — Setup without portal identifier (#40) (2026-07-06)
+
+### Summary
+
+Fixes setup failing with *Could not connect to the EU Data Act portal* after
+login and vehicle selection when the portal has no active continuous data request
+yet ([#40](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/40)).
+
+Credentials and vehicle discovery were already fine; the config flow blocked on
+a missing data-request **Identifier** and surfaced a misleading connect error
+with no log lines.
+
+### Config flow (#40)
+
+- **Finish setup without Identifier** — the config entry is created; the
+  coordinator waits with a clear *delivery not ready* / *waiting for portal data*
+  status instead of aborting setup.
+- **Setup logging** — metadata and login failures during setup are logged at
+  warning/info level.
+
+### Coordinator (#40)
+
+- **Empty identifier** — on first refresh, re-fetch the Identifier from portal
+  metadata before listing datasets; persist it when it appears.
+
+### After upgrading
+
+If setup previously failed at vehicle selection, add the integration again (or
+update via HACS and retry). Complete the portal subscription (continuous
+15-minute request, **All Data** preset) if you have not already — the integration
+will pick up the Identifier automatically once the portal is ready.
+
+### Tests
+
+- Config-flow tests for entry creation without Identifier and after metadata
+  errors.
+- Coordinator tests for empty-Identifier refresh and `delivery_not_ready`.
+
+---
+
 ## v0.6.32 — Flat PHEV charge power & charge rate scaling (#27) (2026-06-30)
 
 ### Summary

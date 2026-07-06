@@ -88,8 +88,6 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
                 identifier, nickname = await self._async_fetch_identifier(vin)
             except AuthError:
                 return self.async_abort(reason="auth")
-            except ApiError:
-                errors["base"] = "cannot_connect"
             else:
                 veh = next((v for v in self._vehicles if v["vin"] == vin), {})
                 title = veh.get("nickname") or nickname or vin
@@ -100,7 +98,7 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_EMAIL: self._email,
                         CONF_PASSWORD: self._password,
                         CONF_VIN: vin,
-                        CONF_IDENTIFIER: identifier,
+                        CONF_IDENTIFIER: identifier or "",
                         CONF_NICKNAME: title,
                     },
                 )
@@ -177,7 +175,8 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
             self._vehicles = await client.async_list_vehicles()
         except AuthError:
             return "invalid_auth"
-        except ApiError:
+        except ApiError as err:
+            _LOGGER.warning("Login or vehicle list failed during setup: %s", err)
             return "cannot_connect"
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Unexpected error during login")
@@ -186,15 +185,27 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
             await session.close()
         return None
 
-    async def _async_fetch_identifier(self, vin: str) -> tuple[str, str | None]:
+    async def _async_fetch_identifier(self, vin: str) -> tuple[str | None, str | None]:
+        """Return portal metadata; ``None`` identifier means subscription not ready yet."""
         session = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar())
         client = self._client(session)
         try:
             await client.async_login()
             meta = await client.async_get_metadata(vin)
+        except AuthError:
+            raise
+        except ApiError as err:
+            _LOGGER.warning(
+                "Could not fetch metadata for %s during setup: %s", vin, err
+            )
+            return None, None
         finally:
             await session.close()
-        identifier = meta.get("Identifier")
+        identifier = meta.get("Identifier") or meta.get("identifier")
         if not identifier:
-            raise ApiError("No data-request identifier for this vehicle")
+            _LOGGER.info(
+                "No data-request identifier for %s yet; finishing setup and waiting "
+                "for the portal subscription",
+                vin,
+            )
         return identifier, meta.get("Name")
