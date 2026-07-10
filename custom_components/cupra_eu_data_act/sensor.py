@@ -654,7 +654,7 @@ class EudaLastVehicleUpdateSensor(EudaEntity, SensorEntity):
 
     @property
     def native_value(self):
-        return self._sticky(latest_captured_time(self.coordinator.data or {}))
+        return self._sticky_monotonic(latest_captured_time(self.coordinator.data or {}))
 
 
 class EudaLastConnectedSensor(EudaEntity, SensorEntity):
@@ -675,7 +675,7 @@ class EudaLastConnectedSensor(EudaEntity, SensorEntity):
 
     @property
     def native_value(self):
-        return self._sticky(last_connected_time(self.coordinator.data or {}))
+        return self._sticky_monotonic(last_connected_time(self.coordinator.data or {}))
 
 
 class EudaDatasetGeneratedSensor(EudaEntity, SensorEntity):

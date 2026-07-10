@@ -49,6 +49,24 @@ class EudaEntity(CoordinatorEntity[EudaCoordinator]):
         self._last_value = sticky(self._last_value, value)
         return self._last_value
 
+    def _sticky_monotonic(self, value):
+        """Like :meth:`_sticky`, but never regress to an earlier value.
+
+        Timestamp sensors derived from ``latest_captured_time`` /
+        ``last_connected_time`` recompute their value from whatever car
+        report snapshots happen to be present in the *current* dataset. Some
+        portal ZIPs omit the report cluster that previously carried the
+        newest ``car_captured_time`` (e.g. a stale/no-new-data refresh), which
+        would otherwise make "Last vehicle update" jump backwards in time even
+        though a newer dataset just arrived. Plain :func:`sticky` only guards
+        against ``None`` and would still let this regression through.
+        """
+        if value is not None and (
+            self._last_value is None or value > self._last_value
+        ):
+            self._last_value = value
+        return self._last_value
+
     def _sticky_unit(
         self, resolved: str | None, *, confirm_required: int = 2
     ) -> str | None:
