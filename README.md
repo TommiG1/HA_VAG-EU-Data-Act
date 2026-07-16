@@ -56,8 +56,10 @@ that access to your vehicle data is **free of charge** under the EU Data Act; yo
 only need a Volkswagen Group brand account linked to the vehicle.
 
 Do not confuse that with the portal’s own **continuous data request** (the
-15-minute “subscription” you create under Data clusters). That is free and is
-what this integration downloads — it is unrelated to Connect Plus.
+15-minute “subscription” you create under **Data clusters** on
+[eu-data-act.drivesomethinggreater.com](https://eu-data-act.drivesomethinggreater.com/),
+not in the brand app). That is free and is what this integration downloads —
+it is unrelated to Connect Plus.
 
 ### Does the car need to be online?
 
@@ -153,12 +155,21 @@ instead.
 
 ## Portal setup (required)
 
-**Do this first**, before adding the integration in Home Assistant:
+**Do this first**, before adding the integration in Home Assistant.
+
+The continuous **15-minute** request is created on the official Volkswagen Group
+**EU Data Act portal** only. It is **not** in myAudi, the VW/Cupra/Škoda app, or
+Home Assistant. Brand apps are only for signing in; the frequency setting lives
+on the portal itself.
 
 1. Open [eu-data-act.drivesomethinggreater.com](https://eu-data-act.drivesomethinggreater.com/)
-2. Sign in and connect your vehicle under **Data clusters → Vehicle overview**
-3. Create a **continuous** data request with **15-minute** frequency — **not** a
-   one-time export
+   (same portal for Audi, VW, Cupra, Škoda, SEAT, Bentley)
+2. Sign in with your brand account and connect the vehicle under
+   **Data clusters → Vehicle overview**
+3. Still on that portal, under **Data clusters**, create a **new data request**
+   for the vehicle. Choose **continuous** (not a one-time export) and set the
+   frequency to **15 minutes**. That option appears in the portal’s request
+   dialog when you create or edit the request.
 4. When choosing the dataset, select the **All Data** preset — not only
    **Charging**, and not a manual selection of every individual field. Pick the
    **All Data** cluster/preset in the portal UI; a charging-only request
