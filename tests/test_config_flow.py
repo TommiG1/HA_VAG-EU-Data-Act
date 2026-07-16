@@ -25,6 +25,15 @@ from custom_components.cupra_eu_data_act.const import (
 CLIENT_PATH = "custom_components.cupra_eu_data_act.config_flow.EudaApiClient"
 
 
+def _make_flow(hass) -> EudaConfigFlow:
+    """Build a flow with a mutable context (needed for async_set_unique_id)."""
+    flow = EudaConfigFlow()
+    flow.hass = hass
+    # Direct construction leaves context as mappingproxy; HA mutates it.
+    flow.context = {}
+    return flow
+
+
 def _fake_client_capturing(captured: dict):
     """Stand-in EudaApiClient that records the brand and logs in cleanly."""
 
@@ -55,8 +64,7 @@ async def test_reauth_restores_non_default_brand(hass) -> None:
     )
     entry.add_to_hass(hass)
 
-    flow = EudaConfigFlow()
-    flow.hass = hass
+    flow = _make_flow(hass)
 
     result = await flow.async_step_reauth(dict(entry.data))
     # The regression: brand restored from the entry, not left at the default.
@@ -74,8 +82,7 @@ async def test_reauth_restores_non_default_brand(hass) -> None:
 async def test_reauth_defaults_brand_when_absent(hass) -> None:
     # Entries created before multi-brand support have no CONF_BRAND; they must
     # fall back to the default brand for backward compatibility.
-    flow = EudaConfigFlow()
-    flow.hass = hass
+    flow = _make_flow(hass)
 
     await flow.async_step_reauth({CONF_EMAIL: "legacy@example.com"})
     assert flow._brand == DEFAULT_BRAND
@@ -83,8 +90,7 @@ async def test_reauth_defaults_brand_when_absent(hass) -> None:
 
 async def test_user_step_shows_brand_selector(hass) -> None:
     # The first step offers a brand choice in the same form as credentials.
-    flow = EudaConfigFlow()
-    flow.hass = hass
+    flow = _make_flow(hass)
 
     form = await flow.async_step_user(None)
     assert form["type"] == "form"
@@ -96,8 +102,7 @@ async def test_user_step_shows_brand_selector(hass) -> None:
 
 async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
     """Missing portal subscription must not block setup (issue #40)."""
-    flow = EudaConfigFlow()
-    flow.hass = hass
+    flow = _make_flow(hass)
     flow._brand = "volkswagen"
     flow._email = "owner@example.com"
     flow._password = "secret"
@@ -124,8 +129,7 @@ async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
 async def test_vehicle_step_creates_entry_when_metadata_fetch_fails(hass) -> None:
     from custom_components.cupra_eu_data_act.api import ApiError
 
-    flow = EudaConfigFlow()
-    flow.hass = hass
+    flow = _make_flow(hass)
     flow._brand = "volkswagen"
     flow._email = "owner@example.com"
     flow._password = "secret"
