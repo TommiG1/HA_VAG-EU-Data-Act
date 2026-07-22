@@ -79,3 +79,47 @@ async def test_diagnostics_includes_uncurated_sample(hass) -> None:
     assert "report_type" not in result["uncurated_fields_sample"]
     assert "range.unit" in result["uncurated_fields_sample"]
     assert len(result["uncurated_fields_sample"]) <= 20
+
+    timestamps = result["timestamps"]
+    assert timestamps is not None
+    assert timestamps["last_connected"]["timestamp_source"] == "car_captured_time"
+    assert timestamps["last_connected"]["raw_timestamp"] == "2026-05-29T22:59:27Z"
+    assert timestamps["mileage"][0]["field_name"] == "mileage.value"
+    assert timestamps["car_captured"][0]["value"] == "2026-05-29T22:59:27Z"
+    assert (
+        timestamps["instrument_cluster_time"][0]["value"]
+        == "2026-05-29T22:59:27+02:00"
+    )
+
+
+async def test_diagnostics_redacts_vin_in_dataset_filenames(hass) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_VIN: "WVWZZZSECRETVIN01",
+            CONF_IDENTIFIER: "secret-id",
+            CONF_EMAIL: "user@example.com",
+            CONF_PASSWORD: "hunter2",
+        },
+        unique_id="WVWZZZSECRETVIN01",
+    )
+    entry.add_to_hass(hass)
+    client = MagicMock()
+    coordinator = EudaCoordinator(hass, entry, client)
+    coordinator.status_label = "ok"
+    coordinator.latest_dataset_name = "20260721195554_WVWZZZSECRETVIN01.zip"
+    coordinator._cached_dataset_meta = [
+        {
+            "name": "20260721195554_WVWZZZSECRETVIN01.zip",
+            "size": 12,
+            "mtime": "2026-07-21T19:55:54+00:00",
+        }
+    ]
+    entry.runtime_data = EudaRuntimeData(coordinator=coordinator, session=MagicMock())
+
+    result = await async_get_config_entry_diagnostics(hass, entry)
+
+    dumped = str(result)
+    assert "WVWZZZSECRETVIN01" not in dumped
+    assert result["latest_dataset"]["name"] == "20260721195554_REDACTED.zip"
+    assert result["cached_datasets"][0]["name"] == "20260721195554_REDACTED.zip"

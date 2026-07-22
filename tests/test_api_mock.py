@@ -13,10 +13,17 @@ from _loader import load_modules  # noqa: E402
 
 
 class _FakeResponse:
-    def __init__(self, status: int, body: str = "", url: str = "https://example.test/"):
+    def __init__(
+        self,
+        status: int,
+        body: str = "",
+        url: str = "https://example.test/",
+        history: list | None = None,
+    ):
         self.status = status
         self._body = body
         self.url = url
+        self.history = history or []
 
     async def text(self) -> str:
         return self._body
@@ -101,6 +108,68 @@ async def main() -> int:
     print(f"  [{'PASS' if ok else 'FAIL'}] skip no_content zip: {content!r}")
     if not ok:
         failures.append("content filtering")
+
+    print("login finish / callbacklogin:")
+    portal = const.BASE_URL.rstrip("/")
+    callback = _FakeResponse(302, url=f"{portal}/services/callbacklogin?code=x")
+    landing_ok = _FakeResponse(
+        404,
+        body="CMS missing",
+        url=f"{portal}/ch/de.html",
+        history=[callback],
+    )
+    check_cb = api._passed_portal_callback(landing_ok)
+    print(f"  [{'PASS' if check_cb else 'FAIL'}] callback via history: {check_cb}")
+    if not check_cb:
+        failures.append("callback via history")
+
+    landing_fail = _FakeResponse(500, body="boom", url=f"{portal}/", history=[])
+    check_no = not api._passed_portal_callback(landing_fail)
+    print(f"  [{'PASS' if check_no else 'FAIL'}] no callback without hop: {check_no}")
+    if not check_no:
+        failures.append("no callback without hop")
+
+    session_login = _FakeSession([])
+    client_login = _client(api, session_login, brand, logged_in=False)
+
+    async def _probe_200(self, req_url, **kwargs):
+        return _FakeResponse(200, "[]", url=req_url)
+
+    client_login._get = _probe_200.__get__(client_login, api.EudaApiClient)
+    try:
+        await client_login._finish_login(landing_ok)
+        print("  [PASS] finish_login ignores landing 404 after callback")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] finish_login ignores landing 404: {type(err).__name__}: {err}")
+        failures.append("finish_login landing 404")
+
+    try:
+        await client_login._finish_login(landing_fail)
+        print("  [FAIL] finish_login should reject 500 without callback")
+        failures.append("finish_login reject without callback")
+    except api.AuthError:
+        print("  [PASS] finish_login rejects 500 without callback")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected: {type(err).__name__}: {err}")
+        failures.append("finish_login reject without callback")
+
+    terms = _FakeResponse(
+        200,
+        url="https://identity.vwgroup.io/terms-and-conditions?updated=dataprivacy",
+        history=[callback],
+    )
+    try:
+        await client_login._finish_login(terms)
+        print("  [FAIL] finish_login should reject terms interstitial")
+        failures.append("finish_login terms")
+    except api.AuthError as err:
+        ok_terms = "terms" in str(err).lower()
+        print(f"  [{'PASS' if ok_terms else 'FAIL'}] terms interstitial: {err}")
+        if not ok_terms:
+            failures.append("finish_login terms")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected terms: {type(err).__name__}: {err}")
+        failures.append("finish_login terms")
 
     print()
     if failures:

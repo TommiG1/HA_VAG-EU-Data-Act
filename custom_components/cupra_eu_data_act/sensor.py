@@ -28,6 +28,7 @@ from .data import (
     datapoint_freshness_attributes,
     detect_dataset_format,
     field_coverage,
+    last_connected_attributes,
     find_by_field,
     friendly_name,
     is_raw_metadata_field,
@@ -676,6 +677,10 @@ class EudaLastConnectedSensor(EudaEntity, SensorEntity):
     @property
     def native_value(self):
         return self._sticky_monotonic(last_connected_time(self.coordinator.data or {}))
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return last_connected_attributes(self.coordinator.data or {})
 
 
 class EudaDatasetGeneratedSensor(EudaEntity, SensorEntity):

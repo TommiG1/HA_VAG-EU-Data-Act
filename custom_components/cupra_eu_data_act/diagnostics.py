@@ -19,7 +19,13 @@ from .const import (
     CONF_VIN,
     DOMAIN,
 )
-from .data import CURATED_FIELDS, detect_dataset_format, field_coverage
+from .data import (
+    CURATED_FIELDS,
+    detect_dataset_format,
+    field_coverage,
+    redact_dataset_filename,
+    timestamp_support_snapshot,
+)
 
 _MANIFEST = json.loads((Path(__file__).parent / "manifest.json").read_text())
 
@@ -40,6 +46,7 @@ async def async_get_config_entry_diagnostics(
     coordinator = entry.runtime_data.coordinator
     points = coordinator.data or {}
     dataset = coordinator.latest_dataset
+    vin = entry.data.get(CONF_VIN)
 
     payload: dict[str, Any] = {
         "integration": {
@@ -67,6 +74,7 @@ async def async_get_config_entry_diagnostics(
             "minutes_since_last_snapshot": coordinator.minutes_since_last_snapshot,
         },
         "latest_dataset": None,
+        "timestamps": timestamp_support_snapshot(points) if points else None,
         "field_coverage": field_coverage(points) if points else None,
         "uncurated_fields_sample": (
             field_coverage(points)["uncurated_fields"][:20] if points else None
@@ -82,7 +90,7 @@ async def async_get_config_entry_diagnostics(
 
     if dataset or coordinator.latest_dataset_name or coordinator.last_download_attempts:
         latest_dataset: dict[str, Any] = {
-            "name": coordinator.latest_dataset_name,
+            "name": redact_dataset_filename(coordinator.latest_dataset_name, vin),
             "last_download_attempts": coordinator.last_download_attempts,
         }
         if dataset:
@@ -102,6 +110,9 @@ async def async_get_config_entry_diagnostics(
 
     cached = coordinator.cached_datasets()
     if cached:
-        payload["cached_datasets"] = cached[:3]
+        payload["cached_datasets"] = [
+            {**item, "name": redact_dataset_filename(item.get("name"), vin)}
+            for item in cached[:3]
+        ]
 
     return async_redact_data(payload, TO_REDACT)

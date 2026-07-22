@@ -1,5 +1,42 @@
 # Release notes
 
+## v0.6.34 — Login landing resilience, ICE/Taigo sensors & timestamp diagnostics (2026-07-22)
+
+### Summary
+
+Login no longer fails when the portal's localized CMS landing page returns
+HTTP 4xx/5xx after a successful OIDC callback (common for some country
+locales). Adds curated sensors for ICE/Taigo-style camelCase fields. Diagnostics
+and the **Last connected** sensor now expose raw portal timestamps to help
+investigate timezone quirks such as
+[#42](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/42).
+
+### Auth
+
+- Judge login success by whether the redirect chain passed
+  `/services/callbacklogin`, not by the final landing page status.
+- Clearer error when the IdP interrupts with a terms-and-conditions page.
+- Cheap vehicles-list probe after login; only HTTP 401/403 fails auth.
+
+### Sensors (ICE / Taigo)
+
+- `inspectionDistance` — signed km until inspection (dotted + flat).
+- `outsideTemperatureIndication` — outside air temperature in °C (dotted + flat).
+- `boardnetBatteryVoltageIndication` — also curated for dotted-format datasets
+  (was flat-only).
+
+### Diagnostics (#42)
+
+- Config-entry diagnostics include a `timestamps` block with the selected
+  **Last connected** source, the original portal string (`raw_timestamp`),
+  parsed UTC, plus raw `mileage` / `timestampUtc`, `car_captured_*`, and
+  `instrument_cluster_time` values.
+- **Last connected** entity attributes mirror that source/raw/parsed info.
+- Dataset filenames in diagnostics redact the VIN (previously still visible).
+
+After upgrading, download a fresh diagnostics dump from the integration if you
+are helping with a timestamp issue. No options change is required.
+
 ## v0.6.33 — Setup without portal identifier (#40) (2026-07-06)
 
 ### Summary

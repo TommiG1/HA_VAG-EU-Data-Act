@@ -526,6 +526,22 @@ def is_raw_metadata_field(field_name: str) -> bool:
     return False
 
 
+def latest_captured_point(points: dict[str, "DataPoint"]) -> DataPoint | None:
+    """Data point carrying the newest car-to-backend captured timestamp."""
+    best: DataPoint | None = None
+    best_ts: datetime | None = None
+    for dp in points.values():
+        if dp.field_name.rsplit(".", 1)[-1] not in _CAPTURED_TIME_SUFFIXES:
+            continue
+        ts = parse_timestamp(dp.raw_value)
+        if ts is None:
+            continue
+        if best_ts is None or ts > best_ts:
+            best = dp
+            best_ts = ts
+    return best
+
+
 def latest_captured_time(points: dict[str, "DataPoint"]) -> datetime | None:
     """Newest car-to-backend timestamp across all report snapshots in a dataset.
 
@@ -533,16 +549,52 @@ def latest_captured_time(points: dict[str, "DataPoint"]) -> datetime | None:
     own captured time. The maximum is when the vehicle itself was last heard
     from — distinct from when the portal generated the ZIP file.
     """
-    times = [
-        ts
-        for dp in points.values()
-        if dp.field_name.rsplit(".", 1)[-1] in _CAPTURED_TIME_SUFFIXES
-        and (ts := parse_timestamp(dp.raw_value))
-    ]
-    return max(times) if times else None
+    dp = latest_captured_point(points)
+    return parse_timestamp(dp.raw_value) if dp else None
 
 
 _LAST_CONNECTED_BASE_FIELDS = ("mileage.value", "mileage")
+_LAST_CONNECTED_SOURCE_MILEAGE = "mileage_timestamp_utc"
+_LAST_CONNECTED_SOURCE_CAPTURED = "car_captured_time"
+_LAST_CONNECTED_SOURCE_NONE = "none"
+
+
+@dataclass(frozen=True)
+class LastConnectedInfo:
+    """Which portal field backed :func:`last_connected_time`, with raw string."""
+
+    source: str
+    field_name: str | None
+    raw: str | None
+    parsed: datetime | None
+
+
+def last_connected_info(points: dict[str, DataPoint]) -> LastConnectedInfo:
+    """Resolve Last connected with source and raw portal string for diagnostics."""
+    for field_name in _LAST_CONNECTED_BASE_FIELDS:
+        dp = find_by_field(points, field_name)
+        if dp and dp.timestamp:
+            return LastConnectedInfo(
+                source=_LAST_CONNECTED_SOURCE_MILEAGE,
+                field_name=dp.field_name,
+                raw=dp.timestamp_utc,
+                parsed=dp.timestamp,
+            )
+    captured = latest_captured_point(points)
+    if captured is not None:
+        parsed = parse_timestamp(captured.raw_value)
+        return LastConnectedInfo(
+            source=_LAST_CONNECTED_SOURCE_CAPTURED,
+            field_name=captured.field_name,
+            raw=captured.raw_value,
+            parsed=parsed,
+        )
+    return LastConnectedInfo(
+        source=_LAST_CONNECTED_SOURCE_NONE,
+        field_name=None,
+        raw=None,
+        parsed=None,
+    )
 
 
 def last_connected_time(points: dict[str, DataPoint]) -> datetime | None:
@@ -552,11 +604,76 @@ def last_connected_time(points: dict[str, DataPoint]) -> datetime | None:
   though mileage itself is present. Fall back to the newest car-captured
   timestamp in the payload so "Last connected" stays useful.
     """
-    for field in _LAST_CONNECTED_BASE_FIELDS:
-        dp = find_by_field(points, field)
-        if dp and dp.timestamp:
-            return dp.timestamp
-    return latest_captured_time(points)
+    return last_connected_info(points).parsed
+
+
+def last_connected_attributes(points: dict[str, DataPoint]) -> dict[str, str | None]:
+    """Entity attributes for the Last connected timestamp sensor."""
+    info = last_connected_info(points)
+    return {
+        "timestamp_source": info.source,
+        "timestamp_field": info.field_name,
+        "raw_timestamp": info.raw,
+        "parsed_utc": info.parsed.isoformat() if info.parsed else None,
+    }
+
+
+def timestamp_support_snapshot(points: dict[str, DataPoint]) -> dict[str, object]:
+    """Compact raw timestamp fields for support diagnostics (issue #42)."""
+    mileage: list[dict[str, str | None]] = []
+    car_captured: list[dict[str, str | None]] = []
+    instrument_cluster: list[dict[str, str | None]] = []
+    seen_mileage: set[str] = set()
+    seen_captured: set[tuple[str, str]] = set()
+    seen_ict: set[tuple[str, str]] = set()
+
+    for field_name in _LAST_CONNECTED_BASE_FIELDS:
+        dp = find_by_field(points, field_name)
+        if dp is None or dp.field_name in seen_mileage:
+            continue
+        seen_mileage.add(dp.field_name)
+        mileage.append(
+            {
+                "field_name": dp.field_name,
+                "value": dp.raw_value,
+                "timestampUtc": dp.timestamp_utc,
+            }
+        )
+
+    for dp in points.values():
+        suffix = dp.field_name.rsplit(".", 1)[-1]
+        if suffix in _CAPTURED_TIME_SUFFIXES:
+            key = (dp.field_name, dp.raw_value)
+            if key in seen_captured:
+                continue
+            seen_captured.add(key)
+            car_captured.append(
+                {"field_name": dp.field_name, "value": dp.raw_value}
+            )
+        if suffix == "instrument_cluster_time":
+            key = (dp.field_name, dp.raw_value)
+            if key in seen_ict:
+                continue
+            seen_ict.add(key)
+            instrument_cluster.append(
+                {"field_name": dp.field_name, "value": dp.raw_value}
+            )
+
+    return {
+        "last_connected": last_connected_attributes(points),
+        "mileage": mileage,
+        "car_captured": car_captured,
+        "instrument_cluster_time": instrument_cluster,
+    }
+
+
+def redact_dataset_filename(name: str | None, vin: str | None) -> str | None:
+    """Strip VIN segments from portal dataset filenames for diagnostics."""
+    if not name:
+        return name
+    if vin and vin in name:
+        return name.replace(vin, "REDACTED")
+    return name
 
 
 def parse_timestamp(raw) -> datetime | None:
@@ -1365,6 +1482,34 @@ CURATED_SENSORS_DOTTED: tuple[CuratedSensor, ...] = (
         translation_key="window_heating_state",
     ),
     CuratedSensor("bem_level", "BEM level", None, None, None, icon="mdi:information"),
+    # === Taigo / ICE fields (flat names that appear in dotted-format datasets) ===
+    # Keep the signed inspection distance (no abs) — same convention as
+    # maintenance_interval_distance_until_inspection on flat datasets.
+    CuratedSensor(
+        "inspectionDistance",
+        "Inspection distance",
+        "distance",
+        "km",
+        "measurement",
+        icon="mdi:car-wrench",
+        suggested_display_precision=0,
+    ),
+    CuratedSensor(
+        "outsideTemperatureIndication",
+        "Outside temperature",
+        "temperature",
+        "°C",
+        "measurement",
+    ),
+    CuratedSensor(
+        "boardnetBatteryVoltageIndication",
+        "12V battery voltage",
+        "voltage",
+        "V",
+        "measurement",
+        icon="mdi:car-battery",
+        suggested_display_precision=2,
+    ),
 )
 
 CURATED_BINARY_DOTTED: tuple[CuratedBinary, ...] = (
@@ -1610,6 +1755,14 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
         "measurement",
         transform="decikelvin_to_celsius",
     ),
+    # ICE/Taigo-style camelCase field; already °C (unlike outside_temperature).
+    CuratedSensor(
+        "outsideTemperatureIndication",
+        "Outside temperature",
+        "temperature",
+        "°C",
+        "measurement",
+    ),
     CuratedSensor(
         "min_temperature", "Battery min temperature", "temperature", "°C", "measurement"
     ),
@@ -1830,6 +1983,16 @@ CURATED_SENSORS_FLAT: tuple[CuratedSensor, ...] = (
     ),
     CuratedSensor(
         "maintenance_interval_distance_until_inspection",
+        "Inspection distance",
+        "distance",
+        "km",
+        "measurement",
+        icon="mdi:car-wrench",
+        suggested_display_precision=0,
+    ),
+    # ICE/Taigo camelCase alias of the signed inspection distance above.
+    CuratedSensor(
+        "inspectionDistance",
         "Inspection distance",
         "distance",
         "km",

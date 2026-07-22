@@ -224,6 +224,12 @@
       "boardnetBatteryVoltageIndication": {
         "name": "12V battery voltage"
       },
+      "inspectionDistance": {
+        "name": "Inspection distance"
+      },
+      "outsideTemperatureIndication": {
+        "name": "Outside temperature"
+      },
       "fuel_level_current_level": {
         "name": "Fuel level"
       },

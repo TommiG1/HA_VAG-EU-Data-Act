@@ -224,6 +224,12 @@
       "boardnetBatteryVoltageIndication": {
         "name": "12V-accuspanning"
       },
+      "inspectionDistance": {
+        "name": "Inspectieafstand"
+      },
+      "outsideTemperatureIndication": {
+        "name": "Buitentemperatuur"
+      },
       "fuel_level_current_level": {
         "name": "Brandstofniveau"
       },

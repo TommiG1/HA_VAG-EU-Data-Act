@@ -152,6 +152,33 @@ def main() -> int:
         data.find_by_field(terramar_12v.points, "boardnetBatteryVoltageIndication").value,
         12.85,
     )
+    _dotted_fields = {s.field_name for s in data.CURATED_SENSORS_DOTTED}
+    check(
+        "inspectionDistance curated dotted",
+        "inspectionDistance" in _dotted_fields,
+        True,
+    )
+    check(
+        "outsideTemperatureIndication curated dotted",
+        "outsideTemperatureIndication" in _dotted_fields,
+        True,
+    )
+    check(
+        "boardnetBatteryVoltageIndication curated dotted",
+        "boardnetBatteryVoltageIndication" in _dotted_fields,
+        True,
+    )
+    _insp_ice = next(
+        s for s in data.CURATED_SENSORS_DOTTED if s.field_name == "inspectionDistance"
+    )
+    check("ICE inspectionDistance keeps raw sign (no abs)", _insp_ice.transform, None)
+    _out_ice = next(
+        s
+        for s in data.CURATED_SENSORS_DOTTED
+        if s.field_name == "outsideTemperatureIndication"
+    )
+    check("ICE outside temp unit °C", _out_ice.unit, "°C")
+    check("ICE outside temp has no kelvin transform", _out_ice.transform, None)
 
     # --- dataset (committed fixture) --------------------------------------
     print("sample dataset:")
@@ -605,6 +632,48 @@ def main() -> int:
         "uses car_captured_time value",
         ts.isoformat().startswith("2026-05-29"),
         True,
+    )
+    info = data.last_connected_info(ds.points)
+    check("source is car_captured_time", info.source, "car_captured_time")
+    check("raw is portal string", info.raw, "2026-05-29T22:59:27Z")
+    snap = data.timestamp_support_snapshot(ds.points)
+    check("snapshot has mileage.value", snap["mileage"][0]["field_name"], "mileage.value")
+    check(
+        "snapshot has car_captured raw",
+        snap["car_captured"][0]["value"],
+        "2026-05-29T22:59:27Z",
+    )
+    check(
+        "snapshot has instrument_cluster_time",
+        snap["instrument_cluster_time"][0]["value"],
+        "2026-05-29T22:59:27+02:00",
+    )
+    mileage_only = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "Data": [
+                {
+                    "key": "m1",
+                    "dataFieldName": "mileage.value",
+                    "value": "100",
+                    "timestampUtc": "2026-07-21T03:46:39+02:00",
+                }
+            ],
+        }
+    )
+    mil_info = data.last_connected_info(mileage_only.points)
+    check("mileage timestampUtc source", mil_info.source, "mileage_timestamp_utc")
+    check(
+        "mileage raw preserved",
+        mil_info.raw,
+        "2026-07-21T03:46:39+02:00",
+    )
+    check(
+        "redact VIN in dataset filename",
+        data.redact_dataset_filename(
+            "20260721195554_WVWZZZTESTVIN0001.zip", "WVWZZZTESTVIN0001"
+        ),
+        "20260721195554_REDACTED.zip",
     )
 
     # --- sentinel detection -----------------------------------------------
