@@ -537,6 +537,113 @@ def main() -> int:
         61,
     )
 
+    # --- issue #45: multiple soc slots in one ZIP, running captured_at -----
+    print("issue #45 — running car_captured_time per point:")
+    # Reproduces the reporter's dataset: three battery_state_report.soc slots
+    # (50, 71, 50) interleaved with car_captured_time markers of different
+    # ages. The old global-max stamp made all three equally "fresh"; a
+    # running stamp should at least drop the one preceded by an older marker.
+    issue_45_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "Data": [
+                {"key": "cct-old", "dataFieldName": "car_captured_time", "value": "2026-07-25T13:15:14Z"},
+                {"key": "soc-1", "dataFieldName": "battery_state_report.soc", "value": "50"},
+                {"key": "cct-new", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
+                {"key": "soc-2", "dataFieldName": "battery_state_report.soc", "value": "71"},
+                {"key": "soc-3", "dataFieldName": "battery_state_report.soc", "value": "50"},
+            ],
+        }
+    )
+    check(
+        "soc-1 stamped with the older preceding marker, not the global max",
+        issue_45_ds.points["soc-1"].captured_at,
+        data._parse_timestamp("2026-07-25T13:15:14Z"),
+    )
+    check(
+        "soc-2/soc-3 stamped with the newer preceding marker",
+        issue_45_ds.points["soc-2"].captured_at,
+        data._parse_timestamp("2026-07-29T05:22:20Z"),
+    )
+    check(
+        "the older-preceded slot loses out to the two fresher, tied slots",
+        data.find_by_field(issue_45_ds.points, "battery_state_report.soc").value,
+        50,  # soc-3: last of the tied-freshest pair (soc-2=71, soc-3=50)
+    )
+    check(
+        "genuine tie between differing values is flagged ambiguous",
+        data.find_by_field_ambiguous(issue_45_ds.points, "battery_state_report.soc"),
+        True,
+    )
+    check(
+        "ambiguous_reading attribute set when the caller flags it",
+        data.datapoint_freshness_attributes(
+            issue_45_ds.points["soc-3"], ambiguous=True
+        ).get("ambiguous_reading"),
+        True,
+    )
+    check(
+        "ambiguous_reading attribute absent by default",
+        "ambiguous_reading"
+        in data.datapoint_freshness_attributes(issue_45_ds.points["soc-3"]),
+        False,
+    )
+
+    # A point that appears before any car_captured_time marker in the array
+    # still falls back to the dataset's newest capture moment (no regression
+    # from the old global-stamp behaviour for that edge case).
+    leading_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "Data": [
+                {"key": "soc-lead", "dataFieldName": "battery_state_report.soc", "value": "60"},
+                {"key": "cct", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
+            ],
+        }
+    )
+    check(
+        "point before any marker falls back to dataset's newest capture",
+        leading_ds.points["soc-lead"].captured_at,
+        data._parse_timestamp("2026-07-29T05:22:20Z"),
+    )
+
+    # Tied-freshest candidates that agree on the value are not ambiguous.
+    agreeing_tie_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "Data": [
+                {"key": "cct", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
+                {"key": "soc-a", "dataFieldName": "battery_state_report.soc", "value": "71"},
+                {"key": "soc-b", "dataFieldName": "battery_state_report.soc", "value": "71"},
+            ],
+        }
+    )
+    check(
+        "tied but agreeing values are not ambiguous",
+        data.find_by_field_ambiguous(agreeing_tie_ds.points, "battery_state_report.soc"),
+        False,
+    )
+
+    # prefer_max_value (mileage) fields never report ambiguity: the ranking
+    # is deterministic (highest numeric value wins) regardless of ties.
+    mileage_tie_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "Data": [
+                {"key": "cct", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
+                {"key": "m1", "dataFieldName": "mileage.value", "value": "70876"},
+                {"key": "m2", "dataFieldName": "mileage.value", "value": "70908"},
+            ],
+        }
+    )
+    check(
+        "monotonic field: highest slot wins outright",
+        data.find_by_field(
+            mileage_tie_ds.points, "mileage.value", prefer_max_value=True
+        ).value,
+        70908,
+    )
+
     print("datapoint_freshness_attributes:")
     from datetime import datetime, timezone
 

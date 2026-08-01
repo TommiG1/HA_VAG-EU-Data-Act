@@ -1,5 +1,60 @@
 # Release notes
 
+## v0.6.35 — SoC duplicate-slot freshness & refresh_now service fix (2026-08-01)
+
+### Summary
+
+Improves how `find_by_field` picks between duplicate value slots (SoC,
+mileage, …) within a single portal ZIP, and fixes a bug that made the
+`refresh_now` service always fail when called without a specific
+`config_entry`.
+
+### Data layer (#45)
+
+Reported in
+[#45](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/45): the battery
+level sensor occasionally reverted to a stale reading (e.g. 71% → 50%)
+because `Dataset.from_json` stamped every point with the single newest
+`car_captured_time` found anywhere in the payload. When a ZIP carries several
+report snapshots with different capture times, this made unrelated `soc`
+slots look equally fresh, and the last one in the array won even when it was
+genuinely older.
+
+- `Dataset.from_json` now tracks the most recent `car_captured_time` seen
+  *while walking the array*, so each point's freshness reflects the snapshot
+  it actually followed, instead of the payload's global maximum. Points
+  before the first marker still fall back to the dataset's newest capture
+  moment (no regression for that edge case).
+- Added `find_by_field_ambiguous()`: true when the freshest candidates for a
+  field are tied on freshness but disagree on value. There is no reliable
+  signal left to arbitrate such a case (the portal itself flattens
+  conflicting snapshots without preserving order), so instead of guessing we
+  surface it. Curated sensors now expose an `ambiguous_reading: true`
+  attribute when this happens, rather than silently picking a value.
+- This does not fully eliminate duplicate-slot conflicts within a single ZIP;
+  that part is a portal-side data quality issue. It does resolve cases where
+  one of the duplicates is verifiably older, and makes remaining true ties
+  visible instead of hidden.
+
+### Services
+
+- Fixed `refresh_now` raising `AttributeError` whenever it was called without
+  an explicit `config_entry` field: the code fell back to a
+  `call.target.config_entry_id` attribute that `ServiceCall` has never
+  exposed. The `config_entry` field already arrives via `call.data` (it's a
+  plain schema field, not a HA target selector), so the fallback was dead
+  code that only ever crashed.
+
+### Tests
+
+- Offline regression reproducing the #45 dataset: the duplicate slot preceded
+  by an older `car_captured_time` marker is now correctly excluded, and the
+  remaining genuine tie is flagged ambiguous instead of guessed.
+- `prefer_max_value` (monotonic) fields are confirmed to never report
+  ambiguity, since that ranking is deterministic by definition.
+- `test_services.py` now passes; previously both `refresh_now` tests failed
+  under a current Home Assistant core.
+
 ## v0.6.34 — Login landing resilience, ICE/Taigo sensors & timestamp diagnostics (2026-07-22)
 
 ### Summary

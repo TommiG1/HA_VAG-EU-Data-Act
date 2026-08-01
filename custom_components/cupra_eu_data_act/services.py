@@ -29,9 +29,10 @@ REFRESH_NOW_SCHEMA = vol.Schema(
 
 def _entries_for_call(hass: HomeAssistant, call: ServiceCall) -> list[ConfigEntry]:
     """Resolve which config entries the service should target."""
+    # ``config_entry`` is a plain schema field (see services.yaml), not a HA
+    # target selector, so it already arrives in ``call.data`` — ServiceCall
+    # itself has no ``target`` attribute to fall back to.
     entry_id = call.data.get(ATTR_CONFIG_ENTRY)
-    if entry_id is None and call.target.config_entry_id:
-        entry_id = call.target.config_entry_id
 
     entries = hass.config_entries.async_entries(DOMAIN)
     if entry_id is not None:

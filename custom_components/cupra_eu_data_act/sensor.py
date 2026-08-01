@@ -30,6 +30,7 @@ from .data import (
     field_coverage,
     last_connected_attributes,
     find_by_field,
+    find_by_field_ambiguous,
     friendly_name,
     is_raw_metadata_field,
     is_sentinel,
@@ -404,9 +405,17 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict:
+        # The monotonic (prefer_max_value) ranking is deterministic by
+        # definition, so ambiguity only applies to the plain freshest-wins path.
+        ambiguous = False
+        if not self._curated.monotonic:
+            ambiguous = find_by_field_ambiguous(
+                self.coordinator.data or {}, self._curated.field_name
+            )
         return datapoint_freshness_attributes(
             self._source_datapoint(),
             now=dt_util.utcnow(),
+            ambiguous=ambiguous,
         )
 
     def _stable_dynamic_unit(

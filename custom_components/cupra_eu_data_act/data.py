@@ -274,6 +274,13 @@ class Dataset:
         dictionary = load_dictionary()
         points: dict[str, DataPoint] = {}
         captured: list[datetime] = []
+        # The portal flattens several report snapshots into one array with no
+        # ordering guarantee (issue #45), so a single global "newest timestamp"
+        # made every value field (soc, mileage, …) look equally fresh. Track the
+        # most recent car_captured_time seen *so far* while walking the array
+        # instead, so a point stamped before an older snapshot's marker doesn't
+        # inherit a newer timestamp it has no evidence for.
+        running_captured: datetime | None = None
         for sequence, item in enumerate(payload.get("Data", [])):
             key = item.get("key")
             if not key:
@@ -283,6 +290,10 @@ class Dataset:
             field_name = normalize_field_name(
                 field_name, meta.get("description") or None
             )
+            if field_name.rsplit(".", 1)[-1] in _CAPTURED_TIME_SUFFIXES:
+                if ts := _parse_timestamp(item.get("value", "")):
+                    captured.append(ts)
+                    running_captured = ts
             dp = DataPoint(
                 key=key,
                 field_name=field_name,
@@ -293,18 +304,17 @@ class Dataset:
                 description=meta.get("description") or None,
                 cluster=meta.get("cluster") or None,
                 timestamp_utc=item.get("timestampUtc") or None,
+                captured_at=running_captured,
             )
             points[key] = dp
-            if field_name.rsplit(".", 1)[-1] in _CAPTURED_TIME_SUFFIXES:
-                if ts := _parse_timestamp(dp.raw_value):
-                    captured.append(ts)
         dataset_captured = max(captured) if captured else None
-        # Stamp the dataset's capture moment onto every point so freshness-based
-        # selection works for value fields (soc, mileage, …) that carry no
-        # per-item timestampUtc of their own.
+        # Points that appear before any car_captured_time marker in the array
+        # have no running stamp to fall back on; use the dataset's newest
+        # capture moment for them, same as the previous global-stamp behaviour.
         if dataset_captured is not None:
             for dp in points.values():
-                dp.captured_at = dataset_captured
+                if dp.captured_at is None:
+                    dp.captured_at = dataset_captured
         return cls(
             vin=payload.get("vin", ""),
             user_id=payload.get("user_id"),
@@ -353,13 +363,20 @@ def datapoint_freshness_attributes(
     dp: DataPoint | None,
     *,
     now: datetime | None = None,
-) -> dict[str, str | int]:
-    """Entity attributes exposing when a reading was captured and how old it is."""
+    ambiguous: bool = False,
+) -> dict[str, str | int | bool]:
+    """Entity attributes exposing when a reading was captured and how old it is.
+
+    ``ambiguous`` (see :func:`find_by_field_ambiguous`) is only added when
+    True, so unaffected sensors keep their existing attribute set.
+    """
     if dp is None:
         return {}
-    attrs: dict[str, str | int] = {}
+    attrs: dict[str, str | int | bool] = {}
     if dp.source_dataset:
         attrs["source_dataset"] = dp.source_dataset
+    if ambiguous:
+        attrs["ambiguous_reading"] = True
     captured = _datapoint_freshness(dp)
     if captured is None:
         return attrs
@@ -398,6 +415,34 @@ def _as_float(raw) -> float | None:
         return None
 
 
+def _rank_freshness(dp: DataPoint) -> tuple[bool, datetime]:
+    fresh = _datapoint_freshness(dp)
+    return (fresh is not None, fresh or _MIN_DT)
+
+
+def _select_freshest(
+    points: dict[str, DataPoint], field_name: str
+) -> tuple[DataPoint | None, bool]:
+    """Pick the freshest candidate for ``field_name`` and flag genuine ties.
+
+    Returns ``(chosen, ambiguous)``. ``ambiguous`` is True when the tied
+    freshest candidates carry more than one distinct value with no signal left
+    to break the tie honestly (issue #45): the portal flattened conflicting
+    report snapshots into one array without preserving which one is real.
+    """
+    matches = [dp for dp in points.values() if dp.field_name == field_name]
+    if not matches:
+        return None, False
+    usable = [dp for dp in matches if is_usable_reading(dp.value, dp.field_name)]
+    candidates = usable or matches
+
+    top = _rank_freshness(max(candidates, key=_rank_freshness))
+    tied = [dp for dp in candidates if _rank_freshness(dp) == top]
+    chosen = max(tied, key=lambda dp: dp.sequence)
+    ambiguous = len({dp.raw_value for dp in tied}) > 1
+    return chosen, ambiguous
+
+
 def find_by_field(
     points: dict[str, DataPoint], field_name: str, *, prefer_max_value: bool = False
 ) -> DataPoint | None:
@@ -412,36 +457,55 @@ def find_by_field(
     the ZIP. The portal often bundles minute-level snapshots in array order, so
     the last duplicate is the best proxy for the freshest value.
 
+    When several candidates are tied for freshest *and* disagree on the value,
+    there is no reliable signal left to pick the "right" one (see
+    :func:`find_by_field_ambiguous` / issue #45) — we still return the last
+    occurrence rather than ``None`` so entities keep reporting a value, but
+    callers that want to surface the uncertainty should check
+    :func:`find_by_field_ambiguous`.
+
     ``prefer_max_value`` is for monotonic fields (the odometer): one dataset can
     carry several ``mileage.value`` slots from report snapshots that lag each
     other (e.g. 70876 vs 70908 at the same capture time), so the **highest**
     reading is the truest current value. With it set the largest numeric value
     wins outright; freshness then ZIP position only break exact-value ties.
     """
-    matches = [dp for dp in points.values() if dp.field_name == field_name]
-    if not matches:
-        return None
-    usable = [
-        dp for dp in matches if is_usable_reading(dp.value, dp.field_name)
-    ]
-    candidates = usable or matches
-
-    def rank(dp: DataPoint) -> tuple[bool, datetime]:
-        fresh = _datapoint_freshness(dp)
-        return (fresh is not None, fresh or _MIN_DT)
-
     if prefer_max_value:
+        matches = [dp for dp in points.values() if dp.field_name == field_name]
+        if not matches:
+            return None
+        usable = [
+            dp for dp in matches if is_usable_reading(dp.value, dp.field_name)
+        ]
+        candidates = usable or matches
+
         def value_rank(dp: DataPoint):
             num = _as_float(dp.raw_value)
             # numeric beats non-numeric, then highest value, then freshest,
             # then last occurrence in the ZIP
-            return (num is not None, num if num is not None else 0.0, *rank(dp), dp.sequence)
+            return (
+                num is not None,
+                num if num is not None else 0.0,
+                *_rank_freshness(dp),
+                dp.sequence,
+            )
 
         return max(candidates, key=value_rank)
 
-    top = rank(max(candidates, key=rank))
-    tied = [dp for dp in candidates if rank(dp) == top]
-    return max(tied, key=lambda dp: dp.sequence)
+    chosen, _ambiguous = _select_freshest(points, field_name)
+    return chosen
+
+
+def find_by_field_ambiguous(points: dict[str, DataPoint], field_name: str) -> bool:
+    """True when the freshest candidates for ``field_name`` disagree on value.
+
+    Surfaces the case ``find_by_field`` can't resolve honestly: several
+    report snapshots in the same portal ZIP tie for freshest but carry
+    different readings (issue #45). Not meaningful for ``prefer_max_value``
+    fields, where the ranking is deterministic by definition.
+    """
+    _chosen, ambiguous = _select_freshest(points, field_name)
+    return ambiguous
 
 
 _FLAT_CHARGING_INACTIVE = frozenset(
