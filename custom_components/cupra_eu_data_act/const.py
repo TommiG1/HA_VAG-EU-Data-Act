@@ -51,7 +51,9 @@ DATASET_INTERVAL = timedelta(minutes=15)
 POST_DATASET_BUFFER = timedelta(seconds=45)
 RETRY_INTERVAL = timedelta(minutes=1)
 MIN_INTERVAL = timedelta(seconds=30)
-# Backoff after repeated portal 5xx (listing or download); cap at 30 minutes.
+# Portal/IdP outages and rate limits: retry and keep previous data, never reauth.
+TRANSIENT_HTTP_STATUSES = frozenset({429, 500, 502, 503, 504})
+# Backoff after repeated transient HTTP (listing or download); cap at 30 minutes.
 SERVER_ERROR_BACKOFF_INTERVALS = (
     timedelta(minutes=5),
     timedelta(minutes=15),

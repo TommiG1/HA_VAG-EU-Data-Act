@@ -1072,6 +1072,20 @@ def main() -> int:
     auth_err = api.AuthError("Login rejected")
     check("AuthError is ApiError", isinstance(auth_err, api.ApiError), True)
     check("AuthError default status None", auth_err.status, None)
+    try:
+        api._raise_login_failure("Login rejected (HTTP 429)", status=429)
+        check("429 login raises", True, False)
+    except api.AuthError:
+        check("429 login is not AuthError", True, False)
+    except api.ApiError as err:
+        check("429 login is ApiError", True, True)
+        check("429 login keeps status", err.status, 429)
+    try:
+        api._raise_login_failure("Login rejected (HTTP 401)", status=401)
+        check("401 login raises", True, False)
+    except api.AuthError as err:
+        check("401 login is AuthError", True, True)
+        check("401 login keeps status", err.status, 401)
 
     # --- find_by_field duplicate handling -------------------------------
     print("find_by_field:")

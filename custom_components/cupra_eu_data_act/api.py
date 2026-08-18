@@ -23,6 +23,7 @@ from .const import (
     OIDC_REDIRECT_URI,
     OIDC_SCOPE,
     RELATION_PATH,
+    TRANSIENT_HTTP_STATUSES,
     USER_AGENT,
     VEHICLES_PATH,
 )
@@ -46,6 +47,18 @@ class ApiError(Exception):
 
 class AuthError(ApiError):
     """Authentication failed or session expired."""
+
+
+def _raise_login_failure(message: str, *, status: int | None = None) -> None:
+    """Raise AuthError, unless the HTTP status is a transient portal/IdP failure.
+
+    HTTP 429/5xx during login is an outage, not invalid credentials. Raising
+    AuthError would make Home Assistant prompt for reauth.
+    """
+    if status in TRANSIENT_HTTP_STATUSES:
+        _LOGGER.warning("Login hit transient HTTP %s: %s", status, message)
+        raise ApiError(message, status=status)
+    raise AuthError(message, status=status)
 
 
 class _FormParser(HTMLParser):
@@ -246,6 +259,7 @@ class EudaApiClient:
         async with await self._get(authorize_url) as resp:
             signin_url = str(resp.url)
             signin_html = await resp.text()
+            signin_status = resp.status
         _LOGGER.debug("login step2: signin page = %s (%d bytes)", signin_url, len(signin_html))
 
         # 2. POST the email (identifier step). Fields come from HTML inputs
@@ -253,8 +267,9 @@ class EudaApiClient:
         fields, action = _login_fields(signin_html)
         _LOGGER.debug("login step2: action=%s fields=%s", action, sorted(fields))
         if "hmac" not in fields or "_csrf" not in fields:
-            raise AuthError(
-                f"Could not parse the sign-in form (fields found: {sorted(fields)})"
+            _raise_login_failure(
+                f"Could not parse the sign-in form (fields found: {sorted(fields)})",
+                status=signin_status,
             )
         fields["email"] = self._email
         identifier_action = urljoin(signin_url, action or "")
@@ -276,10 +291,11 @@ class EudaApiClient:
         _LOGGER.debug("login step3: action=%s fields=%s", action2, sorted(fields2))
         if "hmac" not in fields2 or "_csrf" not in fields2:
             err = _login_error(authenticate_html)
-            raise AuthError(
+            _raise_login_failure(
                 err
                 or "Identity portal did not return the password form - check the "
-                "email address (or the login flow changed)"
+                "email address (or the login flow changed)",
+                status=status,
             )
         fields2["email"] = self._email
         fields2["password"] = self._password
@@ -320,7 +336,10 @@ class EudaApiClient:
                     landing_html[:500],
                 )
                 err = _login_error(landing_html)
-                raise AuthError(err or f"Login rejected (HTTP {resp.status})")
+                _raise_login_failure(
+                    err or f"Login rejected (HTTP {resp.status})",
+                    status=resp.status,
+                )
             _LOGGER.debug(
                 "login step4: landing page HTTP %s ignored (callbacklogin passed): %s",
                 resp.status,

@@ -148,10 +148,50 @@ async def main() -> int:
         print("  [FAIL] finish_login should reject 500 without callback")
         failures.append("finish_login reject without callback")
     except api.AuthError:
-        print("  [PASS] finish_login rejects 500 without callback")
+        print("  [FAIL] finish_login 500 must not be AuthError")
+        failures.append("finish_login reject without callback")
+    except api.ApiError as err:
+        if err.status == 500:
+            print("  [PASS] finish_login 500 without callback is retryable ApiError")
+        else:
+            print(f"  [FAIL] finish_login 500 status={err.status}")
+            failures.append("finish_login reject without callback")
     except Exception as err:  # noqa: BLE001
         print(f"  [FAIL] unexpected: {type(err).__name__}: {err}")
         failures.append("finish_login reject without callback")
+
+    landing_429 = _FakeResponse(429, body="slow down", url=f"{portal}/", history=[])
+    try:
+        await client_login._finish_login(landing_429)
+        print("  [FAIL] finish_login should reject 429 without callback")
+        failures.append("finish_login 429")
+    except api.AuthError:
+        print("  [FAIL] finish_login 429 must not be AuthError")
+        failures.append("finish_login 429")
+    except api.ApiError as err:
+        if err.status == 429:
+            print("  [PASS] finish_login 429 without callback is retryable ApiError")
+        else:
+            print(f"  [FAIL] finish_login 429 status={err.status}")
+            failures.append("finish_login 429")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected: {type(err).__name__}: {err}")
+        failures.append("finish_login 429")
+
+    landing_401 = _FakeResponse(401, body="unauthorized", url=f"{portal}/", history=[])
+    try:
+        await client_login._finish_login(landing_401)
+        print("  [FAIL] finish_login should reject 401 without callback")
+        failures.append("finish_login 401")
+    except api.AuthError as err:
+        if err.status == 401:
+            print("  [PASS] finish_login 401 without callback is AuthError")
+        else:
+            print(f"  [FAIL] finish_login 401 status={err.status}")
+            failures.append("finish_login 401")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected: {type(err).__name__}: {err}")
+        failures.append("finish_login 401")
 
     terms = _FakeResponse(
         200,

@@ -306,6 +306,58 @@ async def test_http_503_listing_sets_listing_failed_and_backoff(hass) -> None:
     assert coordinator.update_interval == SERVER_ERROR_BACKOFF_INTERVALS[0]
 
 
+async def test_http_429_listing_keeps_previous_and_does_not_reauth(
+    hass, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "custom_components.cupra_eu_data_act.coordinator.asyncio.sleep",
+        AsyncMock(),
+    )
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        side_effect=ApiError("HTTP 429", status=429)
+    )
+    client.async_get_metadata = AsyncMock(
+        side_effect=ApiError("no metadata", status=400)
+    )
+    coordinator = _make_coordinator(hass, client)
+    previous = {
+        "key-1": DataPoint(key="key-1", field_name="mileage", raw_value="1000")
+    }
+    coordinator.data = previous
+
+    result = await coordinator._async_update_data()
+
+    assert result is previous
+    assert coordinator.status_label == "listing_failed"
+    assert coordinator.consecutive_server_errors == 1
+
+
+async def test_transient_login_error_does_not_raise_reauth(hass, monkeypatch) -> None:
+    # A 500/429 during login used to be AuthError and triggered HA reauth.
+    monkeypatch.setattr(
+        "custom_components.cupra_eu_data_act.coordinator.asyncio.sleep",
+        AsyncMock(),
+    )
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        side_effect=ApiError("Login rejected (HTTP 500)", status=500)
+    )
+    client.async_get_metadata = AsyncMock(
+        side_effect=ApiError("no metadata", status=400)
+    )
+    coordinator = _make_coordinator(hass, client)
+    previous = {
+        "key-1": DataPoint(key="key-1", field_name="mileage", raw_value="1000")
+    }
+    coordinator.data = previous
+
+    result = await coordinator._async_update_data()
+
+    assert result is previous
+    assert coordinator.status_label == "listing_failed"
+
+
 async def test_consecutive_503_increases_backoff(hass) -> None:
     client = MagicMock()
     client.async_list_datasets = AsyncMock(

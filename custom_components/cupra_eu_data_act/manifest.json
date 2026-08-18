@@ -1,7 +1,7 @@
 {
   "domain": "cupra_eu_data_act",
   "name": "VW Group EU Data Act",
-  "version": "0.6.35",
+  "version": "0.6.36",
   "codeowners": ["@TommiG1"],
   "config_flow": true,
   "dependencies": [],

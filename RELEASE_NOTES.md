@@ -1,5 +1,31 @@
 # Release notes
 
+## v0.6.36 — Don't reauth on portal HTTP 500/429 (2026-08-18)
+
+### Summary
+
+Stops the integration from asking you to sign in again when the VW Group
+portal or identity provider returns a transient HTTP 500 or 429. Those are
+outages, not invalid credentials. Reported in
+[#52](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/52).
+
+### Auth / polling
+
+- Login-step HTTP 429/5xx (missing sign-in form, rejected landing page, …)
+  now raise a retryable `ApiError` instead of `AuthError`, so Home Assistant
+  does not start the reauth flow.
+- Dataset listing and download treat HTTP 429 the same as 500/502/503/504:
+  retry with backoff and keep the previous dataset.
+- Real session expiry and bad credentials (HTTP 401/403, IdP sign-in page)
+  still surface as `ConfigEntryAuthFailed`.
+
+### Tests
+
+- `_finish_login` 500/429 without a portal callback is `ApiError`; 401 stays
+  `AuthError`.
+- Coordinator listing 429 (and a 500 login-shaped `ApiError`) keeps previous
+  data and does not raise `ConfigEntryAuthFailed`.
+
 ## v0.6.35 — SoC duplicate-slot freshness & refresh_now service fix (2026-08-01)
 
 ### Summary

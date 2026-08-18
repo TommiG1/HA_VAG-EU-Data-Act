@@ -30,18 +30,15 @@ from .const import (
     RETRY_INTERVAL,
     SERVER_ERROR_BACKOFF_INTERVALS,
     SUBSCRIPTION_VALIDITY,
+    TRANSIENT_HTTP_STATUSES,
 )
 from .data import Dataset, DataPoint, latest_captured_time, merge_data_points, stamp_source_dataset
 
 _LOGGER = logging.getLogger(__name__)
 
-# Transient upstream errors worth retrying / keeping previous data for.
-_SERVER_ERROR_STATUSES = frozenset({500, 502, 503, 504})
-
-
 def _is_server_error(err: Exception) -> bool:
-    """True for HTTP 5xx ApiErrors we should retry instead of giving up."""
-    return isinstance(err, ApiError) and err.status in _SERVER_ERROR_STATUSES
+    """True for transient HTTP ApiErrors we should retry instead of giving up."""
+    return isinstance(err, ApiError) and err.status in TRANSIENT_HTTP_STATUSES
 
 
 class EudaUpdateNotReady(UpdateFailed):
