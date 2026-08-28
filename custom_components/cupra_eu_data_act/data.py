@@ -1117,14 +1117,96 @@ class CuratedSensor:
     # duplicate value slots via find_by_field(prefer_max_value=...), so a lagging
     # report snapshot in the same dataset can't make mileage read low.
     monotonic: bool = False
-    # fields to sum as a fallback when this sensor's own field carries no usable
-    # reading. Some vehicles report a curated total (e.g. combined cruising
-    # range) as an empty slot while still sending its per-engine components, so
-    # the sum of these fields reconstructs the total. The portal value, when
-    # present, always wins over the computed sum.
+    # fields to sum as a fallback when this sensor's own field carries no
+    # trustworthy reading. Some vehicles report a curated total (e.g. combined
+    # cruising range) as an empty slot while still sending its per-engine
+    # components, so the sum of these fields reconstructs the total. See
+    # :func:`sum_fallback_reading` for when the sum wins over the portal value.
     sum_fallback_fields: tuple[str, ...] = ()
     # create the entity disabled in the registry (the user can enable it)
     enabled_by_default: bool = True
+
+
+def _is_numeric_zero(value) -> bool:
+    """True for a numeric zero; booleans are values, not numbers, here."""
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and value == 0
+    )
+
+
+def _portal_point_is_retained(
+    portal_dp: DataPoint, components: list[DataPoint]
+) -> bool:
+    """True when ``portal_dp`` survived from an older ZIP than its components.
+
+    ``stamp_source_dataset`` tags every point of the dataset it came from, and
+    ``merge_data_points`` keeps previous points for fields the portal stops
+    sending. A total whose source ZIP differs from every component's is
+    therefore a retained reading while the components keep updating.
+    """
+    if portal_dp.source_dataset is None:
+        return False
+    return all(
+        dp.source_dataset is not None and dp.source_dataset != portal_dp.source_dataset
+        for dp in components
+    )
+
+
+def sum_fallback_reading(
+    points: dict[str, DataPoint],
+    curated: CuratedSensor,
+    portal_dp: DataPoint | None,
+) -> tuple[float | int, DataPoint] | None:
+    """Total rebuilt from ``curated.sum_fallback_fields``, or None to keep the portal value.
+
+    Returns the summed value together with the component data point that dates
+    it (the stalest contributor), so callers can report where the number came
+    from. The sum takes over whenever the portal's own total cannot be trusted:
+
+    - it is missing or unusable — the empty-slot case on PHEVs (issue #30);
+    - it is ``0`` while the components report real range. A one-off portal ``0``
+      is stored as a good reading and then protected by the "missing values
+      never overwrite existing ones" retention rule, which used to disable this
+      fallback permanently (issue #54);
+    - it is a retained point from an older dataset while the components keep
+      updating, which covers a stale non-zero total the same way.
+
+    A total of ``0`` whose components are also ``0`` is a real reading (empty
+    tank *and* empty battery) and is left alone, as is any total on a vehicle
+    that reports no components at all.
+    """
+    if not curated.sum_fallback_fields:
+        return None
+
+    components: list[DataPoint] = []
+    total = 0.0
+    for field_name in curated.sum_fallback_fields:
+        dp = find_by_field(points, field_name)
+        if dp is None or not is_usable_reading(dp.value, field_name):
+            continue
+        try:
+            total += float(dp.value)
+        except (TypeError, ValueError):
+            continue
+        components.append(dp)
+    if not components:
+        return None
+
+    value = int(total) if total.is_integer() else total
+    # The sum is only as fresh as its stalest contributor.
+    dates_it = min(components, key=_rank_freshness)
+
+    if portal_dp is None or not is_usable_reading(portal_dp.value, curated.field_name):
+        return value, dates_it
+    if total <= 0:
+        return None
+    if _is_numeric_zero(portal_dp.value) or _portal_point_is_retained(
+        portal_dp, components
+    ):
+        return value, dates_it
+    return None
 
 
 def curated_translation_key(field_name: str, translation_key: str | None = None) -> str:

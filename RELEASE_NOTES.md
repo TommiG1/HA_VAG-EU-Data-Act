@@ -1,5 +1,38 @@
 # Release notes
 
+## v0.6.37 — Combined range no longer latches at 0 (#54) (2026-08-28)
+
+### Summary
+
+Fixes `Range (combined)` getting stuck at **0 km** after a one-off portal `0`
+while `Range (primary)` and `Range (secondary)` keep updating. The sum fallback
+added for PHEVs in v0.6.30 never ran because the retained `0` counted as a
+usable reading. Reported in
+[#54](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/54).
+
+### Combined cruising range
+
+- New `sum_fallback_reading()` in the data layer decides when the portal total
+  can be trusted and when to reconstruct it from the per-engine components.
+- The sum takes over when the combined field is empty, when the portal sends
+  `0` but the components report real range, or when the combined value is a
+  retained point from an older dataset while the components keep updating.
+- A genuine empty tank **and** empty battery (`0` + `0` + `0`) is left alone.
+- Freshness attributes (`source_dataset`, `data_captured_at`, `age_minutes`) now
+  date the summed value from its components instead of the stale combined slot.
+
+### Note for existing installs
+
+- No reload needed: the value corrects itself on the next poll after updating.
+- If you added a helper that sums the two component sensors, you can switch
+  back to `Range (combined)` once this version is running.
+
+### Tests
+
+- Offline checks for every sum-fallback decision path (#30 / #54).
+- Pytest reproduces the full merge chain: spurious `0`, then ten datasets with
+  the field present but no `value` key → sensor reads the component sum.
+
 ## v0.6.36 — Don't reauth on portal HTTP 500/429 (2026-08-18)
 
 ### Summary

@@ -1392,6 +1392,120 @@ def main() -> int:
         "mi",
     )
 
+    # --- summed total fallback (#30 / #54) ---------------------------------
+    print("sum fallback (#30/#54):")
+    combined = next(
+        s for s in data.CURATED_SENSORS_FLAT
+        if s.field_name == "cruising_range_combined"
+    )
+    check(
+        "combined range declares its components",
+        combined.sum_fallback_fields,
+        ("cruising_range_primary_engine", "cruising_range_secondary_engine"),
+    )
+
+    def _range_points(
+        combined_value,
+        primary="770",
+        secondary="22",
+        *,
+        combined_zip="cur.zip",
+        parts_zip="cur.zip",
+    ):
+        """Points for a combined/primary/secondary trio with per-point source ZIPs.
+
+        ``combined_value=None`` is the portal shape from #54: the field is
+        present in the dataset but carries no ``value`` key. A component set to
+        ``None`` is left out of the dataset entirely (vehicle without it).
+        """
+        items = [{"key": "c", "dataFieldName": "cruising_range_combined"}]
+        if combined_value is not None:
+            items[0]["value"] = combined_value
+        for key, field_name, value in (
+            ("p", "cruising_range_primary_engine", primary),
+            ("s", "cruising_range_secondary_engine", secondary),
+        ):
+            if value is not None:
+                items.append(
+                    {"key": key, "dataFieldName": field_name, "value": value}
+                )
+        points = data.Dataset.from_json(
+            {"vin": "V", "user_id": "u", "Data": items}
+        ).points
+        for key, name in (("c", combined_zip), ("p", parts_zip), ("s", parts_zip)):
+            if key in points:
+                points[key].source_dataset = name
+        return points
+
+    def _summed(points):
+        result = data.sum_fallback_reading(
+            points, combined, data.find_by_field(points, combined.field_name)
+        )
+        return None if result is None else result[0]
+
+    check("empty portal slot -> sum (#30)", _summed(_range_points(None)), 792)
+    check("live portal 0 -> sum (#54)", _summed(_range_points("0")), 792)
+    check(
+        "retained 0 while parts update -> sum (#54)",
+        _summed(_range_points("0", combined_zip="old.zip")),
+        792,
+    )
+    check(
+        "retained non-zero total while parts update -> sum",
+        _summed(_range_points("804", combined_zip="old.zip")),
+        792,
+    )
+    check(
+        "usable total from the same dataset wins",
+        _summed(_range_points("804")),
+        None,
+    )
+    check(
+        "genuinely empty tank and battery stay 0",
+        _summed(_range_points("0", primary="0", secondary="0")),
+        None,
+    )
+    check(
+        "no components -> portal value stands",
+        _summed(_range_points("0", primary=None, secondary=None)),
+        None,
+    )
+    check(
+        "empty slot without components stays unknown",
+        _summed(_range_points(None, primary=None, secondary=None)),
+        None,
+    )
+    check(
+        "one missing component still sums",
+        _summed(_range_points(None, secondary=None)),
+        770,
+    )
+    check(
+        "sentinel component is skipped",
+        _summed(_range_points(None, secondary="4294967295")),
+        770,
+    )
+    _retained = _range_points("0", combined_zip="old.zip")
+    _sum_source = data.sum_fallback_reading(
+        _retained,
+        combined,
+        data.find_by_field(_retained, "cruising_range_combined"),
+    )
+    check(
+        "sum is dated by a component, not the retained total",
+        _sum_source[1].field_name,
+        "cruising_range_primary_engine",
+    )
+    _no_fallback = next(
+        s for s in data.CURATED_SENSORS_FLAT
+        if s.field_name == "cruising_range_primary_engine"
+    )
+    check(
+        "sensors without components never fall back",
+        data.sum_fallback_reading(_range_points("0"), _no_fallback, None),
+        None,
+    )
+
     # --- duplicate field ordering within one portal ZIP --------------------
     print("duplicate field ordering:")
     ds_duplicate = data.Dataset.from_json({"vin": "V", "user_id": "u", "Data": [

@@ -43,6 +43,7 @@ from .data import (
     resolve_distance_unit_from_companion_fields,
     resolve_primary_range_unit,
     shorten_enum_label,
+    sum_fallback_reading,
     total_charged_energy_kwh,
 )
 from .entity import EudaEntity
@@ -218,29 +219,6 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
 
         return value
 
-    def _sum_fallback_value(self) -> float | int | None:
-        """Sum the curated sensor's ``sum_fallback_fields`` into a total.
-
-        Used when the sensor's own field carries no usable reading. Only usable
-        numeric components contribute; returns ``None`` when none are present so
-        the sensor stays unknown rather than reporting a misleading zero.
-        """
-        points = self.coordinator.data or {}
-        total = 0.0
-        found = False
-        for fname in self._curated.sum_fallback_fields:
-            dp = find_by_field(points, fname)
-            if dp is None or not is_usable_reading(dp.value, fname):
-                continue
-            try:
-                total += float(dp.value)
-            except (TypeError, ValueError):
-                continue
-            found = True
-        if not found:
-            return None
-        return int(total) if total.is_integer() else total
-
     def _source_datapoint(self) -> DataPoint | None:
         """Return the portal data point backing ``native_value``."""
         points = self.coordinator.data or {}
@@ -269,6 +247,10 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             field_name,
             prefer_max_value=self._curated.monotonic,
         )
+        # A summed total is dated by its components, not by the portal's own
+        # (missing or retained) slot for this field.
+        if fallback := sum_fallback_reading(points, self._curated, dp):
+            return fallback[1]
         if dp is None or is_sentinel(dp.value, field_name):
             return None
         return dp
@@ -315,15 +297,13 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             prefer_max_value=self._curated.monotonic,
         )
 
-        # When the portal sends this field empty (e.g. combined cruising range on
-        # PHEVs) but still reports its components, reconstruct the total from the
-        # declared fallback fields. A usable portal value always takes precedence.
-        if self._curated.sum_fallback_fields and (
-            dp is None or not is_usable_reading(dp.value, field_name)
+        # When the portal's own total is empty, a spurious 0 or a retained
+        # leftover (e.g. combined cruising range on PHEVs) but its components
+        # keep reporting, rebuild the total from the declared fallback fields.
+        if fallback := sum_fallback_reading(
+            self.coordinator.data or {}, self._curated, dp
         ):
-            summed = self._sum_fallback_value()
-            if summed is not None:
-                return self._sticky(summed)
+            return self._sticky(fallback[0])
 
         if not dp:
             return self._sticky(None)
@@ -405,15 +385,19 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict:
+        points = self.coordinator.data or {}
+        source = self._source_datapoint()
         # The monotonic (prefer_max_value) ranking is deterministic by
         # definition, so ambiguity only applies to the plain freshest-wins path.
+        # Conflicting slots of this field also stop mattering once the value is
+        # summed from other fields.
         ambiguous = False
-        if not self._curated.monotonic:
-            ambiguous = find_by_field_ambiguous(
-                self.coordinator.data or {}, self._curated.field_name
-            )
+        if not self._curated.monotonic and (
+            source is None or source.field_name == self._curated.field_name
+        ):
+            ambiguous = find_by_field_ambiguous(points, self._curated.field_name)
         return datapoint_freshness_attributes(
-            self._source_datapoint(),
+            source,
             now=dt_util.utcnow(),
             ambiguous=ambiguous,
         )
