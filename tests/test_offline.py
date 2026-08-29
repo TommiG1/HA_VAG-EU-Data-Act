@@ -19,10 +19,11 @@ from _loader import FIXTURES, load_modules  # noqa: E402
 
 
 def main() -> int:
-    mods = load_modules("const", "data", "api")
+    mods = load_modules("const", "data", "api", "brands")
     const = mods["const"]
     data = mods["data"]
     api = mods["api"]
+    brand = mods["brands"].get_brand("cupra")
     failures: list[str] = []
 
     def check(label, got, want):
@@ -1136,6 +1137,22 @@ def main() -> int:
     fe, ae = api._login_fields(email_page)
     check("html-input _csrf not overridden", fe.get("_csrf"), "HC")
     check("html-input action", ae, "/x/login/identifier")
+    terms_page = (
+        '<form action="/signin-service/v1/client@apps/terms-and-conditions" method="POST">'
+        '<input name="_csrf" value="TC">'
+        '<input name="relayState" value="TRS">'
+        '<input name="hmac" value="THM">'
+        '<input name="countryOfResidence" value="ES">'
+        "</form>"
+    )
+    ft, at = api._login_fields(terms_page)
+    check("terms form action", at, "/signin-service/v1/client@apps/terms-and-conditions")
+    check("terms countryOfResidence", ft.get("countryOfResidence"), "ES")
+    check(
+        "login headers accept-language",
+        api._login_headers(brand, "https://identity.vwgroup.io/signin")["Accept-Language"],
+        "de-DE,de;q=0.9,en;q=0.8",
+    )
 
     # --- sticky unit (mirrors EudaEntity._sticky_unit) --------------------
     print("sticky unit:")

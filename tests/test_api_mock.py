@@ -43,7 +43,7 @@ class _FakeSession:
         self._responses = list(responses)
         self.cookie_jar = []
 
-    async def post(self, *args, **kwargs):
+    def post(self, *args, **kwargs):
         return self._responses.pop(0)
 
     async def close(self):
@@ -193,23 +193,64 @@ async def main() -> int:
         print(f"  [FAIL] unexpected: {type(err).__name__}: {err}")
         failures.append("finish_login 401")
 
+    terms_html = (
+        '<form action="/signin-service/v1/client@apps/terms-and-conditions" method="POST">'
+        '<input name="_csrf" value="csrf1">'
+        '<input name="relayState" value="rs1">'
+        '<input name="hmac" value="hm1">'
+        '<input name="countryOfResidence" value="ES">'
+        "</form>"
+    )
     terms = _FakeResponse(
         200,
+        body=terms_html,
+        url=(
+            "https://identity.vwgroup.io/signin-service/v1/client@apps/"
+            "terms-and-conditions?updated=termsofuse"
+        ),
+    )
+    session_terms = _FakeSession([landing_ok])
+    client_terms = _client(api, session_terms, brand, logged_in=False)
+    client_terms._get = _probe_200.__get__(client_terms, api.EudaApiClient)
+    try:
+        await client_terms._finish_login(terms)
+        print("  [PASS] finish_login auto-accepts terms interstitial")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] finish_login terms auto-accept: {type(err).__name__}: {err}")
+        failures.append("finish_login terms auto-accept")
+
+    terms_empty = _FakeResponse(
+        200,
+        body="<form></form>",
         url="https://identity.vwgroup.io/terms-and-conditions?updated=dataprivacy",
-        history=[callback],
     )
     try:
-        await client_login._finish_login(terms)
-        print("  [FAIL] finish_login should reject terms interstitial")
-        failures.append("finish_login terms")
+        await client_login._finish_login(terms_empty)
+        print("  [FAIL] finish_login should reject terms form without fields")
+        failures.append("finish_login terms missing fields")
     except api.AuthError as err:
         ok_terms = "terms" in str(err).lower()
-        print(f"  [{'PASS' if ok_terms else 'FAIL'}] terms interstitial: {err}")
+        print(f"  [{'PASS' if ok_terms else 'FAIL'}] terms missing fields: {err}")
         if not ok_terms:
-            failures.append("finish_login terms")
+            failures.append("finish_login terms missing fields")
     except Exception as err:  # noqa: BLE001
-        print(f"  [FAIL] unexpected terms: {type(err).__name__}: {err}")
-        failures.append("finish_login terms")
+        print(f"  [FAIL] unexpected terms missing fields: {type(err).__name__}: {err}")
+        failures.append("finish_login terms missing fields")
+
+    session_terms_loop = _FakeSession([terms])
+    client_terms_loop = _client(api, session_terms_loop, brand, logged_in=False)
+    try:
+        await client_terms_loop._finish_login(terms)
+        print("  [FAIL] finish_login should reject repeated terms interstitial")
+        failures.append("finish_login terms loop")
+    except api.AuthError as err:
+        ok_loop = "after submission" in str(err).lower()
+        print(f"  [{'PASS' if ok_loop else 'FAIL'}] terms loop guard: {err}")
+        if not ok_loop:
+            failures.append("finish_login terms loop")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected terms loop: {type(err).__name__}: {err}")
+        failures.append("finish_login terms loop")
 
     print()
     if failures:

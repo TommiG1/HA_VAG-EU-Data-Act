@@ -161,6 +161,33 @@ def _login_error(html: str) -> str | None:
     return str(err) if err else None
 
 
+def _accept_language(country: str) -> str:
+    """Build an Accept-Language header for a two-letter country code."""
+    if len(country) == 2:
+        region = country.upper()
+        return f"{country}-{region},{country};q=0.9,en;q=0.8"
+    return "en-US,en;q=0.9"
+
+
+def _login_headers(brand: BrandConfig, referer: str | None = None) -> dict[str, str]:
+    """Browser-like headers for the VW identity login flow."""
+    country = brand.oidc_state().split("__", 1)[0]
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/avif,image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Language": _accept_language(country),
+        "Cache-Control": "max-age=0",
+    }
+    if referer:
+        headers["Referer"] = referer
+        parsed = urlparse(referer)
+        headers["Origin"] = f"{parsed.scheme}://{parsed.netloc}"
+    return headers
+
+
 def _passed_portal_callback(resp) -> bool:
     """Return True if the redirect chain went through the portal login callback.
 
@@ -256,7 +283,10 @@ class EudaApiClient:
         #    non-browser clients.
         authorize_url = self._build_authorize_url(self._brand)
         _LOGGER.debug("login step1: authorize url = %s", authorize_url)
-        async with await self._get(authorize_url) as resp:
+        async with await self._get(
+            authorize_url,
+            headers=_login_headers(self._brand, f"{BASE_URL}/"),
+        ) as resp:
             signin_url = str(resp.url)
             signin_html = await resp.text()
             signin_status = resp.status
@@ -276,7 +306,7 @@ class EudaApiClient:
         async with self._session.post(
             identifier_action,
             data=fields,
-            headers={"User-Agent": USER_AGENT, "Referer": signin_url},
+            headers=_login_headers(self._brand, signin_url),
         ) as resp:
             authenticate_url = str(resp.url)
             authenticate_html = await resp.text()
@@ -313,11 +343,11 @@ class EudaApiClient:
         async with self._session.post(
             authenticate_action,
             data=fields2,
-            headers={"User-Agent": USER_AGENT, "Referer": authenticate_url},
+            headers=_login_headers(self._brand, authenticate_url),
         ) as resp:
             await self._finish_login(resp)
 
-    async def _finish_login(self, resp) -> None:
+    async def _finish_login(self, resp, *, _after_terms: bool = False) -> None:
         """Judge the credentials redirect chain and confirm the session.
 
         The chain ends on a localized CMS landing page whose availability is
@@ -347,14 +377,38 @@ class EudaApiClient:
             )
         _LOGGER.debug("login step4: landed on %s", landing)
 
-        # IdP terms interstitial — auth has not completed; avoid a misleading
-        # "check email and password" message.
+        # IdP terms interstitial — submit the accept form and continue the
+        # redirect chain. Some accounts hit this only for non-browser clients.
         if "terms-and-conditions" in landing:
-            raise AuthError(
-                "Login interrupted: the identity provider requires accepting "
-                "updated terms and conditions for this account (complete a "
-                "browser login first)."
+            if _after_terms:
+                raise AuthError(
+                    "Login interrupted: the identity provider still requires "
+                    "accepting terms and conditions after submission"
+                )
+            fields, action = _login_fields(landing_html)
+            missing = [key for key in ("_csrf", "relayState", "hmac") if key not in fields]
+            if missing:
+                raise AuthError(
+                    "Login interrupted: the identity provider requires accepting "
+                    "updated terms and conditions for this account "
+                    f"(missing {', '.join(missing)} on terms form)"
+                )
+            if action:
+                terms_action = urljoin(landing, action)
+            else:
+                terms_action = landing.split("?", 1)[0]
+            _LOGGER.debug(
+                "login step4b: POST terms accept to %s fields=%s",
+                terms_action,
+                sorted(fields),
             )
+            async with self._session.post(
+                terms_action,
+                data=fields,
+                headers=_login_headers(self._brand, landing),
+            ) as terms_resp:
+                await self._finish_login(terms_resp, _after_terms=True)
+            return
 
         # Positively confirm success: a completed flow lands back on the portal
         # host (via /services/callbacklogin). Bad credentials re-render the
