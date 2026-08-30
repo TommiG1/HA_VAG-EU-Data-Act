@@ -3,11 +3,13 @@
     "step": {
       "user": {
         "title": "VW Group EU Data Act",
-        "description": "Sélectionnez la marque de votre véhicule et connectez-vous avec les mêmes identifiants que sur le portail EU Data Act.",
+        "description": "Sélectionnez la marque de votre véhicule et connectez-vous avec les mêmes identifiants que sur le portail EU Data Act. Pays et langue sont des codes à deux lettres correspondant au compte (par ex. es pour l'Espagne). Un mauvais locale peut permettre la connexion puis échouer avec HTTP 503 sur les données véhicule.",
         "data": {
           "brand": "Marque",
           "email": "E-mail",
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "country": "Code pays",
+          "language": "Code langue"
         }
       },
       "vehicle": {
@@ -18,9 +20,21 @@
       },
       "reauth_confirm": {
         "title": "Se réauthentifier",
-        "description": "Saisissez le mot de passe pour {email} ({brand}).",
+        "description": "Saisissez le mot de passe pour {email} ({brand}). Pays et langue doivent correspondre au compte du portail EU Data Act (par ex. es / es pour l'Espagne).",
         "data": {
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "country": "Code pays",
+          "language": "Code langue"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurer",
+        "description": "Mettre à jour les identifiants ou le pays/langue du portail. Utilisez les mêmes codes à deux lettres que le pays de résidence de l'ID VW / Cupra / SEAT (par ex. es, de, fr). La langue reprend le code pays si elle est vide.",
+        "data": {
+          "email": "E-mail",
+          "password": "Mot de passe",
+          "country": "Code pays",
+          "language": "Code langue"
         }
       }
     },

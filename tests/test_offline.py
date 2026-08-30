@@ -1150,8 +1150,20 @@ def main() -> int:
     check("terms countryOfResidence", ft.get("countryOfResidence"), "ES")
     check(
         "login headers accept-language",
-        api._login_headers(brand, "https://identity.vwgroup.io/signin")["Accept-Language"],
+        api._login_headers("de", "de", "https://identity.vwgroup.io/signin")[
+            "Accept-Language"
+        ],
         "de-DE,de;q=0.9,en;q=0.8",
+    )
+    check(
+        "login headers es accept-language",
+        api._login_headers("es", "es")["Accept-Language"],
+        "es-ES,es;q=0.9,en;q=0.8",
+    )
+    check(
+        "oidc state with es locale",
+        brand.oidc_state("es", "es"),
+        "es__es__CUPRA",
     )
 
     # --- sticky unit (mirrors EudaEntity._sticky_unit) --------------------

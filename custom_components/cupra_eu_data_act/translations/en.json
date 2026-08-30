@@ -3,11 +3,13 @@
     "step": {
       "user": {
         "title": "VW Group EU Data Act",
-        "description": "Select your vehicle brand and sign in with the same credentials you use on the EU Data Act portal.",
+        "description": "Select your vehicle brand and sign in with the same credentials you use on the EU Data Act portal. Country and language are two letter codes matching your account (for example es for Spain). Wrong locale can log in but fail later with HTTP 503 on vehicle data.",
         "data": {
           "brand": "Brand",
           "email": "Email",
-          "password": "Password"
+          "password": "Password",
+          "country": "Country code",
+          "language": "Language code"
         }
       },
       "vehicle": {
@@ -18,9 +20,21 @@
       },
       "reauth_confirm": {
         "title": "Re-authenticate",
-        "description": "Enter the password for {email} ({brand}).",
+        "description": "Enter the password for {email} ({brand}). Country and language must match the account registered on the EU Data Act portal (for example es / es for Spain).",
         "data": {
-          "password": "Password"
+          "password": "Password",
+          "country": "Country code",
+          "language": "Language code"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure",
+        "description": "Update credentials or the portal country/language. Use the same two letter codes as in your VW / Cupra / SEAT ID country of residence (for example es, de, fr). Language defaults to the country code when left empty.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "country": "Country code",
+          "language": "Language code"
         }
       }
     },
@@ -33,7 +47,8 @@
     "abort": {
       "already_configured": "This vehicle is already configured.",
       "auth": "Authentication failed; please re-add the integration.",
-      "reauth_successful": "Re-authentication was successful."
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Reconfiguration was successful."
     }
   },
   "exceptions": {

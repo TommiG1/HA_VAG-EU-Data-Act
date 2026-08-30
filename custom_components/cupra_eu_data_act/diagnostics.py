@@ -12,8 +12,10 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     CONF_BRAND,
+    CONF_COUNTRY,
     CONF_EMAIL,
     CONF_IDENTIFIER,
+    CONF_LANGUAGE,
     CONF_NICKNAME,
     CONF_PASSWORD,
     CONF_VIN,
@@ -53,6 +55,8 @@ async def async_get_config_entry_diagnostics(
             "domain": DOMAIN,
             "version": _MANIFEST.get("version"),
             "brand": entry.data.get(CONF_BRAND),
+            "country": entry.data.get(CONF_COUNTRY),
+            "language": entry.data.get(CONF_LANGUAGE),
             "nickname": entry.data.get(CONF_NICKNAME),
         },
         "status": {

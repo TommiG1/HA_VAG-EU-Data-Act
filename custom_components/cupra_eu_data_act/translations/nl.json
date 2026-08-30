@@ -3,11 +3,13 @@
     "step": {
       "user": {
         "title": "VW Group EU Data Act",
-        "description": "Selecteer je automerk en meld je aan met dezelfde inloggegevens als op het EU Data Act-portaal.",
+        "description": "Selecteer je automerk en meld je aan met dezelfde inloggegevens als op het EU Data Act-portaal. Land en taal zijn tweelettercodes die bij je account horen (bijv. es voor Spanje). Een verkeerde locale kan inloggen lukken maar daarna HTTP 503 geven bij voertuiggegevens.",
         "data": {
           "brand": "Merk",
           "email": "E-mail",
-          "password": "Wachtwoord"
+          "password": "Wachtwoord",
+          "country": "Landcode",
+          "language": "Taalcode"
         }
       },
       "vehicle": {
@@ -18,9 +20,21 @@
       },
       "reauth_confirm": {
         "title": "Opnieuw aanmelden",
-        "description": "Voer het wachtwoord in voor {email} ({brand}).",
+        "description": "Voer het wachtwoord in voor {email} ({brand}). Land en taal moeten overeenkomen met het account op het EU Data Act-portaal (bijv. es / es voor Spanje).",
         "data": {
-          "password": "Wachtwoord"
+          "password": "Wachtwoord",
+          "country": "Landcode",
+          "language": "Taalcode"
+        }
+      },
+      "reconfigure": {
+        "title": "Herconfigureren",
+        "description": "Werk inloggegevens of portal-land/taal bij. Gebruik dezelfde tweelettercodes als het woonland van je VW-/Cupra-/SEAT-ID (bijv. es, de, fr). Taal valt terug op de landcode als die leeg is.",
+        "data": {
+          "email": "E-mail",
+          "password": "Wachtwoord",
+          "country": "Landcode",
+          "language": "Taalcode"
         }
       }
     },

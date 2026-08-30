@@ -15,6 +15,8 @@ import aiohttp
 from .brands import BrandConfig
 from .const import (
     BASE_URL,
+    DEFAULT_COUNTRY,
+    DEFAULT_LANGUAGE,
     DOWNLOAD_PATH,
     LIST_PATH,
     METADATA_PATH,
@@ -161,24 +163,27 @@ def _login_error(html: str) -> str | None:
     return str(err) if err else None
 
 
-def _accept_language(country: str) -> str:
-    """Build an Accept-Language header for a two-letter country code."""
-    if len(country) == 2:
-        region = country.upper()
-        return f"{country}-{region},{country};q=0.9,en;q=0.8"
+def _accept_language(language: str, country: str | None = None) -> str:
+    """Build an Accept-Language header from ISO language/country codes."""
+    if len(language) == 2:
+        region = (country or language).upper()
+        return f"{language}-{region},{language};q=0.9,en;q=0.8"
     return "en-US,en;q=0.9"
 
 
-def _login_headers(brand: BrandConfig, referer: str | None = None) -> dict[str, str]:
+def _login_headers(
+    country: str,
+    language: str,
+    referer: str | None = None,
+) -> dict[str, str]:
     """Browser-like headers for the VW identity login flow."""
-    country = brand.oidc_state().split("__", 1)[0]
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": (
             "text/html,application/xhtml+xml,application/xml;q=0.9,"
             "image/avif,image/webp,image/apng,*/*;q=0.8"
         ),
-        "Accept-Language": _accept_language(country),
+        "Accept-Language": _accept_language(language, country),
         "Cache-Control": "max-age=0",
     }
     if referer:
@@ -245,12 +250,20 @@ class EudaApiClient:
         email: str,
         password: str,
         brand: BrandConfig,
+        *,
+        country: str = DEFAULT_COUNTRY,
+        language: str = DEFAULT_LANGUAGE,
     ) -> None:
         self._session = session
         self._email = email
         self._password = password
         self._brand = brand
+        self._country = (country or DEFAULT_COUNTRY).lower()
+        self._language = (language or country or DEFAULT_LANGUAGE).lower()
         self._logged_in = False
+
+    def _auth_headers(self, referer: str | None = None) -> dict[str, str]:
+        return _login_headers(self._country, self._language, referer)
 
     # -- low level ---------------------------------------------------------
 
@@ -281,11 +294,11 @@ class EudaApiClient:
         #    authorize URL ourselves because the portal's
         #    /services/redirect/authentication servlet returns HTTP 500 for
         #    non-browser clients.
-        authorize_url = self._build_authorize_url(self._brand)
+        authorize_url = self._authorize_url()
         _LOGGER.debug("login step1: authorize url = %s", authorize_url)
         async with await self._get(
             authorize_url,
-            headers=_login_headers(self._brand, f"{BASE_URL}/"),
+            headers=self._auth_headers(f"{BASE_URL}/"),
         ) as resp:
             signin_url = str(resp.url)
             signin_html = await resp.text()
@@ -306,7 +319,7 @@ class EudaApiClient:
         async with self._session.post(
             identifier_action,
             data=fields,
-            headers=_login_headers(self._brand, signin_url),
+            headers=self._auth_headers(signin_url),
         ) as resp:
             authenticate_url = str(resp.url)
             authenticate_html = await resp.text()
@@ -343,7 +356,7 @@ class EudaApiClient:
         async with self._session.post(
             authenticate_action,
             data=fields2,
-            headers=_login_headers(self._brand, authenticate_url),
+            headers=self._auth_headers(authenticate_url),
         ) as resp:
             await self._finish_login(resp)
 
@@ -405,7 +418,7 @@ class EudaApiClient:
             async with self._session.post(
                 terms_action,
                 data=fields,
-                headers=_login_headers(self._brand, landing),
+                headers=self._auth_headers(landing),
             ) as terms_resp:
                 await self._finish_login(terms_resp, _after_terms=True)
             return
@@ -434,17 +447,29 @@ class EudaApiClient:
             _LOGGER.debug("login step5: session probe network error ignored: %s", err)
 
     @staticmethod
-    def _build_authorize_url(brand: BrandConfig) -> str:
+    def _build_authorize_url(
+        brand: BrandConfig,
+        *,
+        country: str = DEFAULT_COUNTRY,
+        language: str = DEFAULT_LANGUAGE,
+    ) -> str:
         """Construct the OIDC authorize URL (bypasses the broken AEM servlet)."""
         params = {
             "client_id": brand.client_id,
             "response_type": "code",
             "scope": OIDC_SCOPE,
-            "state": brand.oidc_state(),
+            "state": brand.oidc_state(country, language),
             "redirect_uri": OIDC_REDIRECT_URI,
             "prompt": "login",
         }
         return f"{OIDC_AUTHORIZE_URL}?{urlencode(params)}"
+
+    def _authorize_url(self) -> str:
+        return self._build_authorize_url(
+            self._brand,
+            country=self._country,
+            language=self._language,
+        )
 
     # -- authenticated requests -------------------------------------------
 

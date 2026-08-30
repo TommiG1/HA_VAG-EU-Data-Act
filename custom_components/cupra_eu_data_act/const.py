@@ -45,6 +45,10 @@ CONF_PASSWORD = "password"
 CONF_VIN = "vin"
 CONF_IDENTIFIER = "identifier"
 CONF_NICKNAME = "nickname"
+# ISO 3166-1 alpha-2 / ISO 639-1 lowercase; used in OIDC ``state``
+# (``{country}__{language}__BRAND``). Wrong pairing can login but 503 on APIM.
+CONF_COUNTRY = "country"
+CONF_LANGUAGE = "language"
 
 # --- Scheduling -----------------------------------------------------------
 DATASET_INTERVAL = timedelta(minutes=15)

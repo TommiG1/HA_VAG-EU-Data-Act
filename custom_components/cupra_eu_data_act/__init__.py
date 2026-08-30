@@ -15,9 +15,13 @@ from .api import EudaApiClient
 from .brands import DEFAULT_BRAND, get_brand
 from .const import (
     CONF_BRAND,
+    CONF_COUNTRY,
     CONF_EMAIL,
+    CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_VIN,
+    DEFAULT_COUNTRY,
+    DEFAULT_LANGUAGE,
     DOMAIN,
     raw_unique_id,
 )
@@ -80,11 +84,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: EudaConfigEntry) -> bool
         await hass.async_add_executor_job(load_dictionary)
 
         brand = get_brand(entry.data.get(CONF_BRAND, DEFAULT_BRAND))
+        country = entry.data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+        language = entry.data.get(CONF_LANGUAGE, country or DEFAULT_LANGUAGE)
         client = EudaApiClient(
             session,
             entry.data[CONF_EMAIL],
             entry.data[CONF_PASSWORD],
             brand,
+            country=country,
+            language=language,
         )
         coordinator = EudaCoordinator(hass, entry, client)
         entry.runtime_data = EudaRuntimeData(coordinator=coordinator, session=session)

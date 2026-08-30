@@ -15,10 +15,14 @@ from custom_components.cupra_eu_data_act.brands import DEFAULT_BRAND, get_brand
 from custom_components.cupra_eu_data_act.config_flow import EudaConfigFlow
 from custom_components.cupra_eu_data_act.const import (
     CONF_BRAND,
+    CONF_COUNTRY,
     CONF_EMAIL,
     CONF_IDENTIFIER,
+    CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_VIN,
+    DEFAULT_COUNTRY,
+    DEFAULT_LANGUAGE,
     DOMAIN,
 )
 
@@ -35,11 +39,13 @@ def _make_flow(hass) -> EudaConfigFlow:
 
 
 def _fake_client_capturing(captured: dict):
-    """Stand-in EudaApiClient that records the brand and logs in cleanly."""
+    """Stand-in EudaApiClient that records the brand/locale and logs in cleanly."""
 
     class _FakeClient:
-        def __init__(self, session, email, password, brand) -> None:
+        def __init__(self, session, email, password, brand, **kwargs) -> None:
             captured["brand"] = brand
+            captured["country"] = kwargs.get("country")
+            captured["language"] = kwargs.get("language")
 
         async def async_login(self) -> None:
             return None
@@ -57,6 +63,8 @@ async def test_reauth_restores_non_default_brand(hass) -> None:
             CONF_BRAND: "skoda",
             CONF_EMAIL: "owner@example.com",
             CONF_PASSWORD: "old-secret",
+            CONF_COUNTRY: "cz",
+            CONF_LANGUAGE: "cs",
             CONF_VIN: "WVWZZZTESTVIN0001",
             CONF_IDENTIFIER: "ident-1",
         },
@@ -69,6 +77,8 @@ async def test_reauth_restores_non_default_brand(hass) -> None:
     result = await flow.async_step_reauth(dict(entry.data))
     # The regression: brand restored from the entry, not left at the default.
     assert flow._brand == "skoda"
+    assert flow._country == "cz"
+    assert flow._language == "cs"
     assert result["type"] == "form"
     assert result["step_id"] == "reauth_confirm"
 
@@ -77,6 +87,8 @@ async def test_reauth_restores_non_default_brand(hass) -> None:
         assert await flow._async_try_login() is None
     # ...and it is the brand handed to the API client.
     assert captured["brand"] == get_brand("skoda")
+    assert captured["country"] == "cz"
+    assert captured["language"] == "cs"
 
 
 async def test_reauth_defaults_brand_when_absent(hass) -> None:
@@ -86,6 +98,8 @@ async def test_reauth_defaults_brand_when_absent(hass) -> None:
 
     await flow.async_step_reauth({CONF_EMAIL: "legacy@example.com"})
     assert flow._brand == DEFAULT_BRAND
+    assert flow._country == DEFAULT_COUNTRY
+    assert flow._language == DEFAULT_LANGUAGE
 
 
 async def test_user_step_shows_brand_selector(hass) -> None:
@@ -98,6 +112,7 @@ async def test_user_step_shows_brand_selector(hass) -> None:
     # Brand field present in the schema.
     schema_keys = {str(k) for k in form["data_schema"].schema}
     assert CONF_BRAND in schema_keys
+    assert CONF_COUNTRY in schema_keys
 
 
 async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
@@ -106,10 +121,12 @@ async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
     flow._brand = "volkswagen"
     flow._email = "owner@example.com"
     flow._password = "secret"
+    flow._country = "es"
+    flow._language = "es"
     flow._vehicles = [{"vin": "WVWZZZTESTVIN0001", "nickname": "ID.4"}]
 
     class _FakeClient:
-        def __init__(self, session, email, password, brand) -> None:
+        def __init__(self, session, email, password, brand, **kwargs) -> None:
             pass
 
         async def async_login(self) -> None:
@@ -124,6 +141,8 @@ async def test_vehicle_step_creates_entry_without_identifier(hass) -> None:
     assert result["type"] == "create_entry"
     assert result["data"][CONF_IDENTIFIER] == ""
     assert result["data"][CONF_VIN] == "WVWZZZTESTVIN0001"
+    assert result["data"][CONF_COUNTRY] == "es"
+    assert result["data"][CONF_LANGUAGE] == "es"
 
 
 async def test_vehicle_step_creates_entry_when_metadata_fetch_fails(hass) -> None:
@@ -136,7 +155,7 @@ async def test_vehicle_step_creates_entry_when_metadata_fetch_fails(hass) -> Non
     flow._vehicles = [{"vin": "WVWZZZTESTVIN0001"}]
 
     class _FakeClient:
-        def __init__(self, session, email, password, brand) -> None:
+        def __init__(self, session, email, password, brand, **kwargs) -> None:
             pass
 
         async def async_login(self) -> None:
@@ -150,3 +169,27 @@ async def test_vehicle_step_creates_entry_when_metadata_fetch_fails(hass) -> Non
 
     assert result["type"] == "create_entry"
     assert result["data"][CONF_IDENTIFIER] == ""
+    assert result["data"][CONF_COUNTRY] == DEFAULT_COUNTRY
+    assert result["data"][CONF_LANGUAGE] == DEFAULT_LANGUAGE
+
+
+async def test_user_step_passes_locale_to_client(hass) -> None:
+    flow = _make_flow(hass)
+    captured: dict = {}
+
+    with patch(CLIENT_PATH, _fake_client_capturing(captured)):
+        result = await flow.async_step_user(
+            {
+                CONF_BRAND: "cupra",
+                CONF_EMAIL: "es@example.com",
+                CONF_PASSWORD: "secret",
+                CONF_COUNTRY: "ES",
+            }
+        )
+
+    assert result["type"] == "form"
+    assert result["step_id"] == "vehicle"
+    assert captured["country"] == "es"
+    assert captured["language"] == "es"
+    assert flow._country == "es"
+    assert flow._language == "es"

@@ -3,11 +3,13 @@
     "step": {
       "user": {
         "title": "VW Group EU Data Act",
-        "description": "Wähle deine Fahrzeugmarke und melde dich mit denselben Zugangsdaten an wie im EU-Data-Act-Portal.",
+        "description": "Wähle deine Fahrzeugmarke und melde dich mit denselben Zugangsdaten an wie im EU-Data-Act-Portal. Land und Sprache sind zweistellige Codes passend zum Konto (z. B. es für Spanien). Falsches Locale kann Login erlauben, danach aber HTTP 503 bei Fahrzeugdaten liefern.",
         "data": {
           "brand": "Marke",
           "email": "E-Mail",
-          "password": "Passwort"
+          "password": "Passwort",
+          "country": "Ländercode",
+          "language": "Sprachcode"
         }
       },
       "vehicle": {
@@ -18,9 +20,21 @@
       },
       "reauth_confirm": {
         "title": "Erneut anmelden",
-        "description": "Passwort für {email} ({brand}) eingeben.",
+        "description": "Passwort für {email} ({brand}) eingeben. Land und Sprache müssen zum Konto im EU-Data-Act-Portal passen (z. B. es / es für Spanien).",
         "data": {
-          "password": "Passwort"
+          "password": "Passwort",
+          "country": "Ländercode",
+          "language": "Sprachcode"
+        }
+      },
+      "reconfigure": {
+        "title": "Neu konfigurieren",
+        "description": "Zugangsdaten oder Portal-Land/Sprache ändern. Dieselben zweistelligen Codes wie beim Wohnsitz der VW-/Cupra-/SEAT-ID (z. B. es, de, fr). Sprache fällt auf den Ländercode zurück, wenn leer.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "country": "Ländercode",
+          "language": "Sprachcode"
         }
       }
     },
@@ -33,7 +47,8 @@
     "abort": {
       "already_configured": "Dieses Fahrzeug ist bereits eingerichtet.",
       "auth": "Authentifizierung fehlgeschlagen; Integration bitte neu hinzufügen.",
-      "reauth_successful": "Erneute Anmeldung erfolgreich."
+      "reauth_successful": "Erneute Anmeldung erfolgreich.",
+      "reconfigure_successful": "Neukonfiguration erfolgreich."
     }
   },
   "exceptions": {

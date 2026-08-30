@@ -56,6 +56,11 @@ def main() -> int:
         check(f"{slug} state", qs.get("state", [""])[0], brand.oidc_state())
         check(f"{slug} redirect", qs.get("redirect_uri", [""])[0], "https://eu-data-act.drivesomethinggreater.com/login")
 
+    cupra = brands.get_brand("cupra")
+    es_url = api.EudaApiClient._build_authorize_url(cupra, country="es", language="es")
+    es_qs = parse_qs(urlparse(es_url).query)
+    check("cupra es state", es_qs.get("state", [""])[0], "es__es__CUPRA")
+
     print()
     if failures:
         print(f"FAILED: {len(failures)} -> {failures}")

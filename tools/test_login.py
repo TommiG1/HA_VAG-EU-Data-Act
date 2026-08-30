@@ -13,6 +13,7 @@ Run:
         .venv/bin/python tools/test_login.py
 
     .venv/bin/python tools/test_login.py --brand cupra you@example.com 'secret'
+    .venv/bin/python tools/test_login.py --brand cupra --country es you@example.com 'secret'
     .venv/bin/python tools/test_login.py --list-brands
 
 Exit codes:
@@ -57,7 +58,15 @@ def _load():
     return mods
 
 
-async def run_normal(mods, brand_slug: str, email: str, password: str) -> int:
+async def run_normal(
+    mods,
+    brand_slug: str,
+    email: str,
+    password: str,
+    *,
+    country: str,
+    language: str,
+) -> int:
     import aiohttp
 
     api = mods["api"]
@@ -65,10 +74,17 @@ async def run_normal(mods, brand_slug: str, email: str, password: str) -> int:
     brand = mods["brands"].get_brand(brand_slug)
 
     session = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar())
-    client = api.EudaApiClient(session, email, password, brand)
+    client = api.EudaApiClient(
+        session,
+        email,
+        password,
+        brand,
+        country=country,
+        language=language,
+    )
     try:
         print(f"\n=== Brand: {brand.title} ({brand_slug}) ===")
-        print(f"=== OIDC state: {brand.oidc_state()} ===")
+        print(f"=== OIDC state: {brand.oidc_state(country, language)} ===")
         print("\n=== Logging in ===")
         await client.async_login()
         print("LOGIN OK\n")
@@ -130,7 +146,14 @@ async def run_normal(mods, brand_slug: str, email: str, password: str) -> int:
         await session.close()
 
 
-async def run_dump(mods, brand_slug: str, email: str) -> int:
+async def run_dump(
+    mods,
+    brand_slug: str,
+    email: str,
+    *,
+    country: str,
+    language: str,
+) -> int:
     """Walk the flow manually, saving each page and listing all forms."""
     import aiohttp
     from html.parser import HTMLParser
@@ -172,12 +195,16 @@ async def run_dump(mods, brand_slug: str, email: str) -> int:
             print("    (no <form> tags found - page may be JS-rendered)")
 
     session = aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar())
-    client = api.EudaApiClient(session, email, "unused", brand)
+    client = api.EudaApiClient(
+        session, email, "unused", brand, country=country, language=language
+    )
     try:
         async with await client._get(f"{const.BASE_URL}/") as resp:
             await resp.read()
 
-        authorize_url = api.EudaApiClient._build_authorize_url(brand)
+        authorize_url = api.EudaApiClient._build_authorize_url(
+            brand, country=country, language=language
+        )
         print(f"\nBrand: {brand.title}")
         print(f"authorize_url = {authorize_url}")
         async with await client._get(authorize_url) as resp:
@@ -209,6 +236,16 @@ def main() -> int:
         default=os.environ.get("EUDA_BRAND", "cupra"),
         help="Brand slug: volkswagen, audi, skoda, seat, cupra, bentley, volkswagen_commercial",
     )
+    parser.add_argument(
+        "--country",
+        default=os.environ.get("EUDA_COUNTRY", "de"),
+        help="Two letter country code for OIDC state (default: de)",
+    )
+    parser.add_argument(
+        "--language",
+        default=os.environ.get("EUDA_LANGUAGE"),
+        help="Two letter language code (defaults to --country)",
+    )
     parser.add_argument("--dump", action="store_true", help="Dump login HTML without sending password")
     parser.add_argument("--list-brands", action="store_true", help="List supported brand slugs")
     parser.add_argument("email", nargs="?", default=os.environ.get("EUDA_EMAIL"))
@@ -237,11 +274,25 @@ def main() -> int:
         print(f"Unknown brand {args.brand!r}. Use --list-brands.")
         return 1
 
+    country = (args.country or "de").lower()
+    language = (args.language or country).lower()
+
     logging.basicConfig(level=logging.DEBUG, format="%(levelname)s %(name)s: %(message)s")
 
     if args.dump:
-        return asyncio.run(run_dump(mods, args.brand, args.email))
-    return asyncio.run(run_normal(mods, args.brand, args.email, args.password))
+        return asyncio.run(
+            run_dump(mods, args.brand, args.email, country=country, language=language)
+        )
+    return asyncio.run(
+        run_normal(
+            mods,
+            args.brand,
+            args.email,
+            args.password,
+            country=country,
+            language=language,
+        )
+    )
 
 
 if __name__ == "__main__":
