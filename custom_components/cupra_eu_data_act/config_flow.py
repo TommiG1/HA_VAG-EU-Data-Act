@@ -227,6 +227,7 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
                     },
                     reason="reconfigure_successful",
                 )
+        country, language = _normalize_locale(
             entry.data.get(CONF_COUNTRY, DEFAULT_COUNTRY),
             entry.data.get(CONF_LANGUAGE),
         )

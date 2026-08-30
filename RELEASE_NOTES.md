@@ -1,5 +1,19 @@
 # Release notes
 
+## v0.6.39 — Fix reconfigure SyntaxError from #55 (2026-08-30)
+
+### Summary
+
+Hotfix for a `SyntaxError` in `async_step_reconfigure` introduced with the
+portal country field in v0.6.38. The reconfigure form lost its
+`country` / `language` assignment, so importing `config_flow` failed and the
+HA harness CI job went red. Existing installs that only poll are unaffected;
+opening reconfigure (or anything that imports the flow) needs this patch.
+
+### Fix
+
+- Restore `_normalize_locale(...)` when showing the reconfigure form defaults.
+
 ## v0.6.38 — IdP terms auto-accept, portal country, Spanish UI (2026-08-30)
 
 ### Summary
