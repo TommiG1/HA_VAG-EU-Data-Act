@@ -1,5 +1,47 @@
 # Release notes
 
+## v0.6.38 — IdP terms auto-accept, portal country, Spanish UI (2026-08-30)
+
+### Summary
+
+Login no longer dies on the identity provider's terms-and-conditions page,
+setup can pick a two-letter portal country (so Spanish Cupra IDs use
+`es__es__CUPRA` instead of the German default), and the UI has a full Spanish
+translation. Reported in
+[#55](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/55) and
+[#56](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/56).
+
+### Login (#55)
+
+- When the IdP lands on `/terms-and-conditions` after credentials, the client
+  POSTs the accept form (`_csrf`, `relayState`, `hmac`, `countryOfResidence`)
+  and continues the redirect chain. Some accounts only see this interstitial
+  on the scripted client, not in a real browser.
+- Login requests send more browser-like headers (`Accept`, `Accept-Language`,
+  `Origin`, `Referer`).
+- If the terms page is still there after the accept POST, the error is
+  explicit instead of looking like a bad password.
+
+### Portal country / language (#55)
+
+- Setup, reauth and reconfigure take a two-letter country code. Language
+  defaults to the same code when left empty. That drives the OIDC `state`
+  (`{country}__{language}__BRAND`) so metadata and dataset listing hit the
+  right APIM locale (wrong pairing can log in but 503 on metadata).
+- Existing German installs keep `de` / `de`. Change it later via reconfigure.
+- `tools/test_login.py --brand cupra --country es …` does the same without
+  editing source.
+
+### Translations (#56)
+
+- Full Spanish (`es`) strings for config flow, options, repairs and sensors.
+
+### Tests
+
+- Mocked terms accept POST continues login; a second terms landing stays
+  `AuthError`.
+- Config flow stores country/language; OIDC state follows those codes.
+
 ## v0.6.37 — Combined range no longer latches at 0 (#54) (2026-08-28)
 
 ### Summary
