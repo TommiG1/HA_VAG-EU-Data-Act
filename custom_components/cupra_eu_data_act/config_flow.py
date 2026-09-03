@@ -41,7 +41,8 @@ _BRAND_SELECTOR = SelectSelector(
 )
 
 # ISO 639-1 / ISO 3166-1 alpha-2 (lowercase), as used in the portal OIDC state.
-_LOCALE_CODE = vol.All(str, vol.Lower, vol.Match(r"^[a-z]{2}$"))
+# Use Length (not Match): voluptuous_serialize cannot convert Match → HA 500 on flow open.
+_LOCALE_CODE = vol.All(str, vol.Lower, vol.Length(min=2, max=2))
 
 
 def _normalize_locale(country: str, language: str | None) -> tuple[str, str]:

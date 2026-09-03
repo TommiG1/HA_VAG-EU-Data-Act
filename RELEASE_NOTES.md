@@ -1,5 +1,20 @@
 # Release notes
 
+## v0.6.40 — Fix config flow 500 from locale Match validator (#57) (2026-09-03)
+
+### Summary
+
+Adding the integration (or opening reauth / reconfigure) failed with
+`Config flow could not be loaded: 500 Internal Server Error` because the
+country/language schema used `vol.Match`, which `voluptuous_serialize` cannot
+convert to JSON for the frontend. Reported in
+[#57](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/57).
+
+### Fix
+
+- Replace `vol.Match` with `vol.Length(min=2, max=2)` on `_LOCALE_CODE` so the
+  schema serializes cleanly while still requiring a two-letter code.
+
 ## v0.6.39 — Fix reconfigure SyntaxError from #55 (2026-08-30)
 
 ### Summary
