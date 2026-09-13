@@ -852,27 +852,60 @@ def resolve_curated_distance_unit(
 
 
 # Charge-rate unit enums (battery_state_report.charge_rate_unit) -> HA unit.
-# The charge rate is expressed as range gained over time and the unit (km vs
-# miles, per hour vs per minute) varies by vehicle/region, so it is read from
-# the companion charge_rate_unit field rather than hardcoded.
+# The charge rate is range gained over time. Distance (km vs miles) varies by
+# region; the portal also flips hour vs minute between AC and DC sessions.
+# Always expose a per-hour unit so HA long-term statistics never see a unit
+# change (#58). Per-minute portal values are scaled in
+# :func:`scale_charge_rate_to_per_hour`.
 CHARGE_RATE_UNIT_BY_ENUM: dict[str, str] = {
     "CHARGE_RATE_UNIT_KM_PER_H": "km/h",
-    "CHARGE_RATE_UNIT_KM_PER_MIN": "km/min",
+    "CHARGE_RATE_UNIT_KM_PER_MIN": "km/h",
     "CHARGE_RATE_UNIT_MILES_PER_H": "mi/h",
-    "CHARGE_RATE_UNIT_MILES_PER_MIN": "mi/min",
+    "CHARGE_RATE_UNIT_MILES_PER_MIN": "mi/h",
     # Flat PHEV (Passat/Golf) charge_rate_unit strings
     "KM_PER_H": "km/h",
-    "KM_PER_MIN": "km/min",
+    "KM_PER_MIN": "km/h",
     "MILES_PER_H": "mi/h",
-    "MILES_PER_MIN": "mi/min",
+    "MILES_PER_MIN": "mi/h",
 }
+
+CHARGE_RATE_PER_MINUTE_KEYS = frozenset(
+    {
+        "CHARGE_RATE_UNIT_KM_PER_MIN",
+        "CHARGE_RATE_UNIT_MILES_PER_MIN",
+        "KM_PER_MIN",
+        "MILES_PER_MIN",
+    }
+)
 
 
 def resolve_charge_rate_unit(enum_value, default: str | None = None) -> str | None:
-    """Map a charge-rate-unit enum (e.g. "CHARGE_RATE_UNIT_KM_PER_H") to "km/h"."""
+    """Map a charge-rate-unit enum (e.g. "CHARGE_RATE_UNIT_KM_PER_H") to "km/h".
+
+    Per-minute portal enums resolve to the matching per-hour HA unit.
+    """
     if isinstance(enum_value, str):
         return CHARGE_RATE_UNIT_BY_ENUM.get(enum_value.strip().upper(), default)
     return default
+
+
+def scale_charge_rate_to_per_hour(value, unit_enum):
+    """Scale a portal charge-rate reading to per-hour when needed (#58).
+
+    AC sessions typically report km/h (or mi/h); DC may report km/min (or
+    mi/min). Multiply per-minute values by 60 so the sensor state matches the
+    normalised per-hour unit from :func:`resolve_charge_rate_unit`.
+    """
+    if value is None:
+        return None
+    if not isinstance(unit_enum, str):
+        return value
+    if unit_enum.strip().upper() not in CHARGE_RATE_PER_MINUTE_KEYS:
+        return value
+    try:
+        return round(float(value) * 60, 1)
+    except (ValueError, TypeError):
+        return None
 
 
 def decikelvin_to_celsius(raw: str) -> float | None:

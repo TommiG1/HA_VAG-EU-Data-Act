@@ -1,5 +1,26 @@
 # Release notes
 
+## v0.6.41 — Normalize charge rate to per-hour units (#58) (2026-09-13)
+
+### Summary
+
+On MEB / ID.x the portal reports charge rate as `km/h` for AC and often
+`km/min` for DC. Home Assistant stores the first unit in long-term statistics
+and warns on every AC↔DC switch. Reported in
+[#58](https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues/58).
+
+### Fix
+
+- Always expose a per-hour unit (`km/h` or `mi/h`) from
+  `resolve_charge_rate_unit`, including when the portal sends `*/min`.
+- Scale per-minute portal values by 60 via `scale_charge_rate_to_per_hour`
+  for `battery_state_report.charge_rate` and `actual_charge_rate`.
+
+### Tests
+
+- Offline checks for `KM_PER_MIN` / `MILES_PER_MIN` resolution, value scaling,
+  and AC then DC staying on `km/h`.
+
 ## v0.6.40 — Fix config flow 500 from locale Match validator (#57) (2026-09-03)
 
 ### Summary

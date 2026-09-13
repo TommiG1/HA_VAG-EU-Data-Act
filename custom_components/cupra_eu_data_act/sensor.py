@@ -42,6 +42,7 @@ from .data import (
     resolve_distance_unit,
     resolve_distance_unit_from_companion_fields,
     resolve_primary_range_unit,
+    scale_charge_rate_to_per_hour,
     shorten_enum_label,
     sum_fallback_reading,
     total_charged_energy_kwh,
@@ -255,6 +256,21 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
             return None
         return dp
 
+    def _charge_rate_native_value(self, dp: DataPoint):
+        """Apply curated transforms, then scale per-minute portal rates to per-hour."""
+        from .data import deci_kw_to_kw
+
+        value = dp.value
+        if self._curated.transform == "deci_kw":
+            value = deci_kw_to_kw(value)
+        unit_field = self._curated.unit_field
+        if not unit_field:
+            return value
+        unit_dp = find_by_field(self.coordinator.data or {}, unit_field)
+        if unit_dp is None:
+            return value
+        return scale_charge_rate_to_per_hour(value, unit_dp.value)
+
     @property
     def native_value(self):
         if self._curated.field_name.endswith(".due_date"):
@@ -313,6 +329,10 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
         # into a "plausible" 429496729.5.
         if is_sentinel(dp.value, field_name):
             return self._sticky(None)
+
+        # Charge rate: normalise */min → */h so AC↔DC never flips the HA unit (#58).
+        if field_name in _CHARGE_RATE_FIELDS:
+            return self._sticky(self._charge_rate_native_value(dp))
 
         raw_value = dp.value
 

@@ -1216,9 +1216,39 @@ def main() -> int:
         "km/h",
     )
     check(
+        "KM_PER_MIN -> km/h (#58)",
+        data.resolve_charge_rate_unit("CHARGE_RATE_UNIT_KM_PER_MIN"),
+        "km/h",
+    )
+    check(
         "MILES_PER_H -> mi/h",
         data.resolve_charge_rate_unit("CHARGE_RATE_UNIT_MILES_PER_H"),
         "mi/h",
+    )
+    check(
+        "MILES_PER_MIN -> mi/h (#58)",
+        data.resolve_charge_rate_unit("CHARGE_RATE_UNIT_MILES_PER_MIN"),
+        "mi/h",
+    )
+    check(
+        "flat km_per_min -> km/h (#58)",
+        data.resolve_charge_rate_unit("km_per_min"),
+        "km/h",
+    )
+    check(
+        "per-hour value unchanged",
+        data.scale_charge_rate_to_per_hour(42, "CHARGE_RATE_UNIT_KM_PER_H"),
+        42,
+    )
+    check(
+        "per-minute value *60 (#58)",
+        data.scale_charge_rate_to_per_hour(1.5, "CHARGE_RATE_UNIT_KM_PER_MIN"),
+        90.0,
+    )
+    check(
+        "mi/min value *60 (#58)",
+        data.scale_charge_rate_to_per_hour(2, "CHARGE_RATE_UNIT_MILES_PER_MIN"),
+        120.0,
     )
     charge_rate = next(
         s
@@ -1328,6 +1358,17 @@ def main() -> int:
         "single spurious mi/h ignored when value usable",
         _charge_rate_unit(probe, 10, "CHARGE_RATE_UNIT_MILES_PER_H"),
         "km/h",
+    )
+    probe = _StickyUnitProbe()
+    check(
+        "AC km/h then DC km/min stays km/h (#58)",
+        (
+            _charge_rate_unit(probe, 40, "CHARGE_RATE_UNIT_KM_PER_H"),
+            _charge_rate_unit(probe, 40, "CHARGE_RATE_UNIT_KM_PER_H"),
+            _charge_rate_unit(probe, 1, "CHARGE_RATE_UNIT_KM_PER_MIN"),
+            _charge_rate_unit(probe, 1, "CHARGE_RATE_UNIT_KM_PER_MIN"),
+        ),
+        ("km/h", "km/h", "km/h", "km/h"),
     )
 
     # --- distance unit resolved from companion *.unit field ----------------
