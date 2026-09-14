@@ -512,6 +512,72 @@ _FLAT_CHARGING_INACTIVE = frozenset(
     {"off", "completed", "error", "invalid", "unsupported"}
 )
 _FLAT_CHARGING_ACTIVE = frozenset({"charging", "conservationcharging"})
+_DOTTED_CHARGING_ACTIVE = frozenset(
+    {
+        "CHARGE_STATE_CHARGING_HV_BATTERY",
+        "CHARGE_STATE_CONSERVATION_CHARGING",
+    }
+)
+_CHARGING_SIGNAL_FIELDS = (
+    "charging_state_report.current_charge_state",
+    "charging_state",
+    "battery_state_report.charge_power",
+    "charging_power",
+)
+
+
+def _charge_power_watts(points: dict[str, DataPoint]) -> float | None:
+    """Portal charge power when present and numeric, else None."""
+    power = find_by_field(points, "battery_state_report.charge_power")
+    if power is None:
+        power = find_by_field(points, "charging_power")
+    if power is None:
+        return None
+    try:
+        return float(power.value)
+    except (TypeError, ValueError):
+        return None
+
+
+def charging_signal_present(points: dict[str, DataPoint]) -> bool:
+    """True when the dataset carries any field used for the charging binary."""
+    return any(find_by_field(points, name) is not None for name in _CHARGING_SIGNAL_FIELDS)
+
+
+def is_actively_charging(points: dict[str, DataPoint]) -> bool | None:
+    """Whether the vehicle is actively charging (HV or conservation).
+
+    Returns ``None`` when no charging-related signal is present so callers can
+    keep a sticky last-known value. Unlike
+    :func:`charging_time_is_applicable`, this does **not** treat
+    ``CHARGE_STATE_CHARGING_ERROR`` as active (substring ``CHARGING`` alone is
+    too broad for a binary sensor).
+    """
+    scenario = find_by_field(points, "charging_state_report.charging_scenario")
+    if scenario and str(scenario.value).endswith("_OFF"):
+        return False
+
+    flat_state = find_by_field(points, "charging_state")
+    if flat_state is not None:
+        flat_val = str(flat_state.value).strip().lower()
+        if flat_val in _FLAT_CHARGING_ACTIVE:
+            return True
+        if flat_val in _FLAT_CHARGING_INACTIVE:
+            return False
+
+    state = find_by_field(points, "charging_state_report.current_charge_state")
+    if state is not None:
+        dotted_val = str(state.value).strip().upper()
+        if dotted_val in _DOTTED_CHARGING_ACTIVE:
+            return True
+        if dotted_val:
+            return False
+
+    watts = _charge_power_watts(points)
+    if watts is not None:
+        return watts > 0
+
+    return None
 
 
 def charging_time_is_applicable(points: dict[str, DataPoint]) -> bool:
@@ -528,16 +594,14 @@ def charging_time_is_applicable(points: dict[str, DataPoint]) -> bool:
         if flat_val in _FLAT_CHARGING_ACTIVE:
             return True
 
-    power = find_by_field(points, "battery_state_report.charge_power")
-    if power is None:
-        power = find_by_field(points, "charging_power")
-    if power is not None:
-        try:
-            if float(power.value) <= 0:
-                return False
-        except (TypeError, ValueError):
-            pass
+    watts = _charge_power_watts(points)
+    if watts is not None and watts <= 0:
+        return False
 
+    if is_actively_charging(points) is True:
+        return True
+
+    # Remaining-time still treats any CHARGING* enum (incl. ERROR) as applicable.
     state = find_by_field(points, "charging_state_report.current_charge_state")
     if state and "CHARGING" in str(state.value).upper():
         return True
@@ -1760,6 +1824,13 @@ CURATED_BINARY_DOTTED: tuple[CuratedBinary, ...] = (
         None,
         icon="mdi:clock-outline",
     ),
+    # Derived: not a portal field; discovery uses charging_signal_present().
+    CuratedBinary(
+        "charging",
+        "Charging",
+        "battery_charging",
+        icon="mdi:battery-charging",
+    ),
 )
 
 # ---------------------------------------------------------------------------
@@ -2615,6 +2686,13 @@ CURATED_BINARY_FLAT: tuple[CuratedBinary, ...] = (
         "lock",
         icon="mdi:lock",
         encoding="string_lock",
+    ),
+    # Derived: not a portal field; discovery uses charging_signal_present().
+    CuratedBinary(
+        "charging",
+        "Charging",
+        "battery_charging",
+        icon="mdi:battery-charging",
     ),
 )
 

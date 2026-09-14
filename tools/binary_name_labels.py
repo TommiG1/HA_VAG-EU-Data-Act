@@ -278,6 +278,12 @@ _BY_ENGLISH: dict[str, dict[str, str]] = {
         "it": "Blocco centralizzato",
         "nl": "Centrale vergrendeling",
     },
+    "Charging": {
+        "de": "Lädt",
+        "fr": "En charge",
+        "it": "In carica",
+        "nl": "Aan het laden",
+    },
 }
 
 # translation_key -> English name (all curated binary sensors)
@@ -329,6 +335,7 @@ _BINARY_KEYS: dict[str, str] = {
     "energy_flow": "Energy flow",
     "plug_state": "Charging plug",
     "lock_state": "Central lock",
+    "charging": "Charging",
 }
 
 

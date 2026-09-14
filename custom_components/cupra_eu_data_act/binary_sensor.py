@@ -17,13 +17,18 @@ from .data import (
     CURATED_BINARY_FLAT,
     CuratedBinary,
     DataPoint,
+    charging_signal_present,
     curated_translation_key,
     datapoint_freshness_attributes,
     decode_binary_state,
     detect_dataset_format,
     find_by_field,
+    is_actively_charging,
 )
 from .entity import EudaEntity
+
+# Synthetic curated field — not present in portal payloads.
+_DERIVED_CHARGING_FIELD = "charging"
 
 
 async def async_setup_entry(
@@ -54,7 +59,10 @@ async def async_setup_entry(
         for curated in curated_binary:
             if curated.field_name in added:
                 continue
-            if curated.field_name not in present_fields:
+            if curated.field_name == _DERIVED_CHARGING_FIELD:
+                if not charging_signal_present(points):
+                    continue
+            elif curated.field_name not in present_fields:
                 continue
             new_entities.append(EudaBinarySensor(coordinator, curated))
             added.add(curated.field_name)
@@ -81,6 +89,8 @@ class EudaBinarySensor(EudaEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
+        if self._curated.field_name == _DERIVED_CHARGING_FIELD:
+            return self._sticky(is_actively_charging(self.coordinator.data or {}))
         dp = find_by_field(self.coordinator.data or {}, self._curated.field_name)
         result = (
             decode_binary_state(
@@ -93,5 +103,17 @@ class EudaBinarySensor(EudaEntity, BinarySensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict:
+        if self._curated.field_name == _DERIVED_CHARGING_FIELD:
+            # Prefer charge-state freshness; fall back to power fields.
+            for field_name in (
+                "charging_state_report.current_charge_state",
+                "charging_state",
+                "battery_state_report.charge_power",
+                "charging_power",
+            ):
+                dp = find_by_field(self.coordinator.data or {}, field_name)
+                if dp is not None:
+                    return datapoint_freshness_attributes(dp, now=dt_util.utcnow())
+            return {}
         dp = find_by_field(self.coordinator.data or {}, self._curated.field_name)
         return datapoint_freshness_attributes(dp, now=dt_util.utcnow())

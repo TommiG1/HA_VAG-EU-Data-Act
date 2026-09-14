@@ -1,5 +1,27 @@
 # Release notes
 
+## v0.6.42 — Binary sensor for active charging (2026-09-14)
+
+### Summary
+
+Community request (ID.3): there was no simple on/off “is charging” entity,
+only the curated enum `sensor.*_charge_state`. Automations had to compare VW
+enums such as `CHARGE_STATE_CHARGING_HV_BATTERY`.
+
+### Feature
+
+- New curated `binary_sensor.*_charging` (device class `battery_charging`) for
+  both dotted (BEV/ID.x) and flat (PHEV) layouts.
+- **On** for active HV / conservation charging; **off** for ready, not ready,
+  purpose reached, discharging, error, and scenario `*_OFF`.
+- Power fallback (`charge_power` / `charging_power` > 0) when state is missing.
+- Read-only: no charging switch (portal does not expose charge commands).
+
+### Tests
+
+- Offline checks for dotted/flat on/off cases, error exclusion, and power
+  fallback.
+
 ## v0.6.41 — Normalize charge rate to per-hour units (#58) (2026-09-13)
 
 ### Summary

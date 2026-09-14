@@ -895,6 +895,173 @@ def main() -> int:
         True,
     )
 
+    # --- derived charging binary (#community) -----------------------------
+    print("is_actively_charging binary:")
+    check(
+        "dotted HV charging -> on",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CHARGING_HV_BATTERY"
+                    ),
+                }
+            )
+        ),
+        True,
+    )
+    check(
+        "dotted conservation charging -> on",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CONSERVATION_CHARGING"
+                    ),
+                }
+            )
+        ),
+        True,
+    )
+    check(
+        "dotted ready -> off",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_READY_FOR_CHARGING"
+                    ),
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted not ready -> off",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_NOT_READY_FOR_CHARGING"
+                    ),
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted error not treated as charging",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CHARGING_ERROR"
+                    ),
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted purpose reached -> off",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING"
+                    ),
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted discharging -> off",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_DISCHARGING"
+                    ),
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted scenario OFF -> off",
+        data.is_actively_charging(
+            _pts(
+                **{
+                    "charging_state_report.current_charge_state": (
+                        "CHARGE_STATE_CHARGING_HV_BATTERY"
+                    ),
+                    "charging_state_report.charging_scenario": "CHARGING_SCENARIO_OFF",
+                }
+            )
+        ),
+        False,
+    )
+    check(
+        "dotted power fallback when state missing",
+        data.is_actively_charging(
+            _pts(**{"battery_state_report.charge_power": "7.2"})
+        ),
+        True,
+    )
+    check(
+        "dotted zero power fallback -> off",
+        data.is_actively_charging(
+            _pts(**{"battery_state_report.charge_power": "0"})
+        ),
+        False,
+    )
+    check(
+        "flat charging -> on",
+        data.is_actively_charging(_pts(charging_state="charging")),
+        True,
+    )
+    check(
+        "flat conservationCharging -> on",
+        data.is_actively_charging(_pts(charging_state="conservationCharging")),
+        True,
+    )
+    check(
+        "flat off -> off",
+        data.is_actively_charging(_pts(charging_state="off")),
+        False,
+    )
+    check(
+        "flat completed -> off",
+        data.is_actively_charging(_pts(charging_state="completed")),
+        False,
+    )
+    check(
+        "flat power fallback when state missing",
+        data.is_actively_charging(_pts(charging_power="3.5")),
+        True,
+    )
+    check(
+        "no charging signal -> None",
+        data.is_actively_charging(_pts(remaining_charging_time="40")),
+        None,
+    )
+    check(
+        "charging binary registered dotted",
+        "charging" in {b.field_name for b in data.CURATED_BINARY_DOTTED},
+        True,
+    )
+    check(
+        "charging binary registered flat",
+        "charging" in {b.field_name for b in data.CURATED_BINARY_FLAT},
+        True,
+    )
+    check(
+        "charging binary device class",
+        next(b for b in data.CURATED_BINARY_DOTTED if b.field_name == "charging").device_class,
+        "battery_charging",
+    )
+
     check(
         "uint32 max without field name",
         data.is_sentinel(4294967295),

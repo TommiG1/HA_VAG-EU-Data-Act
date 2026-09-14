@@ -702,6 +702,9 @@
       },
       "lock_state": {
         "name": "Verrouillage central"
+      },
+      "charging": {
+        "name": "Charge"
       }
     }
   }

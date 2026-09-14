@@ -702,6 +702,9 @@
       },
       "lock_state": {
         "name": "Centrale vergrendeling"
+      },
+      "charging": {
+        "name": "Laden"
       }
     }
   }
