@@ -133,24 +133,38 @@ async def async_setup_entry(
                 continue
             # Due-date sensors derive a timestamp from a ".due_date" base field
             # (e.g. maintenance_interval__time_until_inspection.due_date); create
-            # once the base day-countdown field is present.
+            # once the base day-countdown field holds a usable reading (not a
+            # sentinel/empty value for hardware the vehicle doesn't have).
             if curated.field_name.endswith(".due_date"):
                 base_field = curated.field_name[: -len(".due_date")]
-                if find_by_field(points, base_field) is not None:
+                base_dp = find_by_field(points, base_field)
+                if base_dp is not None and is_usable_reading(
+                    base_dp.value, base_dp.field_name
+                ):
                     new_entities.append(EudaCuratedSensor(coordinator, curated))
                     added_curated.add(curated.field_name)
                 continue
             # Timestamp sensors track ".timestamp" on a base field (e.g.
-            # mileage.value.timestamp). Create once the base mileage field is
-            # present — timestampUtc is often missing on Cupra/MEB payloads.
+            # mileage.value.timestamp). Create once the base mileage field
+            # holds a usable reading — timestampUtc is often missing on
+            # Cupra/MEB payloads.
             if ".timestamp" in curated.field_name:
                 base_field = curated.field_name.replace(".timestamp", "")
-                if find_by_field(points, base_field) is not None:
+                base_dp = find_by_field(points, base_field)
+                if base_dp is not None and is_usable_reading(
+                    base_dp.value, base_dp.field_name
+                ):
                     new_entities.append(EudaCuratedSensor(coordinator, curated))
                     added_curated.add(curated.field_name)
             elif curated.field_name in present_fields:
-                new_entities.append(EudaCuratedSensor(coordinator, curated))
-                added_curated.add(curated.field_name)
+                # Only create the entity once the field carries a real
+                # reading, not just a sentinel/empty value — fields for
+                # hardware the vehicle doesn't have (sunroof, TPMS, …)
+                # otherwise become entities that can never hold a state.
+                dp = find_by_field(points, curated.field_name)
+                if dp is not None and is_usable_reading(dp.value, dp.field_name):
+                    new_entities.append(EudaCuratedSensor(coordinator, curated))
+                    added_curated.add(curated.field_name)
 
         for key, dp in points.items():
             if key in added_raw_keys:

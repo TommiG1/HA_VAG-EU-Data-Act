@@ -24,8 +24,8 @@ from .const import (
     OIDC_AUTHORIZE_URL,
     OIDC_REDIRECT_URI,
     OIDC_SCOPE,
+    LOGIN_TRANSIENT_HTTP_STATUSES,
     RELATION_PATH,
-    TRANSIENT_HTTP_STATUSES,
     USER_AGENT,
     VEHICLES_PATH,
 )
@@ -54,10 +54,10 @@ class AuthError(ApiError):
 def _raise_login_failure(message: str, *, status: int | None = None) -> None:
     """Raise AuthError, unless the HTTP status is a transient portal/IdP failure.
 
-    HTTP 429/5xx during login is an outage, not invalid credentials. Raising
-    AuthError would make Home Assistant prompt for reauth.
+    HTTP 429/404/5xx during login is an outage, not invalid credentials.
+    Raising AuthError would make Home Assistant prompt for reauth.
     """
-    if status in TRANSIENT_HTTP_STATUSES:
+    if status in LOGIN_TRANSIENT_HTTP_STATUSES:
         _LOGGER.warning("Login hit transient HTTP %s: %s", status, message)
         raise ApiError(message, status=status)
     raise AuthError(message, status=status)

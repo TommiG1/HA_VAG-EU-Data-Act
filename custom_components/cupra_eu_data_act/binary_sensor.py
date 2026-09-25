@@ -64,6 +64,17 @@ async def async_setup_entry(
                     continue
             elif curated.field_name not in present_fields:
                 continue
+            else:
+                # Only create the entity once the field decodes to an actual
+                # on/off state, not just an unsupported/invalid sentinel —
+                # fields for hardware the vehicle doesn't have (sunroof,
+                # spoiler, …) otherwise become entities that can never hold
+                # a state.
+                dp = find_by_field(points, curated.field_name)
+                if dp is None or decode_binary_state(
+                    dp.value, curated.encoding, curated.invert
+                ) is None:
+                    continue
             new_entities.append(EudaBinarySensor(coordinator, curated))
             added.add(curated.field_name)
 

@@ -2577,20 +2577,11 @@ CURATED_BINARY_FLAT: tuple[CuratedBinary, ...] = (
         invert=True,
         icon="mdi:shield-car",
     ),
-    CuratedBinary(
-        "safe_state_tailgate",
-        "Tailgate safe",
-        "safety",
-        invert=True,
-        icon="mdi:shield-car",
-    ),
-    CuratedBinary(
-        "safe_state_front_engine_bonnet",
-        "Hood safe",
-        "safety",
-        invert=True,
-        icon="mdi:shield-car",
-    ),
+    # Tailgate/bonnet "safe" fields are excluded from curation: unlike the
+    # door variants (safe=2/unsafe=3), the dictionary documents no "safe"
+    # value for tailgate/bonnet, only unsafe(3)/invalid(1) — so a closed
+    # tailgate or hood permanently reports "unsafe" here, a false alarm.
+    # Still available as disabled-by-default raw diagnostic sensors.
     # === Window States (value 2=open, 3=closed, 0=unsupported, 1=invalid) ===
     CuratedBinary(
         "state_front_left_door_window_lifter",

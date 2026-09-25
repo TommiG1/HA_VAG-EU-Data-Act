@@ -1,5 +1,47 @@
 # Release notes
 
+## v0.6.43 — Login 404 resilience, hood/tailgate safety false alarms, leaner discovery
+
+### Summary
+
+Three resilience and data-quality fixes for the login flow and curated
+sensors, found during a review of the login/discovery code paths.
+
+### Fixes
+
+- **Login HTTP 404 is now transient, not an auth failure.** The identity
+  provider occasionally answers a login step with 404 (service redeploying /
+  a step URL temporarily missing), same class of problem as the existing
+  429/5xx handling. Previously this caused a misleading "could not parse the
+  sign-in form" `AuthError` and an unnecessary reauth prompt. `const.py` gains
+  a login-only `LOGIN_TRANSIENT_HTTP_STATUSES` set (`TRANSIENT_HTTP_STATUSES`
+  stays unchanged for listing/download, where 404 already means "no ZIPs
+  delivered yet").
+- **Removed the `safe_state_tailgate` / `safe_state_front_engine_bonnet`
+  curated binary sensors.** Unlike the door variants (`safe`=2 / `unsafe`=3),
+  the data dictionary documents no "safe" value for tailgate/bonnet — only
+  `unsafe(3)`/`invalid(1)` — so a closed hood or tailgate permanently reported
+  a safety problem. Still available as disabled-by-default raw diagnostic
+  sensors. Door `safe_state_*` sensors are unaffected.
+- **Curated entities are now created only once a field holds a usable
+  reading**, not merely once the field is present in a dataset. Fields for
+  hardware the vehicle doesn't have (TPMS, sunroof, hood, …) otherwise become
+  entities that can never hold a state. The existing per-refresh discovery
+  listener still re-runs, so an entity appears as soon as a real reading
+  shows up. Entities already registered from a previous version will show as
+  unavailable until removed manually; this release does not prune the
+  registry.
+
+### Tests
+
+- `_raise_login_failure` parametrized for HTTP 404 (transient) alongside the
+  existing 429/401 cases.
+- `CURATED_BINARY_FLAT` asserted to no longer contain the two removed safety
+  sensors; door `safe_state_*` sensors asserted to remain.
+- New `tests/test_entity_discovery.py`: a sentinel-only tyre-pressure /
+  hood-state field creates no entity; a subsequent usable reading creates it
+  via the existing discovery listener.
+
 ## v0.6.42 — Binary sensor for active charging (2026-09-14)
 
 ### Summary

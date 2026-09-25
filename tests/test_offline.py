@@ -1165,6 +1165,32 @@ def main() -> int:
         data.decode_binary_state("unlocked", encoding="string_lock"),
         False,
     )
+
+    # --- hood/tailgate "safe" sensors removed (permanent false alarm) ----
+    # The dictionary documents no "safe" value for tailgate/bonnet (only
+    # unsafe(3)/invalid(1)), unlike the door variants (safe=2/unsafe=3), so a
+    # closed tailgate/hood would permanently report a safety problem.
+    _flat_binary_fields = {b.field_name for b in data.CURATED_BINARY_FLAT}
+    check(
+        "safe_state_tailgate not curated",
+        "safe_state_tailgate" in _flat_binary_fields,
+        False,
+    )
+    check(
+        "safe_state_front_engine_bonnet not curated",
+        "safe_state_front_engine_bonnet" in _flat_binary_fields,
+        False,
+    )
+    check(
+        "door safe_state_* still curated",
+        {
+            "safe_state_front_right_door",
+            "safe_state_rear_left_door",
+            "safe_state_rear_right_door",
+        }.issubset(_flat_binary_fields),
+        True,
+    )
+
     check(
         "PHEV flat binary fields registered",
         {
@@ -1248,6 +1274,16 @@ def main() -> int:
     except api.ApiError as err:
         check("429 login is ApiError", True, True)
         check("429 login keeps status", err.status, 429)
+    try:
+        # IdP redeploy / temporarily missing step URL — transient, not a
+        # credential problem.
+        api._raise_login_failure("Login rejected (HTTP 404)", status=404)
+        check("404 login raises", True, False)
+    except api.AuthError:
+        check("404 login is not AuthError", True, False)
+    except api.ApiError as err:
+        check("404 login is ApiError", True, True)
+        check("404 login keeps status", err.status, 404)
     try:
         api._raise_login_failure("Login rejected (HTTP 401)", status=401)
         check("401 login raises", True, False)

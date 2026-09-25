@@ -57,6 +57,10 @@ RETRY_INTERVAL = timedelta(minutes=1)
 MIN_INTERVAL = timedelta(seconds=30)
 # Portal/IdP outages and rate limits: retry and keep previous data, never reauth.
 TRANSIENT_HTTP_STATUSES = frozenset({429, 500, 502, 503, 504})
+# Login steps only: the IdP also answers with 404 while a sign-in step URL is
+# temporarily missing (e.g. redeploy). Not applied to listing/download, where
+# 404 already has a specific meaning (no ZIPs delivered yet).
+LOGIN_TRANSIENT_HTTP_STATUSES = TRANSIENT_HTTP_STATUSES | frozenset({404})
 # Backoff after repeated transient HTTP (listing or download); cap at 30 minutes.
 SERVER_ERROR_BACKOFF_INTERVALS = (
     timedelta(minutes=5),
