@@ -199,9 +199,6 @@ async def run_dump(
         session, email, "unused", brand, country=country, language=language
     )
     try:
-        async with await client._get(f"{const.BASE_URL}/") as resp:
-            await resp.read()
-
         authorize_url = api.EudaApiClient._build_authorize_url(
             brand, country=country, language=language
         )

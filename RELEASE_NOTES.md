@@ -1,5 +1,29 @@
 # Release notes
 
+## v0.6.44 — Drop login priming request
+
+### Summary
+
+The login no longer sends a priming `GET` to the portal root page before
+starting the OIDC flow. The portal operator reported millions of such requests
+per day (used only as an "is the portal online" check) and confirmed that the
+session cookies needed by the callback are set by the normal login redirect
+chain, so the request is unnecessary.
+
+### Changes
+
+- **Removed login step 0** (`GET https://eu-data-act.drivesomethinggreater.com/`)
+  from `EudaApiClient._do_login`. Thanks to @VWGroupDatahub for the PR (#60)
+  and to the evcc project for verifying that login and dataset download work
+  without it.
+- `tools/test_login.py` no longer sends the priming request in `--dump` mode.
+
+### Tests
+
+- Offline, API mock and brand test suites pass.
+- Verified on live Home Assistant after deploy: integration loads, manual
+  refresh downloads the latest dataset, status `ok`, no auth errors.
+
 ## v0.6.43 — Login 404 resilience, hood/tailgate safety false alarms, leaner discovery
 
 ### Summary
