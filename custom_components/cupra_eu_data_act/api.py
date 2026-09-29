@@ -15,6 +15,7 @@ import aiohttp
 from .brands import BrandConfig
 from .const import (
     BASE_URL,
+    CALLBACK_LOGIN_PATH,
     DEFAULT_COUNTRY,
     DEFAULT_LANGUAGE,
     DOWNLOAD_PATH,
@@ -31,6 +32,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+_LOGIN_REDIRECT_STATUSES = frozenset({301, 302, 303})
+_MAX_LOGIN_REDIRECTS = 10
 
 
 class ApiError(Exception):
@@ -193,6 +196,15 @@ def _login_headers(
     return headers
 
 
+def _is_portal_callback(url: str) -> bool:
+    """Return whether URL is the portal's OIDC callback endpoint."""
+    parsed = urlparse(url)
+    return (
+        parsed.netloc == urlparse(BASE_URL).netloc
+        and parsed.path.startswith(CALLBACK_LOGIN_PATH)
+    )
+
+
 def _passed_portal_callback(resp) -> bool:
     """Return True if the redirect chain went through the portal login callback.
 
@@ -201,16 +213,10 @@ def _passed_portal_callback(resp) -> bool:
     what the final localized CMS landing page returns (some locales 4xx/5xx
     there even after a successful login).
     """
-    portal_host = urlparse(BASE_URL).netloc
     history = getattr(resp, "history", ()) or ()
     for hop in list(history) + [resp]:
         url = getattr(hop, "url", None)
-        if url is None:
-            continue
-        parsed = urlparse(str(url))
-        if parsed.netloc == portal_host and parsed.path.startswith(
-            "/services/callbacklogin"
-        ):
+        if url is not None and _is_portal_callback(str(url)):
             return True
     return False
 
@@ -270,6 +276,47 @@ class EudaApiClient:
     async def _get(self, url: str, *, headers: dict | None = None, allow_redirects: bool = True):
         h = {"User-Agent": USER_AGENT, **(headers or {})}
         return await self._session.get(url, headers=h, allow_redirects=allow_redirects)
+
+    async def _post_login_form(
+        self,
+        url: str,
+        *,
+        data: dict[str, str],
+        referer: str,
+    ):
+        """POST a login form and stop after the portal callback response.
+
+        The callback stores the authenticated session cookie and then redirects
+        to a localized CMS page. Returning its response avoids downloading that
+        unrelated page while preserving the cookie in the session's cookie jar.
+        """
+        resp = await self._session.post(
+            url,
+            data=data,
+            headers=self._auth_headers(referer),
+            allow_redirects=False,
+        )
+        for _ in range(_MAX_LOGIN_REDIRECTS):
+            if _is_portal_callback(str(resp.url)):
+                return resp
+            if resp.status not in _LOGIN_REDIRECT_STATUSES:
+                return resp
+            location = resp.headers.get("Location")
+            if not location:
+                return resp
+            redirect_url = urljoin(str(resp.url), location)
+            redirect_referer = str(resp.url)
+            resp.release()
+            resp = await self._get(
+                redirect_url,
+                headers=self._auth_headers(redirect_referer),
+                allow_redirects=False,
+            )
+
+        resp.release()
+        raise ApiError(
+            f"Login redirect chain exceeded {_MAX_LOGIN_REDIRECTS} hops"
+        )
 
     # -- authentication ----------------------------------------------------
 
@@ -345,40 +392,41 @@ class EudaApiClient:
 
         # 4. POST credentials; follow the redirect chain back to the portal,
         #    which sets the session cookies via /services/callbacklogin.
-        async with self._session.post(
+        async with await self._post_login_form(
             authenticate_action,
             data=fields2,
-            headers=self._auth_headers(authenticate_url),
+            referer=authenticate_url,
         ) as resp:
             await self._finish_login(resp)
 
     async def _finish_login(self, resp, *, _after_terms: bool = False) -> None:
-        """Judge the credentials redirect chain and confirm the session.
-
-        The chain ends on a localized CMS landing page whose availability is
-        unrelated to authentication — it simply does not exist for some locales
-        (e.g. country ``ch``). Once the chain has passed ``/services/callbacklogin``
-        the session cookies are set, so the landing page status alone must not
-        fail the login.
-        """
+        """Judge the credentials redirect chain and confirm the session cookie."""
         landing = str(resp.url)
+
+        # The callback exchanges the OIDC code, sets access_token, and responds
+        # with a redirect to the localized CMS page. Do not follow that redirect.
+        if _is_portal_callback(landing):
+            token_cookie = resp.cookies.get("access_token")
+            token = getattr(token_cookie, "value", token_cookie)
+            if not token:
+                raise AuthError(
+                    "Login callback did not establish a session "
+                    "(access_token cookie missing)"
+                )
+            _LOGGER.debug("login step4: access token cookie received")
+            return
+
         landing_html = await resp.text()
         if resp.status >= 400:
-            if not _passed_portal_callback(resp):
-                _LOGGER.debug(
-                    "login step4: HTTP %s body[:500]=%s",
-                    resp.status,
-                    landing_html[:500],
-                )
-                err = _login_error(landing_html)
-                _raise_login_failure(
-                    err or f"Login rejected (HTTP {resp.status})",
-                    status=resp.status,
-                )
             _LOGGER.debug(
-                "login step4: landing page HTTP %s ignored (callbacklogin passed): %s",
+                "login step4: HTTP %s body[:500]=%s",
                 resp.status,
-                landing,
+                landing_html[:500],
+            )
+            err = _login_error(landing_html)
+            _raise_login_failure(
+                err or f"Login rejected (HTTP {resp.status})",
+                status=resp.status,
             )
         _LOGGER.debug("login step4: landed on %s", landing)
 
@@ -407,36 +455,17 @@ class EudaApiClient:
                 terms_action,
                 sorted(fields),
             )
-            async with self._session.post(
+            async with await self._post_login_form(
                 terms_action,
                 data=fields,
-                headers=self._auth_headers(landing),
+                referer=landing,
             ) as terms_resp:
                 await self._finish_login(terms_resp, _after_terms=True)
             return
 
-        # Positively confirm success: a completed flow lands back on the portal
-        # host (via /services/callbacklogin). Bad credentials re-render the
-        # identity sign-in page (URL still on identity.vwgroup.io/signin-service).
-        portal_host = urlparse(BASE_URL).netloc
         if "signin-service" in landing or "/error" in landing:
             raise AuthError("Login failed - check email and password")
-        if urlparse(landing).netloc != portal_host:
-            raise AuthError(f"Login did not complete (ended at {landing})")
-
-        # Prove the session with a cheap authenticated call. Only 401/403 is an
-        # authentication verdict; other probe failures are left to normal polling.
-        try:
-            async with await self._get(
-                f"{BASE_URL}{VEHICLES_PATH}?viewPosition=FRONT_LEFT"
-            ) as probe:
-                if probe.status in (401, 403):
-                    raise AuthError(
-                        f"Login did not establish a session (probe HTTP {probe.status})"
-                    )
-                _LOGGER.debug("login step5: session probe HTTP %s", probe.status)
-        except aiohttp.ClientError as err:
-            _LOGGER.debug("login step5: session probe network error ignored: %s", err)
+        raise AuthError(f"Login did not complete (ended at {landing})")
 
     @staticmethod
     def _build_authorize_url(

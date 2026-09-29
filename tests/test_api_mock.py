@@ -19,17 +19,31 @@ class _FakeResponse:
         body: str = "",
         url: str = "https://example.test/",
         history: list | None = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
     ):
         self.status = status
         self._body = body
         self.url = url
         self.history = history or []
+        self.headers = headers or {}
+        self.cookies = cookies or {}
+        self.released = False
 
     async def text(self) -> str:
         return self._body
 
     async def read(self) -> bytes:
         return self._body.encode()
+
+    def release(self) -> None:
+        self.released = True
+
+    def __await__(self):
+        async def _response():
+            return self
+
+        return _response().__await__()
 
     async def __aenter__(self):
         return self
@@ -42,8 +56,14 @@ class _FakeSession:
     def __init__(self, responses: list[_FakeResponse]):
         self._responses = list(responses)
         self.cookie_jar = []
+        self.requests = []
 
     def post(self, *args, **kwargs):
+        self.requests.append(("POST", args, kwargs))
+        return self._responses.pop(0)
+
+    def get(self, *args, **kwargs):
+        self.requests.append(("GET", args, kwargs))
         return self._responses.pop(0)
 
     async def close(self):
@@ -137,12 +157,64 @@ async def main() -> int:
 
     client_login._get = _probe_200.__get__(client_login, api.EudaApiClient)
 
+    first_redirect = _FakeResponse(
+        302,
+        url="https://identity.vwgroup.io/login/authenticate",
+        headers={"Location": f"{portal}/services/callbacklogin?code=x"},
+    )
+    callback_redirect = _FakeResponse(
+        302,
+        url=f"{portal}/services/callbacklogin?code=x",
+        headers={"Location": f"{portal}/content/euda/de/de/user.html"},
+        cookies={"access_token": "token"},
+    )
+    redirect_session = _FakeSession([first_redirect, callback_redirect])
+    redirect_client = _client(api, redirect_session, brand, logged_in=False)
+    stopped = await redirect_client._post_login_form(
+        "https://identity.vwgroup.io/login/authenticate",
+        data={"password": "secret"},
+        referer="https://identity.vwgroup.io/signin",
+    )
+    stopped_ok = (
+        stopped is callback_redirect
+        and first_redirect.released
+        and len(redirect_session.requests) == 2
+        and redirect_session.requests[1][0] == "GET"
+        and redirect_session.requests[1][1][0]
+        == f"{portal}/services/callbacklogin?code=x"
+        and redirect_session.requests[1][2]["allow_redirects"] is False
+    )
+    print(
+        f"  [{'PASS' if stopped_ok else 'FAIL'}] "
+        "stop on callback redirect without fetching CMS page"
+    )
+    if not stopped_ok:
+        failures.append("stop on callback redirect")
+
     try:
-        await client_login._finish_login(landing_ok)
-        print("  [PASS] finish_login ignores landing 404 after callback")
+        await client_login._finish_login(callback_redirect)
+        print("  [PASS] finish_login accepts callback access_token cookie")
     except Exception as err:  # noqa: BLE001
-        print(f"  [FAIL] finish_login ignores landing 404: {type(err).__name__}: {err}")
-        failures.append("finish_login landing 404")
+        print(f"  [FAIL] callback access_token: {type(err).__name__}: {err}")
+        failures.append("callback access_token")
+
+    callback_without_token = _FakeResponse(
+        302,
+        url=f"{portal}/services/callbacklogin?code=x",
+        headers={"Location": f"{portal}/content/euda/de/de/user.html"},
+    )
+    try:
+        await client_login._finish_login(callback_without_token)
+        print("  [FAIL] finish_login should reject callback without access_token")
+        failures.append("callback missing access_token")
+    except api.AuthError as err:
+        missing_token = "access_token" in str(err)
+        print(
+            f"  [{'PASS' if missing_token else 'FAIL'}] "
+            f"callback missing access_token: {err}"
+        )
+        if not missing_token:
+            failures.append("callback missing access_token")
 
     try:
         await client_login._finish_login(landing_fail)
@@ -210,7 +282,7 @@ async def main() -> int:
             "terms-and-conditions?updated=termsofuse"
         ),
     )
-    session_terms = _FakeSession([landing_ok])
+    session_terms = _FakeSession([callback_redirect])
     client_terms = _client(api, session_terms, brand, logged_in=False)
     client_terms._get = _probe_200.__get__(client_terms, api.EudaApiClient)
     try:

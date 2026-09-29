@@ -1,9 +1,35 @@
 """Constants for the VW Group EU Data Act integration."""
 from __future__ import annotations
 
+import json
 from datetime import timedelta
+from pathlib import Path
+import re
 
 DOMAIN = "cupra_eu_data_act"
+LIBRARY_NAME = "HA-VAG-EU-Data-Act"
+
+_HTTP_TOKEN_INVALID = re.compile(r"[^!#$%&'*+\-.^_`|~0-9A-Za-z]")
+
+
+def _http_token(value: object, fallback: str) -> str:
+    """Return an RFC 9110 token suitable for a User-Agent product."""
+    token = _HTTP_TOKEN_INVALID.sub("-", str(value)).strip("-")
+    return token or fallback
+
+
+def _integration_version() -> str:
+    """Read the canonical integration version from the HA manifest."""
+    try:
+        manifest = json.loads(Path(__file__).with_name("manifest.json").read_text("utf-8"))
+    except (OSError, ValueError, TypeError):
+        return "unknown"
+    if not isinstance(manifest, dict):
+        return "unknown"
+    return _http_token(manifest.get("version", ""), "unknown")
+
+
+USER_AGENT = f"{_http_token(LIBRARY_NAME, 'HA-VAG-EU-Data-Act')}/{_integration_version()}"
 
 
 def raw_unique_id(vin: str, key: str) -> str:
@@ -32,11 +58,6 @@ RELATION_PATH = "/proxy_api/vum/v2/users/me/relations/{vin}"
 METADATA_PATH = "/proxy_api/euda-apim/datarequest/vehicles/{vin}/metadata/partial"
 LIST_PATH = "/proxy_api/euda-apim/datadelivery/vehicles/{vin}/{identifier}/list"
 DOWNLOAD_PATH = "/proxy_api/euda-apim/datadelivery/vehicles/{vin}/{identifier}/download"
-
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
-)
 
 # --- Config entry keys ----------------------------------------------------
 CONF_BRAND = "brand"
