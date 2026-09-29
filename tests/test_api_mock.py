@@ -136,6 +136,7 @@ async def main() -> int:
         return _FakeResponse(200, "[]", url=req_url)
 
     client_login._get = _probe_200.__get__(client_login, api.EudaApiClient)
+
     try:
         await client_login._finish_login(landing_ok)
         print("  [PASS] finish_login ignores landing 404 after callback")
