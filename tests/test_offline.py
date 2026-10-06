@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -1362,6 +1363,22 @@ def main() -> int:
         "login headers es accept-language",
         api._login_headers("es", "es")["Accept-Language"],
         "es-ES,es;q=0.9,en;q=0.8",
+    )
+    check(
+        "user agent uses manifest version",
+        api.USER_AGENT,
+        f"HA-VAG-EU-Data-Act/{const._integration_version()}",
+    )
+    check(
+        "user agent is RFC product syntax",
+        bool(
+            re.fullmatch(
+                r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+/"
+                r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+",
+                api.USER_AGENT,
+            )
+        ),
+        True,
     )
     check(
         "oidc state with es locale",
