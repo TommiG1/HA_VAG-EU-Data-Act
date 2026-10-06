@@ -1,5 +1,37 @@
 # Release notes
 
+## v0.6.45 — Stop OIDC redirects after callback
+
+### Summary
+
+Login now stops at the portal callback once the session cookie is set, instead
+of following through to the localized CMS user page. Authentication success is
+judged by the `access_token` cookie from `/services/callbacklogin`. The
+browser-style User-Agent is replaced with `HA-VAG-EU-Data-Act/<version>`
+(read from `manifest.json`). Thanks to @VWGroupDatahub for the PR (#61); the
+same login-flow change is already in EVCC and ioBroker.vw-connect (see #62).
+
+### Changes
+
+- Follow login redirects manually and stop at `/services/callbacklogin`.
+- Validate login via the `access_token` cookie; drop the post-login vehicles
+  list probe.
+- User-Agent is now `HA-VAG-EU-Data-Act/<manifest version>`.
+- Tests cover redirect termination, missing callback cookie, and User-Agent
+  format.
+
+### Known portal issue
+
+The portal operator reports a sporadic issue where a download may contain
+**"No Content Found"** instead of vehicle data (#62). They are working on a
+fix; no action is required from affected users. If a refresh looks empty or
+fails oddly, try again later and update this integration if a newer version
+is available.
+
+### Tests
+
+- Offline, API mock and brand test suites pass.
+
 ## v0.6.44 — Drop login priming request
 
 ### Summary
