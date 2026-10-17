@@ -135,7 +135,17 @@ def normalize_field_name(field_name: str, description: str | None) -> str:
     Several dictionary entries use ``name: value`` with a descriptive sentence.
     Without this, curated sensors cannot target them and entity names would
     collide across unrelated ``value`` fields.
+
+    Some ``battery_state_report.soc`` slots hold the SoC at charge start, not
+    the current SoC; the dictionary description is the only way to tell them
+    apart, so they get their own name and never compete with the live reading.
     """
+    if (
+        field_name == "battery_state_report.soc"
+        and description
+        and "when charging is started" in description.lower()
+    ):
+        return "battery_state_report.soc_at_charge_start"
     if field_name.lower() not in _GENERIC_FIELD_NAMES or not description:
         return _FIELD_ALIASES.get(field_name, field_name)
     desc = description.strip().lower()
@@ -274,13 +284,10 @@ class Dataset:
         dictionary = load_dictionary()
         points: dict[str, DataPoint] = {}
         captured: list[datetime] = []
-        # The portal flattens several report snapshots into one array with no
-        # ordering guarantee (issue #45), so a single global "newest timestamp"
-        # made every value field (soc, mileage, …) look equally fresh. Track the
-        # most recent car_captured_time seen *so far* while walking the array
-        # instead, so a point stamped before an older snapshot's marker doesn't
-        # inherit a newer timestamp it has no evidence for.
-        running_captured: datetime | None = None
+        # The portal shuffles the array on every export (identical payloads
+        # arrive in different orders), so a car_captured_time marker says
+        # nothing about the neighbouring fields. Only the dataset-wide newest
+        # capture moment is a defensible stamp for value fields.
         for sequence, item in enumerate(payload.get("Data", [])):
             key = item.get("key")
             if not key:
@@ -293,7 +300,6 @@ class Dataset:
             if field_name.rsplit(".", 1)[-1] in _CAPTURED_TIME_SUFFIXES:
                 if ts := _parse_timestamp(item.get("value", "")):
                     captured.append(ts)
-                    running_captured = ts
             dp = DataPoint(
                 key=key,
                 field_name=field_name,
@@ -304,17 +310,11 @@ class Dataset:
                 description=meta.get("description") or None,
                 cluster=meta.get("cluster") or None,
                 timestamp_utc=item.get("timestampUtc") or None,
-                captured_at=running_captured,
             )
             points[key] = dp
         dataset_captured = max(captured) if captured else None
-        # Points that appear before any car_captured_time marker in the array
-        # have no running stamp to fall back on; use the dataset's newest
-        # capture moment for them, same as the previous global-stamp behaviour.
-        if dataset_captured is not None:
-            for dp in points.values():
-                if dp.captured_at is None:
-                    dp.captured_at = dataset_captured
+        for dp in points.values():
+            dp.captured_at = dataset_captured
         return cls(
             vin=payload.get("vin", ""),
             user_id=payload.get("user_id"),
@@ -454,8 +454,8 @@ def find_by_field(
     under different UUIDs with conflicting values. We prefer usable readings,
     then the **freshest** one (by its own ``timestampUtc`` / captured time).
     When no timestamps distinguish the candidates we use the last occurrence in
-    the ZIP. The portal often bundles minute-level snapshots in array order, so
-    the last duplicate is the best proxy for the freshest value.
+    the ZIP. That is only a deterministic tie-break: the portal shuffles the
+    array per export, so position carries no freshness information.
 
     When several candidates are tied for freshest *and* disagree on the value,
     there is no reliable signal left to pick the "right" one (see

@@ -539,12 +539,10 @@ def main() -> int:
         61,
     )
 
-    # --- issue #45: multiple soc slots in one ZIP, running captured_at -----
-    print("issue #45 — running car_captured_time per point:")
-    # Reproduces the reporter's dataset: three battery_state_report.soc slots
-    # (50, 71, 50) interleaved with car_captured_time markers of different
-    # ages. The old global-max stamp made all three equally "fresh"; a
-    # running stamp should at least drop the one preceded by an older marker.
+    # --- issue #45: multiple soc slots in one ZIP --------------------------
+    print("issue #45 — dataset-wide car_captured_time, charge-start soc slot:")
+    # The portal shuffles the array per export, so a marker's position says
+    # nothing about its neighbours: every point gets the dataset's newest stamp.
     issue_45_ds = data.Dataset.from_json(
         {
             "vin": "V",
@@ -553,24 +551,18 @@ def main() -> int:
                 {"key": "soc-1", "dataFieldName": "battery_state_report.soc", "value": "50"},
                 {"key": "cct-new", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
                 {"key": "soc-2", "dataFieldName": "battery_state_report.soc", "value": "71"},
-                {"key": "soc-3", "dataFieldName": "battery_state_report.soc", "value": "50"},
             ],
         }
     )
     check(
-        "soc-1 stamped with the older preceding marker, not the global max",
+        "array position does not change a point's stamp",
         issue_45_ds.points["soc-1"].captured_at,
-        data._parse_timestamp("2026-07-25T13:15:14Z"),
-    )
-    check(
-        "soc-2/soc-3 stamped with the newer preceding marker",
         issue_45_ds.points["soc-2"].captured_at,
-        data._parse_timestamp("2026-07-29T05:22:20Z"),
     )
     check(
-        "the older-preceded slot loses out to the two fresher, tied slots",
-        data.find_by_field(issue_45_ds.points, "battery_state_report.soc").value,
-        50,  # soc-3: last of the tied-freshest pair (soc-2=71, soc-3=50)
+        "every point carries the dataset's newest capture",
+        issue_45_ds.points["soc-1"].captured_at,
+        data._parse_timestamp("2026-07-29T05:22:20Z"),
     )
     check(
         "genuine tie between differing values is flagged ambiguous",
@@ -580,33 +572,50 @@ def main() -> int:
     check(
         "ambiguous_reading attribute set when the caller flags it",
         data.datapoint_freshness_attributes(
-            issue_45_ds.points["soc-3"], ambiguous=True
+            issue_45_ds.points["soc-2"], ambiguous=True
         ).get("ambiguous_reading"),
         True,
     )
     check(
         "ambiguous_reading attribute absent by default",
         "ambiguous_reading"
-        in data.datapoint_freshness_attributes(issue_45_ds.points["soc-3"]),
+        in data.datapoint_freshness_attributes(issue_45_ds.points["soc-2"]),
         False,
     )
 
-    # A point that appears before any car_captured_time marker in the array
-    # still falls back to the dataset's newest capture moment (no regression
-    # from the old global-stamp behaviour for that edge case).
-    leading_ds = data.Dataset.from_json(
-        {
-            "vin": "V",
-            "Data": [
-                {"key": "soc-lead", "dataFieldName": "battery_state_report.soc", "value": "60"},
-                {"key": "cct", "dataFieldName": "car_captured_time", "value": "2026-07-29T05:22:20Z"},
-            ],
-        }
-    )
+    # Live Cupra ZIPs carry a "SoC when charging is started" slot under the same
+    # field name (81) next to the current SoC (71). The dictionary description
+    # separates them regardless of array order.
+    for order in ("start_first", "current_first"):
+        slots = [
+            {"key": "7bddd5e7-43a4-3878-bd63-9502782f77a5", "value": "81"},
+            {"key": "506cb83e-f99f-3af3-bbeb-0429b69a78d9", "value": "71"},
+        ]
+        if order == "current_first":
+            slots.reverse()
+        charge_start_ds = data.Dataset.from_json(
+            {
+                "vin": "V",
+                "Data": [
+                    {"key": "cct", "dataFieldName": "car_captured_time", "value": "2026-10-16T16:11:24Z"},
+                    *slots,
+                ],
+            }
+        )
+        check(
+            f"current soc wins over charge-start slot ({order})",
+            data.find_by_field(charge_start_ds.points, "battery_state_report.soc").value,
+            71,
+        )
+        check(
+            f"soc not ambiguous once charge-start slot is split off ({order})",
+            data.find_by_field_ambiguous(charge_start_ds.points, "battery_state_report.soc"),
+            False,
+        )
     check(
-        "point before any marker falls back to dataset's newest capture",
-        leading_ds.points["soc-lead"].captured_at,
-        data._parse_timestamp("2026-07-29T05:22:20Z"),
+        "charge-start slot keeps its own field name",
+        charge_start_ds.points["7bddd5e7-43a4-3878-bd63-9502782f77a5"].field_name,
+        "battery_state_report.soc_at_charge_start",
     )
 
     # Tied-freshest candidates that agree on the value are not ambiguous.
