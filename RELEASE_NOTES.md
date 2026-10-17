@@ -1,5 +1,36 @@
 # Release notes
 
+## v0.6.46 — Battery level no longer flips to the charge-start SoC
+
+### Summary
+
+On some cars the battery sensor kept jumping between the real SoC and an older
+value (e.g. 71 % ↔ 81 %) without any new data from the car. The portal sends
+several `battery_state_report.soc` slots, and some of them hold the **SoC at the
+moment charging started**, not the current SoC. Those slots are now told apart
+by their data dictionary description and no longer compete with the live
+reading.
+
+### Changes
+
+- `battery_state_report.soc` slots described as *"State of Charging when
+  charging is started"* are renamed to `battery_state_report.soc_at_charge_start`
+  and are no longer picked for the **Battery** sensor.
+- Dropped the per-position `car_captured_time` stamping introduced for #45.
+  Comparing consecutive live ZIPs showed the portal shuffles the array on every
+  export, so a marker's position says nothing about its neighbours. Every value
+  field now carries the dataset's newest capture time again; genuine ties are
+  still flagged via `ambiguous_reading`.
+
+### Tests
+
+- Offline tests cover the charge-start slot in both array orders and
+  order-independent capture stamps.
+- Offline, API mock, brand and pytest suites pass.
+- Verified on live Home Assistant: the same ZIP that previously produced 81 %
+  now yields 71 % (matching `battery_level_HV.value`), without
+  `ambiguous_reading`.
+
 ## v0.6.45 — Stop OIDC redirects after callback
 
 ### Summary
