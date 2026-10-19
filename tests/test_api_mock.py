@@ -325,6 +325,97 @@ async def main() -> int:
         print(f"  [FAIL] unexpected terms loop: {type(err).__name__}: {err}")
         failures.append("finish_login terms loop")
 
+    marketing_url = (
+        "https://identity.vwgroup.io/signin-service/v1/consent/marketing/user/client"
+        "?callback=https%3A%2F%2Fidentity.vwgroup.io%2Foidc%2Fv1%2Foauth%2Fclient%2Fcallback"
+        "%3Fuser_id%3Du1%26scopes%3Dopenid%20cars&hmac=abc"
+    )
+    marketing = _FakeResponse(200, body="please consent", url=marketing_url)
+    marketing_hop = _FakeResponse(
+        302,
+        url=(
+            "https://identity.vwgroup.io/oidc/v1/oauth/client/callback"
+            "?user_id=u1&scopes=openid+cars"
+        ),
+        headers={"Location": f"{portal}/services/callbacklogin?code=x"},
+    )
+    session_marketing = _FakeSession([marketing_hop, callback_redirect])
+    client_marketing = _client(api, session_marketing, brand, logged_in=False)
+    try:
+        await client_marketing._finish_login(marketing)
+        marketing_get = session_marketing.requests[0]
+        skipped = (
+            marketing_get[0] == "GET"
+            and marketing_get[1][0].startswith(
+                "https://identity.vwgroup.io/oidc/v1/oauth/client/callback?"
+            )
+            and "scopes=openid+cars" in marketing_get[1][0]
+            and session_marketing.requests[1][1][0]
+            == f"{portal}/services/callbacklogin?code=x"
+        )
+        print(
+            f"  [{'PASS' if skipped else 'FAIL'}] "
+            "finish_login skips marketing consent via callback"
+        )
+        if not skipped:
+            failures.append("finish_login marketing skip")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] finish_login marketing skip: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing skip")
+
+    marketing_again = _FakeResponse(200, body="please consent", url=marketing_url)
+    session_marketing_loop = _FakeSession([marketing_again])
+    client_marketing_loop = _client(api, session_marketing_loop, brand, logged_in=False)
+    try:
+        await client_marketing_loop._finish_login(marketing)
+        print("  [FAIL] finish_login should reject a repeated marketing page")
+        failures.append("finish_login marketing loop")
+    except api.AuthError as err:
+        ok_marketing_loop = "after it was skipped" in str(err)
+        print(f"  [{'PASS' if ok_marketing_loop else 'FAIL'}] marketing loop guard: {err}")
+        if not ok_marketing_loop:
+            failures.append("finish_login marketing loop")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected marketing loop: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing loop")
+
+    marketing_open = _FakeResponse(
+        200,
+        url="https://identity.vwgroup.io/signin-service/v1/consent/marketing/user/client",
+    )
+    try:
+        await client_login._finish_login(marketing_open)
+        print("  [FAIL] finish_login should reject marketing page without callback")
+        failures.append("finish_login marketing missing callback")
+    except api.AuthError as err:
+        ok_missing = "without a continuation" in str(err)
+        print(f"  [{'PASS' if ok_missing else 'FAIL'}] marketing missing callback: {err}")
+        if not ok_missing:
+            failures.append("finish_login marketing missing callback")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected marketing missing callback: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing missing callback")
+
+    marketing_evil = _FakeResponse(
+        200,
+        url=(
+            "https://identity.vwgroup.io/signin-service/v1/consent/marketing/user/client"
+            "?callback=https%3A%2F%2Fevil.example%2Fphish"
+        ),
+    )
+    try:
+        await client_login._finish_login(marketing_evil)
+        print("  [FAIL] finish_login should reject an off-host marketing callback")
+        failures.append("finish_login marketing off-host")
+    except api.AuthError as err:
+        ok_host = "unexpected" in str(err)
+        print(f"  [{'PASS' if ok_host else 'FAIL'}] marketing off-host callback: {err}")
+        if not ok_host:
+            failures.append("finish_login marketing off-host")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected marketing off-host: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing off-host")
+
     print()
     if failures:
         print(f"FAILED: {len(failures)} -> {failures}")

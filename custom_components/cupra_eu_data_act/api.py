@@ -8,7 +8,7 @@ import re
 import uuid
 import zipfile
 from html.parser import HTMLParser
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 import aiohttp
 
@@ -16,6 +16,7 @@ from .brands import BrandConfig
 from .const import (
     BASE_URL,
     CALLBACK_LOGIN_PATH,
+    IDENTITY_BASE,
     DEFAULT_COUNTRY,
     DEFAULT_LANGUAGE,
     DOWNLOAD_PATH,
@@ -196,6 +197,33 @@ def _login_headers(
     return headers
 
 
+def _marketing_consent_callback(url: str) -> str | None:
+    """Return the continuation URL from an optional marketing-consent page.
+
+    The identity provider sometimes inserts ``/consent/marketing/`` after a
+    successful login. Consent is not required; the ``callback`` query parameter
+    is the next hop. Returns None when ``url`` is not that page.
+    """
+    parsed = urlparse(url)
+    if "/consent/marketing/" not in parsed.path:
+        return None
+    raw = parse_qs(parsed.query).get("callback", [""])[0]
+    if not raw:
+        raise AuthError(
+            "Login interrupted: the identity provider showed a marketing "
+            "consent page without a continuation URL"
+        )
+    target = urlparse(urljoin(url, raw))
+    allowed = {urlparse(BASE_URL).netloc, urlparse(IDENTITY_BASE).netloc}
+    if target.scheme != "https" or target.netloc not in allowed:
+        raise AuthError(
+            "Login interrupted: the marketing consent page has an unexpected "
+            "continuation URL"
+        )
+    query = urlencode(parse_qs(target.query, keep_blank_values=True), doseq=True)
+    return urlunparse(target._replace(query=query))
+
+
 def _is_portal_callback(url: str) -> bool:
     """Return whether URL is the portal's OIDC callback endpoint."""
     parsed = urlparse(url)
@@ -296,6 +324,19 @@ class EudaApiClient:
             headers=self._auth_headers(referer),
             allow_redirects=False,
         )
+        return await self._follow_login_redirects(resp)
+
+    async def _get_login_redirects(self, url: str, *, referer: str):
+        """GET a login hop and stop after the portal callback response."""
+        resp = await self._get(
+            url,
+            headers=self._auth_headers(referer),
+            allow_redirects=False,
+        )
+        return await self._follow_login_redirects(resp)
+
+    async def _follow_login_redirects(self, resp):
+        """Follow login redirects and stop on the portal callback response."""
         for _ in range(_MAX_LOGIN_REDIRECTS):
             if _is_portal_callback(str(resp.url)):
                 return resp
@@ -399,7 +440,13 @@ class EudaApiClient:
         ) as resp:
             await self._finish_login(resp)
 
-    async def _finish_login(self, resp, *, _after_terms: bool = False) -> None:
+    async def _finish_login(
+        self,
+        resp,
+        *,
+        _after_terms: bool = False,
+        _after_marketing: bool = False,
+    ) -> None:
         """Judge the credentials redirect chain and confirm the session cookie."""
         landing = str(resp.url)
 
@@ -414,6 +461,29 @@ class EudaApiClient:
                     "(access_token cookie missing)"
                 )
             _LOGGER.debug("login step4: access token cookie received")
+            return
+
+        # Optional marketing page. Consent is not required; the callback query
+        # parameter continues the OIDC flow. POST to this endpoint is rejected.
+        marketing_callback = _marketing_consent_callback(landing)
+        if marketing_callback is not None:
+            if _after_marketing:
+                raise AuthError(
+                    "Login interrupted: the identity provider still shows a "
+                    "marketing consent page after it was skipped"
+                )
+            _LOGGER.debug(
+                "login step4b: skip marketing consent via %s", marketing_callback
+            )
+            async with await self._get_login_redirects(
+                marketing_callback,
+                referer=landing,
+            ) as marketing_resp:
+                await self._finish_login(
+                    marketing_resp,
+                    _after_terms=_after_terms,
+                    _after_marketing=True,
+                )
             return
 
         landing_html = await resp.text()
