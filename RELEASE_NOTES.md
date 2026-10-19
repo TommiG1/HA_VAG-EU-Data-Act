@@ -1,5 +1,27 @@
 # Release notes
 
+## v0.6.47 — Skip optional marketing consent during login
+
+### Summary
+
+The identity provider sometimes inserts an optional marketing consent page
+(`/consent/marketing/`) after the password step. Login stopped there. Consent
+is not required: the page carries a `callback` URL, and login now follows it
+with GET and finishes the portal session.
+
+### Changes
+
+- Detect `/consent/marketing/` and continue via the `callback` query parameter.
+  That endpoint rejects POST.
+- Only follow callbacks on `identity.vwgroup.io` or the EU Data Act portal.
+- A second marketing page after the skip still fails the login.
+
+### Tests
+
+- API mock covers a successful skip, a repeated page, a missing callback, and
+  an off-host callback.
+- Offline, API mock, brand and pytest suites pass.
+
 ## v0.6.46 — Battery level no longer flips to the charge-start SoC
 
 ### Summary
