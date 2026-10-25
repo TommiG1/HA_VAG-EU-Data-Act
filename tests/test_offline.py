@@ -428,6 +428,42 @@ def main() -> int:
         data.find_by_field(points, "mileage").value,
         20717,
     )
+    alt_sent = {
+        "bad": data.DataPoint(
+            key="bad",
+            field_name="mileage.value",
+            raw_value="4294967294",
+        ),
+        "good": data.DataPoint(
+            key="good",
+            field_name="mileage.value",
+            raw_value="24762",
+        ),
+    }
+    check(
+        "prefer_max ignores uint32 max-1 (#70)",
+        data.find_by_field(
+            alt_sent, "mileage.value", prefer_max_value=True
+        ).value,
+        24762,
+    )
+    merged_alt = data.merge_data_points(
+        {
+            "k": data.DataPoint(
+                key="k", field_name="mileage", raw_value="24762"
+            )
+        },
+        {
+            "k": data.DataPoint(
+                key="k", field_name="mileage", raw_value="4294967294"
+            )
+        },
+    )
+    check(
+        "merge keeps good over uint32 max-1 (#70)",
+        merged_alt["k"].value,
+        24762,
+    )
 
     # --- P5: timestamp-aware find_by_field & merge (issue #24) ------------
     print("timestamp-aware find_by_field:")
@@ -798,6 +834,21 @@ def main() -> int:
     print("sentinel detection:")
     check("uint32 max mileage", data.is_sentinel(4294967295, "mileage"), True)
     check("uint32 max mileage.value", data.is_sentinel(4294967295, "mileage.value"), True)
+    check(
+        "uint32 max-1 mileage (#70)",
+        data.is_sentinel(4294967294, "mileage"),
+        True,
+    )
+    check(
+        "uint32 max-1 mileage.value (#70)",
+        data.is_sentinel(4294967294, "mileage.value"),
+        True,
+    )
+    check(
+        "uint32 max-1 as string (#70)",
+        data.is_sentinel("4294967294", "mileage"),
+        True,
+    )
     check("uint16 max charging time", data.is_sentinel(65535, "remaining_charging_time"), True)
     check(
         "uint16 max dotted charging time",

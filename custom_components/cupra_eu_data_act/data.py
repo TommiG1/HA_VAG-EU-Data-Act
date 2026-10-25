@@ -1089,10 +1089,14 @@ def electr_consumption_kwh_per_1000km_to_kwh_per_100km(value) -> float | None:
 # floats so float-typed fields with the same magnitude are caught.
 
 # Global integer sentinels: max-unsigned and max-signed for common widths.
+# Also max-1 for uint32: the portal has started emitting 4294967294 as an
+# alternate "no reading" mileage value (issue #70), one below the classic
+# uint32-max sentinel.
 _GLOBAL_NUMERIC_SENTINELS: frozenset[float] = frozenset(
     {
         2**16 - 1,   # 65535  (uint16 max)
         2**31 - 1,   # 2147483647 (int32 max)
+        2**32 - 2,   # 4294967294 (uint32 max - 1, issue #70)
         2**32 - 1,   # 4294967295 (uint32 max)
     }
 )
