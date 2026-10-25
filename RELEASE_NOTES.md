@@ -1,5 +1,27 @@
 # Release notes
 
+## v0.6.48 — Alternate uint32 mileage sentinel (#70)
+
+### Summary
+
+The portal has started reporting mileage as `4294967294` (uint32 max minus
+one) when there is no reading. That value sat one below the classic
+`4294967295` sentinel, so it was treated as a real odometer. With mileage
+preferring the highest value in a ZIP, the fake reading would win and spike
+history.
+
+### Fix
+
+- Treat `4294967294` as a global numeric sentinel alongside `4294967295`.
+- Sticky merge and `prefer_max_value` already skip sentinels; they now ignore
+  this alternate value as well.
+
+### Tests
+
+- Offline coverage for `is_sentinel`, merge retention, and prefer-max with
+  `4294967294`.
+- Offline, API mock, brand and pytest suites pass.
+
 ## v0.6.47 — Skip optional marketing consent during login
 
 ### Summary
