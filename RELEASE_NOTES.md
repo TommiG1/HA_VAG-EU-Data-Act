@@ -1,5 +1,33 @@
 # Release notes
 
+## v0.6.50 — Hassfest / HACS default submission prep
+
+### Summary
+
+Adds the HACS and hassfest GitHub Actions required to submit the
+integration to `hacs/default`, and fixes validation findings so both
+actions pass without ignores.
+
+### Changes
+
+- Add `.github/workflows/validate.yml` (HACS + hassfest).
+- Sort `manifest.json` keys; declare `CONFIG_SCHEMA`.
+- Normalize entity translation keys (camelCase / `__` → snake_case).
+- Lowercase ALLCAPS enum **state** values used with `translation_key`
+  so `strings.json` state maps pass hassfest.
+
+### Breaking
+
+Enum sensors that used an explicit `translation_key` now report
+lowercase states (e.g. `auto_unlock_ac_off` instead of
+`AUTO_UNLOCK_AC_OFF`). Update automations that match the old uppercase
+states.
+
+### Tests
+
+- Offline, API mock and brand suites pass.
+- Validate workflow: HACS + hassfest green.
+
 ## v0.6.49 — Auth0 Universal Login for CUPRA and SEAT (#71, #72)
 
 ### Summary
