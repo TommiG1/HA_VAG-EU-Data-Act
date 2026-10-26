@@ -1,5 +1,27 @@
 # Release notes
 
+## v0.6.49 — Auth0 Universal Login for CUPRA and SEAT (#71, #72)
+
+### Summary
+
+CUPRA and SEAT identity login moved from the classic VW `signin-service`
+pages to Auth0 Universal Login at `/u/login`. The integration still expected
+`hmac` / `_csrf` fields, so reauth failed (often shown as HTTP 400) even when
+the same credentials worked in the EU Data Act portal.
+
+### Fix
+
+- Detect Auth0 `/u/login` and complete email + password in a single POST.
+- Keep the classic two-step signin-service flow for other brands.
+- Read Auth0 `data-error-code` so wrong credentials are reported clearly.
+
+### Tests
+
+- Offline coverage for Auth0 form parsing and error extraction.
+- API mock covers a successful Auth0 login and wrong-password handling.
+- Verified end-to-end against a live CUPRA account.
+- Offline, API mock, brand and pytest suites pass.
+
 ## v0.6.48 — Alternate uint32 mileage sentinel (#70)
 
 ### Summary
