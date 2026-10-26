@@ -8,8 +8,10 @@ import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
 from .api import EudaApiClient
 from .brands import DEFAULT_BRAND, get_brand
@@ -37,8 +39,10 @@ from .utility_meter import async_ensure_utility_meters
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
 
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the integration (services)."""
     async_setup_services(hass)
     return True

@@ -1311,10 +1311,16 @@ def sum_fallback_reading(
 
 
 def curated_translation_key(field_name: str, translation_key: str | None = None) -> str:
-    """Stable HA translation key for a curated sensor field."""
+    """Stable HA translation key for a curated sensor field.
+
+    Hassfest requires ``[a-z0-9-_]+`` without leading/trailing separators, so
+    portal camelCase and ``__`` field names are normalized to snake_case.
+    """
     if translation_key:
         return translation_key
-    return field_name.replace(".", "_")
+    key = field_name.replace(".", "_")
+    key = re.sub(r"(?<!^)(?=[A-Z])", "_", key).lower()
+    return re.sub(r"_+", "_", key).strip("_")
 
 
 def maintenance_due_datetime(days_value, now):

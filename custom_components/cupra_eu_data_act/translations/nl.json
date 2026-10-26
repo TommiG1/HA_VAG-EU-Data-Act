@@ -235,19 +235,19 @@
       "charged_energy": {
         "name": "Totaal geladen energie"
       },
-      "boardnetBatteryVoltageIndication": {
+      "boardnet_battery_voltage_indication": {
         "name": "12V-accuspanning"
       },
-      "inspectionDistance": {
+      "inspection_distance": {
         "name": "Inspectieafstand"
       },
-      "outsideTemperatureIndication": {
+      "outside_temperature_indication": {
         "name": "Buitentemperatuur"
       },
       "fuel_level_current_level": {
         "name": "Brandstofniveau"
       },
-      "fuel_level__accuracy": {
+      "fuel_level_accuracy": {
         "name": "Brandstofniveau-nauwkeurigheid"
       },
       "cng_gas_level": {
@@ -328,10 +328,10 @@
       "position_sunroof_motor_hood_1": {
         "name": "Schuifdakpositie"
       },
-      "maintenance_interval__time_until_inspection": {
+      "maintenance_interval_time_until_inspection": {
         "name": "Inspectie-interval"
       },
-      "maintenance_interval__time_until_oil_change": {
+      "maintenance_interval_time_until_oil_change": {
         "name": "Oliebeurt-interval"
       },
       "maintenance_interval_distance_until_inspection": {
@@ -610,7 +610,7 @@
       "locked_state_front_right_door": {
         "name": "Deurslot voor rechts"
       },
-      "locked_state__rear_left_door": {
+      "locked_state_rear_left_door": {
         "name": "Deurslot achter links"
       },
       "locked_state_rear_right_door": {

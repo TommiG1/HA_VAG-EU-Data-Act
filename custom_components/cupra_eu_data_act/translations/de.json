@@ -236,19 +236,19 @@
       "charged_energy": {
         "name": "Gesamt geladene Energie"
       },
-      "boardnetBatteryVoltageIndication": {
+      "boardnet_battery_voltage_indication": {
         "name": "12V-Batteriespannung"
       },
-      "inspectionDistance": {
+      "inspection_distance": {
         "name": "Inspektionsdistanz"
       },
-      "outsideTemperatureIndication": {
+      "outside_temperature_indication": {
         "name": "Außentemperatur"
       },
       "fuel_level_current_level": {
         "name": "Tankfüllstand"
       },
-      "fuel_level__accuracy": {
+      "fuel_level_accuracy": {
         "name": "Tankfüllstand-Genauigkeit"
       },
       "cng_gas_level": {
@@ -329,10 +329,10 @@
       "position_sunroof_motor_hood_1": {
         "name": "Schiebedachposition"
       },
-      "maintenance_interval__time_until_inspection": {
+      "maintenance_interval_time_until_inspection": {
         "name": "Inspektionsintervall"
       },
-      "maintenance_interval__time_until_oil_change": {
+      "maintenance_interval_time_until_oil_change": {
         "name": "Ölwechsel-Intervall"
       },
       "maintenance_interval_distance_until_inspection": {
@@ -611,7 +611,7 @@
       "locked_state_front_right_door": {
         "name": "Türschloss vorne rechts"
       },
-      "locked_state__rear_left_door": {
+      "locked_state_rear_left_door": {
         "name": "Türschloss hinten links"
       },
       "locked_state_rear_right_door": {

@@ -1,7 +1,6 @@
 {
   "domain": "cupra_eu_data_act",
   "name": "VW Group EU Data Act",
-  "version": "0.6.49",
   "codeowners": ["@TommiG1"],
   "config_flow": true,
   "dependencies": [],
@@ -9,5 +8,6 @@
   "integration_type": "device",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues",
-  "requirements": []
+  "requirements": [],
+  "version": "0.6.49"
 }

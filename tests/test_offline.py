@@ -309,6 +309,16 @@ def main() -> int:
         "mileage_value",
     )
     check(
+        "curated_translation_key camelCase",
+        data.curated_translation_key("boardnetBatteryVoltageIndication"),
+        "boardnet_battery_voltage_indication",
+    )
+    check(
+        "curated_translation_key collapses underscores",
+        data.curated_translation_key("fuel_level__accuracy"),
+        "fuel_level_accuracy",
+    )
+    check(
         "curated_translation_key keeps short key",
         data.curated_translation_key(
             "charging_state_report.current_charge_state", "charge_state"
