@@ -428,109 +428,109 @@
       "charge_state": {
         "name": "Laadstatus",
         "state": {
-          "CHARGE_STATE_READY_FOR_CHARGING": "Klaar om te laden",
-          "CHARGE_STATE_NOT_READY_FOR_CHARGING": "Niet gereed",
-          "CHARGE_STATE_CHARGING_HV_BATTERY": "Laadt HV-accu",
-          "CHARGE_STATE_CONSERVATION_CHARGING": "Behoudlading",
-          "CHARGE_STATE_DISCHARGING": "Ontladen",
-          "CHARGE_STATE_CHARGING_ERROR": "Laadfout",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_CONSERVATION": "Doel bereikt (behoud)",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING": "Doel bereikt"
+          "charge_state_ready_for_charging": "Klaar om te laden",
+          "charge_state_not_ready_for_charging": "Niet gereed",
+          "charge_state_charging_hv_battery": "Laadt HV-accu",
+          "charge_state_conservation_charging": "Behoudlading",
+          "charge_state_discharging": "Ontladen",
+          "charge_state_charging_error": "Laadfout",
+          "charge_state_charge_purpose_reached_and_conservation": "Doel bereikt (behoud)",
+          "charge_state_charge_purpose_reached_and_not_conservation_charging": "Doel bereikt"
         }
       },
       "charge_mode": {
         "name": "Laadmodus",
         "state": {
-          "CHARGE_MODE_IMMEDIATELY_DEFAULT": "Direct (standaard)",
-          "CHARGE_MODE_IMMEDIATELY_PROFILE": "Direct (profiel)",
-          "CHARGE_MODE_IMMEDIATELY_STOPPED": "Direct gestopt",
-          "CHARGE_MODE_EXTENDED_PROFILE": "Verlengd (profiel)",
-          "CHARGE_MODE_EXTENDED_STOPPED": "Verlengd gestopt",
-          "CHARGE_MODE_INVALID": "Ongeldig"
+          "charge_mode_immediately_default": "Direct (standaard)",
+          "charge_mode_immediately_profile": "Direct (profiel)",
+          "charge_mode_immediately_stopped": "Direct gestopt",
+          "charge_mode_extended_profile": "Verlengd (profiel)",
+          "charge_mode_extended_stopped": "Verlengd gestopt",
+          "charge_mode_invalid": "Ongeldig"
         }
       },
       "charge_type": {
         "name": "Laadtype",
         "state": {
-          "CHARGE_TYPE_AC": "AC",
-          "CHARGE_TYPE_DC": "DC",
-          "CHARGE_TYPE_OFF": "Uit"
+          "charge_type_ac": "AC",
+          "charge_type_dc": "DC",
+          "charge_type_off": "Uit"
         }
       },
       "charging_scenario": {
         "name": "Laadscenario",
         "state": {
-          "CHARGING_SCENARIO_OFF": "Uit",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_ACTIVE": "Direct laden actief",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_FINISHED": "Direct laden voltooid",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_ACTIVE": "Laden tot vertrek",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_FINISHED": "Vertrekladen voltooid",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_AC": "Geoptimaliseerd AC-laden",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_FINISHED": "Geoptimaliseerd laden voltooid"
+          "charging_scenario_off": "Uit",
+          "charging_scenario_immediately_charging_active": "Direct laden actief",
+          "charging_scenario_immediately_charging_finished": "Direct laden voltooid",
+          "charging_scenario_charging_to_departure_time_active": "Laden tot vertrek",
+          "charging_scenario_charging_to_departure_time_finished": "Vertrekladen voltooid",
+          "charging_scenario_optimised_charging_ac": "Geoptimaliseerd AC-laden",
+          "charging_scenario_optimised_charging_finished": "Geoptimaliseerd laden voltooid"
         }
       },
       "immediate_action_state": {
         "name": "Laadactiestatus",
         "state": {
-          "IMMEDIATE_ACTION_STATE_INVALID": "Ongeldig",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_CHARGING": "Direct laden",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_TIME": "Actie: tijd",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_STOPPED": "Actie gestopt",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_RANGE": "Actie: bereik",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_SOC": "Actie: laadstatus",
-          "IMMEDIATE_ACTION_STATE_CHARGE_MODE_SELECTION": "Moduskeuze"
+          "immediate_action_state_invalid": "Ongeldig",
+          "immediate_action_state_immediate_charging": "Direct laden",
+          "immediate_action_state_immediate_action_time": "Actie: tijd",
+          "immediate_action_state_immediate_action_stopped": "Actie gestopt",
+          "immediate_action_state_immediate_action_range": "Actie: bereik",
+          "immediate_action_state_immediate_action_soc": "Actie: laadstatus",
+          "immediate_action_state_charge_mode_selection": "Moduskeuze"
         }
       },
       "charge_mode_selection": {
         "name": "Laadmodusselectie",
         "state": {
-          "CHARGE_MODE_SELECTION_INVALID": "Ongeldig",
-          "CHARGE_MODE_SELECTION_IMMEDIATECHARGING": "Direct laden",
-          "CHARGE_MODE_SELECTION_IMMEDIATE_DISCHARGING": "Direct ontladen",
-          "CHARGE_MODE_SELECTION_TIMERCHARGING": "Timerladen",
-          "CHARGE_MODE_SELECTION_TIMER_CHARGING_CLIMATIZATION": "Timer + klimaat",
-          "CHARGE_MODE_SELECTION_PREFERRED_CHARGING_TIMES": "Voorkeurstijden",
-          "CHARGE_MODE_SELECTION_ONLY_OWN_CURRENT": "Alleen eigen stroom",
-          "CHARGE_MODE_SELECTION_HOME_STORAGE_CHARGING": "Thuisopslag"
+          "charge_mode_selection_invalid": "Ongeldig",
+          "charge_mode_selection_immediatecharging": "Direct laden",
+          "charge_mode_selection_immediate_discharging": "Direct ontladen",
+          "charge_mode_selection_timercharging": "Timerladen",
+          "charge_mode_selection_timer_charging_climatization": "Timer + klimaat",
+          "charge_mode_selection_preferred_charging_times": "Voorkeurstijden",
+          "charge_mode_selection_only_own_current": "Alleen eigen stroom",
+          "charge_mode_selection_home_storage_charging": "Thuisopslag"
         }
       },
       "max_ac_charge_current": {
         "name": "Max. AC-laadstroom",
         "state": {
-          "MAX_CHARGE_CURRENT_INVALID": "Ongeldig",
-          "MAX_CHARGE_CURRENT_MAXIMUM": "Maximum",
-          "MAX_CHARGE_CURRENT_REDUCED": "Verminderd"
+          "max_charge_current_invalid": "Ongeldig",
+          "max_charge_current_maximum": "Maximum",
+          "max_charge_current_reduced": "Verminderd"
         }
       },
       "auto_unlock_ac": {
         "name": "AC automatisch ontgrendelen",
         "state": {
-          "AUTO_UNLOCK_AC_INVALID": "Ongeldig",
-          "AUTO_UNLOCK_AC_OFF": "Uit",
-          "AUTO_UNLOCK_AC_ONCE": "Eenmalig",
-          "AUTO_UNLOCK_AC_PERMANENT": "Permanent"
+          "auto_unlock_ac_invalid": "Ongeldig",
+          "auto_unlock_ac_off": "Uit",
+          "auto_unlock_ac_once": "Eenmalig",
+          "auto_unlock_ac_permanent": "Permanent"
         }
       },
       "bcam_activation": {
         "name": "BCAM-activering",
         "state": {
-          "BCAM_ACTIVATION_ACTIVATED": "Geactiveerd",
-          "BCAM_ACTIVATION_DEACTIVATED": "Gedeactiveerd"
+          "bcam_activation_activated": "Geactiveerd",
+          "bcam_activation_deactivated": "Gedeactiveerd"
         }
       },
       "charging_timer_reachability": {
         "name": "Laadtimer haalbaarheid",
         "state": {
-          "TARGET_REACHABILITY_CALCULATING": "Berekenen",
-          "TARGET_REACHABILITY_REACHABLE": "Haalbaar",
-          "TARGET_REACHABILITY_NOT_REACHABLE": "Niet haalbaar"
+          "target_reachability_calculating": "Berekenen",
+          "target_reachability_reachable": "Haalbaar",
+          "target_reachability_not_reachable": "Niet haalbaar"
         }
       },
       "window_heating_state": {
         "name": "Ruitverwarming",
         "state": {
-          "WINDOW_HEATING_STATE_OFF": "Uit",
-          "WINDOW_HEATING_STATE_ON": "Aan"
+          "window_heating_state_off": "Uit",
+          "window_heating_state_on": "Aan"
         }
       },
       "charging_state": {
@@ -563,7 +563,7 @@
       "last_battery_charger_update_trigger": {
         "name": "Laadpaal-update trigger",
         "state": {
-          "clamp15Off": "Klem 15 uit"
+          "clamp15off": "Klem 15 uit"
         }
       }
     },

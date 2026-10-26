@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -410,6 +412,10 @@ class EudaCuratedSensor(EudaEntity, SensorEntity):
                 return self._sticky(transformed)
 
         if self._curated.translation_key:
+            # Hassfest requires lowercase state keys under entity.*.state;
+            # keep ALLCAPS portal enums as snake_case for translation lookup.
+            if isinstance(raw_value, str) and re.fullmatch(r"[A-Z0-9_]+", raw_value):
+                return self._sticky(raw_value.lower())
             return self._sticky(raw_value)
         if isinstance(raw_value, str):
             return self._sticky(

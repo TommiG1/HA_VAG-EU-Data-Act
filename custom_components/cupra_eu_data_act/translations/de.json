@@ -429,109 +429,109 @@
       "charge_state": {
         "name": "Ladestatus",
         "state": {
-          "CHARGE_STATE_READY_FOR_CHARGING": "Ladebereit",
-          "CHARGE_STATE_NOT_READY_FOR_CHARGING": "Nicht ladebereit",
-          "CHARGE_STATE_CHARGING_HV_BATTERY": "Lädt HV-Batterie",
-          "CHARGE_STATE_CONSERVATION_CHARGING": "Erhaltungsladung",
-          "CHARGE_STATE_DISCHARGING": "Entladen",
-          "CHARGE_STATE_CHARGING_ERROR": "Ladefehler",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_CONSERVATION": "Ziel erreicht (Erhaltung)",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING": "Ziel erreicht"
+          "charge_state_ready_for_charging": "Ladebereit",
+          "charge_state_not_ready_for_charging": "Nicht ladebereit",
+          "charge_state_charging_hv_battery": "Lädt HV-Batterie",
+          "charge_state_conservation_charging": "Erhaltungsladung",
+          "charge_state_discharging": "Entladen",
+          "charge_state_charging_error": "Ladefehler",
+          "charge_state_charge_purpose_reached_and_conservation": "Ziel erreicht (Erhaltung)",
+          "charge_state_charge_purpose_reached_and_not_conservation_charging": "Ziel erreicht"
         }
       },
       "charge_mode": {
         "name": "Lademodus",
         "state": {
-          "CHARGE_MODE_IMMEDIATELY_DEFAULT": "Sofort (Standard)",
-          "CHARGE_MODE_IMMEDIATELY_PROFILE": "Sofort (Profil)",
-          "CHARGE_MODE_IMMEDIATELY_STOPPED": "Sofort gestoppt",
-          "CHARGE_MODE_EXTENDED_PROFILE": "Verlängert (Profil)",
-          "CHARGE_MODE_EXTENDED_STOPPED": "Verlängert gestoppt",
-          "CHARGE_MODE_INVALID": "Ungültig"
+          "charge_mode_immediately_default": "Sofort (Standard)",
+          "charge_mode_immediately_profile": "Sofort (Profil)",
+          "charge_mode_immediately_stopped": "Sofort gestoppt",
+          "charge_mode_extended_profile": "Verlängert (Profil)",
+          "charge_mode_extended_stopped": "Verlängert gestoppt",
+          "charge_mode_invalid": "Ungültig"
         }
       },
       "charge_type": {
         "name": "Ladeart",
         "state": {
-          "CHARGE_TYPE_AC": "AC",
-          "CHARGE_TYPE_DC": "DC",
-          "CHARGE_TYPE_OFF": "Aus"
+          "charge_type_ac": "AC",
+          "charge_type_dc": "DC",
+          "charge_type_off": "Aus"
         }
       },
       "charging_scenario": {
         "name": "Ladeszenario",
         "state": {
-          "CHARGING_SCENARIO_OFF": "Aus",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_ACTIVE": "Sofortladen aktiv",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_FINISHED": "Sofortladen beendet",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_ACTIVE": "Laden bis Abfahrt",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_FINISHED": "Abfahrtsladen beendet",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_AC": "Optimiertes AC-Laden",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_FINISHED": "Optimiertes Laden beendet"
+          "charging_scenario_off": "Aus",
+          "charging_scenario_immediately_charging_active": "Sofortladen aktiv",
+          "charging_scenario_immediately_charging_finished": "Sofortladen beendet",
+          "charging_scenario_charging_to_departure_time_active": "Laden bis Abfahrt",
+          "charging_scenario_charging_to_departure_time_finished": "Abfahrtsladen beendet",
+          "charging_scenario_optimised_charging_ac": "Optimiertes AC-Laden",
+          "charging_scenario_optimised_charging_finished": "Optimiertes Laden beendet"
         }
       },
       "immediate_action_state": {
         "name": "Sofortlade-Status",
         "state": {
-          "IMMEDIATE_ACTION_STATE_INVALID": "Ungültig",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_CHARGING": "Sofortladen",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_TIME": "Aktion: Zeit",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_STOPPED": "Aktion gestoppt",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_RANGE": "Aktion: Reichweite",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_SOC": "Aktion: Ladestand",
-          "IMMEDIATE_ACTION_STATE_CHARGE_MODE_SELECTION": "Moduswahl"
+          "immediate_action_state_invalid": "Ungültig",
+          "immediate_action_state_immediate_charging": "Sofortladen",
+          "immediate_action_state_immediate_action_time": "Aktion: Zeit",
+          "immediate_action_state_immediate_action_stopped": "Aktion gestoppt",
+          "immediate_action_state_immediate_action_range": "Aktion: Reichweite",
+          "immediate_action_state_immediate_action_soc": "Aktion: Ladestand",
+          "immediate_action_state_charge_mode_selection": "Moduswahl"
         }
       },
       "charge_mode_selection": {
         "name": "Lademodus-Auswahl",
         "state": {
-          "CHARGE_MODE_SELECTION_INVALID": "Ungültig",
-          "CHARGE_MODE_SELECTION_IMMEDIATECHARGING": "Sofortladen",
-          "CHARGE_MODE_SELECTION_IMMEDIATE_DISCHARGING": "Sofort entladen",
-          "CHARGE_MODE_SELECTION_TIMERCHARGING": "Timer-Laden",
-          "CHARGE_MODE_SELECTION_TIMER_CHARGING_CLIMATIZATION": "Timer + Klima",
-          "CHARGE_MODE_SELECTION_PREFERRED_CHARGING_TIMES": "Bevorzugte Zeiten",
-          "CHARGE_MODE_SELECTION_ONLY_OWN_CURRENT": "Nur eigener Strom",
-          "CHARGE_MODE_SELECTION_HOME_STORAGE_CHARGING": "Heimspeicher"
+          "charge_mode_selection_invalid": "Ungültig",
+          "charge_mode_selection_immediatecharging": "Sofortladen",
+          "charge_mode_selection_immediate_discharging": "Sofort entladen",
+          "charge_mode_selection_timercharging": "Timer-Laden",
+          "charge_mode_selection_timer_charging_climatization": "Timer + Klima",
+          "charge_mode_selection_preferred_charging_times": "Bevorzugte Zeiten",
+          "charge_mode_selection_only_own_current": "Nur eigener Strom",
+          "charge_mode_selection_home_storage_charging": "Heimspeicher"
         }
       },
       "max_ac_charge_current": {
         "name": "Max. AC-Ladestrom",
         "state": {
-          "MAX_CHARGE_CURRENT_INVALID": "Ungültig",
-          "MAX_CHARGE_CURRENT_MAXIMUM": "Maximum",
-          "MAX_CHARGE_CURRENT_REDUCED": "Reduziert"
+          "max_charge_current_invalid": "Ungültig",
+          "max_charge_current_maximum": "Maximum",
+          "max_charge_current_reduced": "Reduziert"
         }
       },
       "auto_unlock_ac": {
         "name": "AC automatisch entriegeln",
         "state": {
-          "AUTO_UNLOCK_AC_INVALID": "Ungültig",
-          "AUTO_UNLOCK_AC_OFF": "Aus",
-          "AUTO_UNLOCK_AC_ONCE": "Einmalig",
-          "AUTO_UNLOCK_AC_PERMANENT": "Dauerhaft"
+          "auto_unlock_ac_invalid": "Ungültig",
+          "auto_unlock_ac_off": "Aus",
+          "auto_unlock_ac_once": "Einmalig",
+          "auto_unlock_ac_permanent": "Dauerhaft"
         }
       },
       "bcam_activation": {
         "name": "BCAM-Aktivierung",
         "state": {
-          "BCAM_ACTIVATION_ACTIVATED": "Aktiviert",
-          "BCAM_ACTIVATION_DEACTIVATED": "Deaktiviert"
+          "bcam_activation_activated": "Aktiviert",
+          "bcam_activation_deactivated": "Deaktiviert"
         }
       },
       "charging_timer_reachability": {
         "name": "Lade-Timer erreichbar",
         "state": {
-          "TARGET_REACHABILITY_CALCULATING": "Berechnet",
-          "TARGET_REACHABILITY_REACHABLE": "Erreichbar",
-          "TARGET_REACHABILITY_NOT_REACHABLE": "Nicht erreichbar"
+          "target_reachability_calculating": "Berechnet",
+          "target_reachability_reachable": "Erreichbar",
+          "target_reachability_not_reachable": "Nicht erreichbar"
         }
       },
       "window_heating_state": {
         "name": "Scheibenheizung",
         "state": {
-          "WINDOW_HEATING_STATE_OFF": "Aus",
-          "WINDOW_HEATING_STATE_ON": "An"
+          "window_heating_state_off": "Aus",
+          "window_heating_state_on": "An"
         }
       },
       "charging_state": {
@@ -564,7 +564,7 @@
       "last_battery_charger_update_trigger": {
         "name": "Ladegerät-Aktualisierung",
         "state": {
-          "clamp15Off": "Klemme 15 aus"
+          "clamp15off": "Klemme 15 aus"
         }
       }
     },

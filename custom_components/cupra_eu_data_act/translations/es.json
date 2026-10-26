@@ -429,109 +429,109 @@
       "charge_state": {
         "name": "Estado de carga",
         "state": {
-          "CHARGE_STATE_READY_FOR_CHARGING": "Listo para cargar",
-          "CHARGE_STATE_NOT_READY_FOR_CHARGING": "No listo",
-          "CHARGE_STATE_CHARGING_HV_BATTERY": "Cargando batería de alto voltaje",
-          "CHARGE_STATE_CONSERVATION_CHARGING": "Carga de conservación",
-          "CHARGE_STATE_DISCHARGING": "Descargando",
-          "CHARGE_STATE_CHARGING_ERROR": "Error de carga",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_CONSERVATION": "Objetivo alcanzado (conservación)",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING": "Objetivo alcanzado"
+          "charge_state_ready_for_charging": "Listo para cargar",
+          "charge_state_not_ready_for_charging": "No listo",
+          "charge_state_charging_hv_battery": "Cargando batería de alto voltaje",
+          "charge_state_conservation_charging": "Carga de conservación",
+          "charge_state_discharging": "Descargando",
+          "charge_state_charging_error": "Error de carga",
+          "charge_state_charge_purpose_reached_and_conservation": "Objetivo alcanzado (conservación)",
+          "charge_state_charge_purpose_reached_and_not_conservation_charging": "Objetivo alcanzado"
         }
       },
       "charge_mode": {
         "name": "Modo de carga",
         "state": {
-          "CHARGE_MODE_IMMEDIATELY_DEFAULT": "Inmediata (por defecto)",
-          "CHARGE_MODE_IMMEDIATELY_PROFILE": "Inmediata (perfil)",
-          "CHARGE_MODE_IMMEDIATELY_STOPPED": "Inmediata detenida",
-          "CHARGE_MODE_EXTENDED_PROFILE": "Extendida (perfil)",
-          "CHARGE_MODE_EXTENDED_STOPPED": "Extendida detenida",
-          "CHARGE_MODE_INVALID": "No válido"
+          "charge_mode_immediately_default": "Inmediata (por defecto)",
+          "charge_mode_immediately_profile": "Inmediata (perfil)",
+          "charge_mode_immediately_stopped": "Inmediata detenida",
+          "charge_mode_extended_profile": "Extendida (perfil)",
+          "charge_mode_extended_stopped": "Extendida detenida",
+          "charge_mode_invalid": "No válido"
         }
       },
       "charge_type": {
         "name": "Tipo de carga",
         "state": {
-          "CHARGE_TYPE_AC": "CA",
-          "CHARGE_TYPE_DC": "CC",
-          "CHARGE_TYPE_OFF": "Desactivado"
+          "charge_type_ac": "CA",
+          "charge_type_dc": "CC",
+          "charge_type_off": "Desactivado"
         }
       },
       "charging_scenario": {
         "name": "Escenario de carga",
         "state": {
-          "CHARGING_SCENARIO_OFF": "Desactivado",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_ACTIVE": "Carga inmediata",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_FINISHED": "Carga inmediata finalizada",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_ACTIVE": "Carga según hora de salida",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_FINISHED": "Carga según salida finalizada",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_AC": "Carga en CA optimizada",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_FINISHED": "Carga optimizada finalizada"
+          "charging_scenario_off": "Desactivado",
+          "charging_scenario_immediately_charging_active": "Carga inmediata",
+          "charging_scenario_immediately_charging_finished": "Carga inmediata finalizada",
+          "charging_scenario_charging_to_departure_time_active": "Carga según hora de salida",
+          "charging_scenario_charging_to_departure_time_finished": "Carga según salida finalizada",
+          "charging_scenario_optimised_charging_ac": "Carga en CA optimizada",
+          "charging_scenario_optimised_charging_finished": "Carga optimizada finalizada"
         }
       },
       "immediate_action_state": {
         "name": "Estado de acción de carga",
         "state": {
-          "IMMEDIATE_ACTION_STATE_INVALID": "No válido",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_CHARGING": "Carga inmediata",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_TIME": "Acción: hora",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_STOPPED": "Acción detenida",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_RANGE": "Acción: autonomía",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_SOC": "Acción: nivel de carga",
-          "IMMEDIATE_ACTION_STATE_CHARGE_MODE_SELECTION": "Selección de modo"
+          "immediate_action_state_invalid": "No válido",
+          "immediate_action_state_immediate_charging": "Carga inmediata",
+          "immediate_action_state_immediate_action_time": "Acción: hora",
+          "immediate_action_state_immediate_action_stopped": "Acción detenida",
+          "immediate_action_state_immediate_action_range": "Acción: autonomía",
+          "immediate_action_state_immediate_action_soc": "Acción: nivel de carga",
+          "immediate_action_state_charge_mode_selection": "Selección de modo"
         }
       },
       "charge_mode_selection": {
         "name": "Selección del modo de carga",
         "state": {
-          "CHARGE_MODE_SELECTION_INVALID": "No válido",
-          "CHARGE_MODE_SELECTION_IMMEDIATECHARGING": "Carga inmediata",
-          "CHARGE_MODE_SELECTION_IMMEDIATE_DISCHARGING": "Descarga inmediata",
-          "CHARGE_MODE_SELECTION_TIMERCHARGING": "Carga programada",
-          "CHARGE_MODE_SELECTION_TIMER_CHARGING_CLIMATIZATION": "Carga programada + climatización",
-          "CHARGE_MODE_SELECTION_PREFERRED_CHARGING_TIMES": "Horarios preferentes",
-          "CHARGE_MODE_SELECTION_ONLY_OWN_CURRENT": "Solo corriente propia (autoconsumo)",
-          "CHARGE_MODE_SELECTION_HOME_STORAGE_CHARGING": "Batería doméstica"
+          "charge_mode_selection_invalid": "No válido",
+          "charge_mode_selection_immediatecharging": "Carga inmediata",
+          "charge_mode_selection_immediate_discharging": "Descarga inmediata",
+          "charge_mode_selection_timercharging": "Carga programada",
+          "charge_mode_selection_timer_charging_climatization": "Carga programada + climatización",
+          "charge_mode_selection_preferred_charging_times": "Horarios preferentes",
+          "charge_mode_selection_only_own_current": "Solo corriente propia (autoconsumo)",
+          "charge_mode_selection_home_storage_charging": "Batería doméstica"
         }
       },
       "max_ac_charge_current": {
         "name": "Corriente máx. de carga en CA",
         "state": {
-          "MAX_CHARGE_CURRENT_INVALID": "No válido",
-          "MAX_CHARGE_CURRENT_MAXIMUM": "Máxima",
-          "MAX_CHARGE_CURRENT_REDUCED": "Reducida"
+          "max_charge_current_invalid": "No válido",
+          "max_charge_current_maximum": "Máxima",
+          "max_charge_current_reduced": "Reducida"
         }
       },
       "auto_unlock_ac": {
         "name": "Desbloqueo automático de CA",
         "state": {
-          "AUTO_UNLOCK_AC_INVALID": "No válido",
-          "AUTO_UNLOCK_AC_OFF": "Desactivado",
-          "AUTO_UNLOCK_AC_ONCE": "Una vez",
-          "AUTO_UNLOCK_AC_PERMANENT": "Permanente"
+          "auto_unlock_ac_invalid": "No válido",
+          "auto_unlock_ac_off": "Desactivado",
+          "auto_unlock_ac_once": "Una vez",
+          "auto_unlock_ac_permanent": "Permanente"
         }
       },
       "bcam_activation": {
         "name": "Activación de BCAM",
         "state": {
-          "BCAM_ACTIVATION_ACTIVATED": "Activado",
-          "BCAM_ACTIVATION_DEACTIVATED": "Desactivado"
+          "bcam_activation_activated": "Activado",
+          "bcam_activation_deactivated": "Desactivado"
         }
       },
       "charging_timer_reachability": {
         "name": "Alcanzabilidad del temporizador de carga",
         "state": {
-          "TARGET_REACHABILITY_CALCULATING": "Calculando",
-          "TARGET_REACHABILITY_REACHABLE": "Alcanzable",
-          "TARGET_REACHABILITY_NOT_REACHABLE": "No alcanzable"
+          "target_reachability_calculating": "Calculando",
+          "target_reachability_reachable": "Alcanzable",
+          "target_reachability_not_reachable": "No alcanzable"
         }
       },
       "window_heating_state": {
         "name": "Calefacción de lunas",
         "state": {
-          "WINDOW_HEATING_STATE_OFF": "Apagada",
-          "WINDOW_HEATING_STATE_ON": "Encendida"
+          "window_heating_state_off": "Apagada",
+          "window_heating_state_on": "Encendida"
         }
       },
       "charging_state": {
@@ -564,7 +564,7 @@
       "last_battery_charger_update_trigger": {
         "name": "Activador de actualización del cargador",
         "state": {
-          "clamp15Off": "Borne 15 desconectado"
+          "clamp15off": "Borne 15 desconectado"
         }
       }
     },

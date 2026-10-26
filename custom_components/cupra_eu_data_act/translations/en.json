@@ -429,109 +429,109 @@
       "charge_state": {
         "name": "Charge state",
         "state": {
-          "CHARGE_STATE_READY_FOR_CHARGING": "Ready for charging",
-          "CHARGE_STATE_NOT_READY_FOR_CHARGING": "Not ready",
-          "CHARGE_STATE_CHARGING_HV_BATTERY": "Charging HV battery",
-          "CHARGE_STATE_CONSERVATION_CHARGING": "Conservation charging",
-          "CHARGE_STATE_DISCHARGING": "Discharging",
-          "CHARGE_STATE_CHARGING_ERROR": "Charging error",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_CONSERVATION": "Target reached (conservation)",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING": "Target reached"
+          "charge_state_ready_for_charging": "Ready for charging",
+          "charge_state_not_ready_for_charging": "Not ready",
+          "charge_state_charging_hv_battery": "Charging HV battery",
+          "charge_state_conservation_charging": "Conservation charging",
+          "charge_state_discharging": "Discharging",
+          "charge_state_charging_error": "Charging error",
+          "charge_state_charge_purpose_reached_and_conservation": "Target reached (conservation)",
+          "charge_state_charge_purpose_reached_and_not_conservation_charging": "Target reached"
         }
       },
       "charge_mode": {
         "name": "Charge mode",
         "state": {
-          "CHARGE_MODE_IMMEDIATELY_DEFAULT": "Immediate (default)",
-          "CHARGE_MODE_IMMEDIATELY_PROFILE": "Immediate (profile)",
-          "CHARGE_MODE_IMMEDIATELY_STOPPED": "Immediate stopped",
-          "CHARGE_MODE_EXTENDED_PROFILE": "Extended (profile)",
-          "CHARGE_MODE_EXTENDED_STOPPED": "Extended stopped",
-          "CHARGE_MODE_INVALID": "Invalid"
+          "charge_mode_immediately_default": "Immediate (default)",
+          "charge_mode_immediately_profile": "Immediate (profile)",
+          "charge_mode_immediately_stopped": "Immediate stopped",
+          "charge_mode_extended_profile": "Extended (profile)",
+          "charge_mode_extended_stopped": "Extended stopped",
+          "charge_mode_invalid": "Invalid"
         }
       },
       "charge_type": {
         "name": "Charge type",
         "state": {
-          "CHARGE_TYPE_AC": "AC",
-          "CHARGE_TYPE_DC": "DC",
-          "CHARGE_TYPE_OFF": "Off"
+          "charge_type_ac": "AC",
+          "charge_type_dc": "DC",
+          "charge_type_off": "Off"
         }
       },
       "charging_scenario": {
         "name": "Charging scenario",
         "state": {
-          "CHARGING_SCENARIO_OFF": "Off",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_ACTIVE": "Immediate charging",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_FINISHED": "Immediate charging done",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_ACTIVE": "Charging to departure",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_FINISHED": "Departure charging done",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_AC": "Optimised AC charging",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_FINISHED": "Optimised charging done"
+          "charging_scenario_off": "Off",
+          "charging_scenario_immediately_charging_active": "Immediate charging",
+          "charging_scenario_immediately_charging_finished": "Immediate charging done",
+          "charging_scenario_charging_to_departure_time_active": "Charging to departure",
+          "charging_scenario_charging_to_departure_time_finished": "Departure charging done",
+          "charging_scenario_optimised_charging_ac": "Optimised AC charging",
+          "charging_scenario_optimised_charging_finished": "Optimised charging done"
         }
       },
       "immediate_action_state": {
         "name": "Charging action state",
         "state": {
-          "IMMEDIATE_ACTION_STATE_INVALID": "Invalid",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_CHARGING": "Immediate charging",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_TIME": "Action: time",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_STOPPED": "Action stopped",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_RANGE": "Action: range",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_SOC": "Action: SoC",
-          "IMMEDIATE_ACTION_STATE_CHARGE_MODE_SELECTION": "Mode selection"
+          "immediate_action_state_invalid": "Invalid",
+          "immediate_action_state_immediate_charging": "Immediate charging",
+          "immediate_action_state_immediate_action_time": "Action: time",
+          "immediate_action_state_immediate_action_stopped": "Action stopped",
+          "immediate_action_state_immediate_action_range": "Action: range",
+          "immediate_action_state_immediate_action_soc": "Action: SoC",
+          "immediate_action_state_charge_mode_selection": "Mode selection"
         }
       },
       "charge_mode_selection": {
         "name": "Charge mode selection",
         "state": {
-          "CHARGE_MODE_SELECTION_INVALID": "Invalid",
-          "CHARGE_MODE_SELECTION_IMMEDIATECHARGING": "Immediate charging",
-          "CHARGE_MODE_SELECTION_IMMEDIATE_DISCHARGING": "Immediate discharging",
-          "CHARGE_MODE_SELECTION_TIMERCHARGING": "Timer charging",
-          "CHARGE_MODE_SELECTION_TIMER_CHARGING_CLIMATIZATION": "Timer + climate",
-          "CHARGE_MODE_SELECTION_PREFERRED_CHARGING_TIMES": "Preferred times",
-          "CHARGE_MODE_SELECTION_ONLY_OWN_CURRENT": "Own current only",
-          "CHARGE_MODE_SELECTION_HOME_STORAGE_CHARGING": "Home storage"
+          "charge_mode_selection_invalid": "Invalid",
+          "charge_mode_selection_immediatecharging": "Immediate charging",
+          "charge_mode_selection_immediate_discharging": "Immediate discharging",
+          "charge_mode_selection_timercharging": "Timer charging",
+          "charge_mode_selection_timer_charging_climatization": "Timer + climate",
+          "charge_mode_selection_preferred_charging_times": "Preferred times",
+          "charge_mode_selection_only_own_current": "Own current only",
+          "charge_mode_selection_home_storage_charging": "Home storage"
         }
       },
       "max_ac_charge_current": {
         "name": "Max AC charge current",
         "state": {
-          "MAX_CHARGE_CURRENT_INVALID": "Invalid",
-          "MAX_CHARGE_CURRENT_MAXIMUM": "Maximum",
-          "MAX_CHARGE_CURRENT_REDUCED": "Reduced"
+          "max_charge_current_invalid": "Invalid",
+          "max_charge_current_maximum": "Maximum",
+          "max_charge_current_reduced": "Reduced"
         }
       },
       "auto_unlock_ac": {
         "name": "Auto unlock AC",
         "state": {
-          "AUTO_UNLOCK_AC_INVALID": "Invalid",
-          "AUTO_UNLOCK_AC_OFF": "Off",
-          "AUTO_UNLOCK_AC_ONCE": "Once",
-          "AUTO_UNLOCK_AC_PERMANENT": "Permanent"
+          "auto_unlock_ac_invalid": "Invalid",
+          "auto_unlock_ac_off": "Off",
+          "auto_unlock_ac_once": "Once",
+          "auto_unlock_ac_permanent": "Permanent"
         }
       },
       "bcam_activation": {
         "name": "BCAM activation",
         "state": {
-          "BCAM_ACTIVATION_ACTIVATED": "Activated",
-          "BCAM_ACTIVATION_DEACTIVATED": "Deactivated"
+          "bcam_activation_activated": "Activated",
+          "bcam_activation_deactivated": "Deactivated"
         }
       },
       "charging_timer_reachability": {
         "name": "Charging timer reachability",
         "state": {
-          "TARGET_REACHABILITY_CALCULATING": "Calculating",
-          "TARGET_REACHABILITY_REACHABLE": "Reachable",
-          "TARGET_REACHABILITY_NOT_REACHABLE": "Not reachable"
+          "target_reachability_calculating": "Calculating",
+          "target_reachability_reachable": "Reachable",
+          "target_reachability_not_reachable": "Not reachable"
         }
       },
       "window_heating_state": {
         "name": "Window heating",
         "state": {
-          "WINDOW_HEATING_STATE_OFF": "Off",
-          "WINDOW_HEATING_STATE_ON": "On"
+          "window_heating_state_off": "Off",
+          "window_heating_state_on": "On"
         }
       },
       "charging_state": {
@@ -564,7 +564,7 @@
       "last_battery_charger_update_trigger": {
         "name": "Charger update trigger",
         "state": {
-          "clamp15Off": "Clamp 15 off"
+          "clamp15off": "Clamp 15 off"
         }
       }
     },

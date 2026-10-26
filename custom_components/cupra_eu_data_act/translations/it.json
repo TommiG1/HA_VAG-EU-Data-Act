@@ -428,109 +428,109 @@
       "charge_state": {
         "name": "Stato di carica",
         "state": {
-          "CHARGE_STATE_READY_FOR_CHARGING": "Pronto per la carica",
-          "CHARGE_STATE_NOT_READY_FOR_CHARGING": "Non pronto",
-          "CHARGE_STATE_CHARGING_HV_BATTERY": "Carica batteria HV",
-          "CHARGE_STATE_CONSERVATION_CHARGING": "Carica di conservazione",
-          "CHARGE_STATE_DISCHARGING": "Scarica",
-          "CHARGE_STATE_CHARGING_ERROR": "Errore di carica",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_CONSERVATION": "Obiettivo raggiunto (conservazione)",
-          "CHARGE_STATE_CHARGE_PURPOSE_REACHED_AND_NOT_CONSERVATION_CHARGING": "Obiettivo raggiunto"
+          "charge_state_ready_for_charging": "Pronto per la carica",
+          "charge_state_not_ready_for_charging": "Non pronto",
+          "charge_state_charging_hv_battery": "Carica batteria HV",
+          "charge_state_conservation_charging": "Carica di conservazione",
+          "charge_state_discharging": "Scarica",
+          "charge_state_charging_error": "Errore di carica",
+          "charge_state_charge_purpose_reached_and_conservation": "Obiettivo raggiunto (conservazione)",
+          "charge_state_charge_purpose_reached_and_not_conservation_charging": "Obiettivo raggiunto"
         }
       },
       "charge_mode": {
         "name": "Modalità di carica",
         "state": {
-          "CHARGE_MODE_IMMEDIATELY_DEFAULT": "Immediata (predefinita)",
-          "CHARGE_MODE_IMMEDIATELY_PROFILE": "Immediata (profilo)",
-          "CHARGE_MODE_IMMEDIATELY_STOPPED": "Immediata arrestata",
-          "CHARGE_MODE_EXTENDED_PROFILE": "Estesa (profilo)",
-          "CHARGE_MODE_EXTENDED_STOPPED": "Estesa arrestata",
-          "CHARGE_MODE_INVALID": "Non valido"
+          "charge_mode_immediately_default": "Immediata (predefinita)",
+          "charge_mode_immediately_profile": "Immediata (profilo)",
+          "charge_mode_immediately_stopped": "Immediata arrestata",
+          "charge_mode_extended_profile": "Estesa (profilo)",
+          "charge_mode_extended_stopped": "Estesa arrestata",
+          "charge_mode_invalid": "Non valido"
         }
       },
       "charge_type": {
         "name": "Tipo di carica",
         "state": {
-          "CHARGE_TYPE_AC": "AC",
-          "CHARGE_TYPE_DC": "DC",
-          "CHARGE_TYPE_OFF": "Spento"
+          "charge_type_ac": "AC",
+          "charge_type_dc": "DC",
+          "charge_type_off": "Spento"
         }
       },
       "charging_scenario": {
         "name": "Scenario di carica",
         "state": {
-          "CHARGING_SCENARIO_OFF": "Spento",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_ACTIVE": "Carica immediata attiva",
-          "CHARGING_SCENARIO_IMMEDIATELY_CHARGING_FINISHED": "Carica immediata terminata",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_ACTIVE": "Carica fino alla partenza",
-          "CHARGING_SCENARIO_CHARGING_TO_DEPARTURE_TIME_FINISHED": "Carica partenza terminata",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_AC": "Carica AC ottimizzata",
-          "CHARGING_SCENARIO_OPTIMISED_CHARGING_FINISHED": "Carica ottimizzata terminata"
+          "charging_scenario_off": "Spento",
+          "charging_scenario_immediately_charging_active": "Carica immediata attiva",
+          "charging_scenario_immediately_charging_finished": "Carica immediata terminata",
+          "charging_scenario_charging_to_departure_time_active": "Carica fino alla partenza",
+          "charging_scenario_charging_to_departure_time_finished": "Carica partenza terminata",
+          "charging_scenario_optimised_charging_ac": "Carica AC ottimizzata",
+          "charging_scenario_optimised_charging_finished": "Carica ottimizzata terminata"
         }
       },
       "immediate_action_state": {
         "name": "Stato azione di carica",
         "state": {
-          "IMMEDIATE_ACTION_STATE_INVALID": "Non valido",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_CHARGING": "Carica immediata",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_TIME": "Azione: orario",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_STOPPED": "Azione arrestata",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_RANGE": "Azione: autonomia",
-          "IMMEDIATE_ACTION_STATE_IMMEDIATE_ACTION_SOC": "Azione: carica",
-          "IMMEDIATE_ACTION_STATE_CHARGE_MODE_SELECTION": "Selezione modalità"
+          "immediate_action_state_invalid": "Non valido",
+          "immediate_action_state_immediate_charging": "Carica immediata",
+          "immediate_action_state_immediate_action_time": "Azione: orario",
+          "immediate_action_state_immediate_action_stopped": "Azione arrestata",
+          "immediate_action_state_immediate_action_range": "Azione: autonomia",
+          "immediate_action_state_immediate_action_soc": "Azione: carica",
+          "immediate_action_state_charge_mode_selection": "Selezione modalità"
         }
       },
       "charge_mode_selection": {
         "name": "Selezione modalità carica",
         "state": {
-          "CHARGE_MODE_SELECTION_INVALID": "Non valido",
-          "CHARGE_MODE_SELECTION_IMMEDIATECHARGING": "Carica immediata",
-          "CHARGE_MODE_SELECTION_IMMEDIATE_DISCHARGING": "Scarica immediata",
-          "CHARGE_MODE_SELECTION_TIMERCHARGING": "Carica a timer",
-          "CHARGE_MODE_SELECTION_TIMER_CHARGING_CLIMATIZATION": "Timer + clima",
-          "CHARGE_MODE_SELECTION_PREFERRED_CHARGING_TIMES": "Orari preferiti",
-          "CHARGE_MODE_SELECTION_ONLY_OWN_CURRENT": "Solo corrente propria",
-          "CHARGE_MODE_SELECTION_HOME_STORAGE_CHARGING": "Accumulo domestico"
+          "charge_mode_selection_invalid": "Non valido",
+          "charge_mode_selection_immediatecharging": "Carica immediata",
+          "charge_mode_selection_immediate_discharging": "Scarica immediata",
+          "charge_mode_selection_timercharging": "Carica a timer",
+          "charge_mode_selection_timer_charging_climatization": "Timer + clima",
+          "charge_mode_selection_preferred_charging_times": "Orari preferiti",
+          "charge_mode_selection_only_own_current": "Solo corrente propria",
+          "charge_mode_selection_home_storage_charging": "Accumulo domestico"
         }
       },
       "max_ac_charge_current": {
         "name": "Corrente AC max",
         "state": {
-          "MAX_CHARGE_CURRENT_INVALID": "Non valido",
-          "MAX_CHARGE_CURRENT_MAXIMUM": "Massimo",
-          "MAX_CHARGE_CURRENT_REDUCED": "Ridotto"
+          "max_charge_current_invalid": "Non valido",
+          "max_charge_current_maximum": "Massimo",
+          "max_charge_current_reduced": "Ridotto"
         }
       },
       "auto_unlock_ac": {
         "name": "Sblocco AC automatico",
         "state": {
-          "AUTO_UNLOCK_AC_INVALID": "Non valido",
-          "AUTO_UNLOCK_AC_OFF": "Spento",
-          "AUTO_UNLOCK_AC_ONCE": "Una volta",
-          "AUTO_UNLOCK_AC_PERMANENT": "Permanente"
+          "auto_unlock_ac_invalid": "Non valido",
+          "auto_unlock_ac_off": "Spento",
+          "auto_unlock_ac_once": "Una volta",
+          "auto_unlock_ac_permanent": "Permanente"
         }
       },
       "bcam_activation": {
         "name": "Attivazione BCAM",
         "state": {
-          "BCAM_ACTIVATION_ACTIVATED": "Attivato",
-          "BCAM_ACTIVATION_DEACTIVATED": "Disattivato"
+          "bcam_activation_activated": "Attivato",
+          "bcam_activation_deactivated": "Disattivato"
         }
       },
       "charging_timer_reachability": {
         "name": "Raggiungibilità timer carica",
         "state": {
-          "TARGET_REACHABILITY_CALCULATING": "Calcolo in corso",
-          "TARGET_REACHABILITY_REACHABLE": "Raggiungibile",
-          "TARGET_REACHABILITY_NOT_REACHABLE": "Non raggiungibile"
+          "target_reachability_calculating": "Calcolo in corso",
+          "target_reachability_reachable": "Raggiungibile",
+          "target_reachability_not_reachable": "Non raggiungibile"
         }
       },
       "window_heating_state": {
         "name": "Riscaldamento vetri",
         "state": {
-          "WINDOW_HEATING_STATE_OFF": "Spento",
-          "WINDOW_HEATING_STATE_ON": "Acceso"
+          "window_heating_state_off": "Spento",
+          "window_heating_state_on": "Acceso"
         }
       },
       "charging_state": {
@@ -563,7 +563,7 @@
       "last_battery_charger_update_trigger": {
         "name": "Trigger aggiornamento caricatore",
         "state": {
-          "clamp15Off": "Clamp 15 spento"
+          "clamp15off": "Clamp 15 spento"
         }
       }
     },
