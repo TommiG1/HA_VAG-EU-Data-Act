@@ -229,11 +229,11 @@ def _login_headers(
 
 
 def _marketing_consent_callback(url: str) -> str | None:
-    """Return the continuation URL from an optional marketing-consent page.
+    """Return the continuation URL from the classic marketing-consent page.
 
-    The identity provider sometimes inserts ``/consent/marketing/`` after a
-    successful login. Consent is not required; the ``callback`` query parameter
-    is the next hop. Returns None when ``url`` is not that page.
+    Older IdP flows insert ``/consent/marketing/`` after login. Consent is not
+    required; the ``callback`` query parameter is the next hop (GET). Returns
+    None when ``url`` is not that page.
     """
     parsed = urlparse(url)
     if "/consent/marketing/" not in parsed.path:
@@ -253,6 +253,36 @@ def _marketing_consent_callback(url: str) -> str | None:
         )
     query = urlencode(parse_qs(target.query, keep_blank_values=True), doseq=True)
     return urlunparse(target._replace(query=query))
+
+
+def _marketing_consent_v2_skip(url: str) -> tuple[str, dict[str, str]] | None:
+    """Return (skip_url, form fields) for the v2 SPA marketing-consent page.
+
+    Newer flows land on ``/v2/login/ui/marketing-consent`` with ``relayState``
+    and ``state`` query parameters (no ``callback``). The SPA skips by POSTing
+    those fields to ``…/marketing-consent/skip``. Returns None when ``url`` is
+    not that page.
+    """
+    parsed = urlparse(url)
+    path = parsed.path.rstrip("/")
+    if "/login/ui/marketing-consent" not in path:
+        return None
+    if path.endswith("/skip") or path.endswith("/accept"):
+        return None
+    if parsed.scheme != "https" or parsed.netloc != urlparse(IDENTITY_BASE).netloc:
+        raise AuthError(
+            "Login interrupted: the marketing consent page has an unexpected host"
+        )
+    qs = parse_qs(parsed.query)
+    relay = (qs.get("relayState") or [""])[0]
+    state = (qs.get("state") or [""])[0]
+    if not relay or not state:
+        raise AuthError(
+            "Login interrupted: the identity provider showed a marketing "
+            "consent page without relayState/state"
+        )
+    skip_url = urlunparse(parsed._replace(path=f"{path}/skip", query="", fragment=""))
+    return skip_url, {"relayState": relay, "state": state}
 
 
 def _is_portal_callback(url: str) -> bool:
@@ -542,22 +572,39 @@ class EudaApiClient:
             _LOGGER.debug("login step4: access token cookie received")
             return
 
-        # Optional marketing page. Consent is not required; the callback query
-        # parameter continues the OIDC flow. POST to this endpoint is rejected.
+        # Optional marketing page. Consent is not required.
+        # Classic: GET the ``callback`` query parameter (POST is rejected).
+        # v2 SPA: POST relayState/state to ``…/marketing-consent/skip``.
         marketing_callback = _marketing_consent_callback(landing)
-        if marketing_callback is not None:
+        marketing_v2 = (
+            None if marketing_callback is not None else _marketing_consent_v2_skip(landing)
+        )
+        if marketing_callback is not None or marketing_v2 is not None:
             if _after_marketing:
                 raise AuthError(
                     "Login interrupted: the identity provider still shows a "
                     "marketing consent page after it was skipped"
                 )
-            _LOGGER.debug(
-                "login step4b: skip marketing consent via %s", marketing_callback
-            )
-            async with await self._get_login_redirects(
-                marketing_callback,
-                referer=landing,
-            ) as marketing_resp:
+            if marketing_callback is not None:
+                _LOGGER.debug(
+                    "login step4b: skip marketing consent via %s", marketing_callback
+                )
+                marketing_cm = await self._get_login_redirects(
+                    marketing_callback,
+                    referer=landing,
+                )
+            else:
+                assert marketing_v2 is not None
+                skip_url, skip_fields = marketing_v2
+                _LOGGER.debug(
+                    "login step4b: skip marketing consent v2 via POST %s", skip_url
+                )
+                marketing_cm = await self._post_login_form(
+                    skip_url,
+                    data=skip_fields,
+                    referer=landing,
+                )
+            async with marketing_cm as marketing_resp:
                 await self._finish_login(
                     marketing_resp,
                     _after_terms=_after_terms,

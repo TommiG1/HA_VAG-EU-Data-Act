@@ -416,6 +416,81 @@ async def main() -> int:
         print(f"  [FAIL] unexpected marketing off-host: {type(err).__name__}: {err}")
         failures.append("finish_login marketing off-host")
 
+    marketing_v2_url = (
+        "https://identity.vwgroup.io/v2/login/ui/marketing-consent"
+        "?relayState=rs1&state=st1"
+    )
+    marketing_v2 = _FakeResponse(200, body="please consent", url=marketing_v2_url)
+    marketing_v2_hop = _FakeResponse(
+        302,
+        url="https://identity.vwgroup.io/oidc/v1/oauth/client/callback?user_id=u1",
+        headers={"Location": f"{portal}/services/callbacklogin?code=x"},
+    )
+    session_marketing_v2 = _FakeSession([marketing_v2_hop, callback_redirect])
+    client_marketing_v2 = _client(api, session_marketing_v2, brand, logged_in=False)
+    try:
+        await client_marketing_v2._finish_login(marketing_v2)
+        marketing_v2_post = session_marketing_v2.requests[0]
+        skipped_v2 = (
+            marketing_v2_post[0] == "POST"
+            and marketing_v2_post[1][0]
+            == "https://identity.vwgroup.io/v2/login/ui/marketing-consent/skip"
+            and marketing_v2_post[2].get("data")
+            == {"relayState": "rs1", "state": "st1"}
+            and session_marketing_v2.requests[1][1][0]
+            == f"{portal}/services/callbacklogin?code=x"
+        )
+        print(
+            f"  [{'PASS' if skipped_v2 else 'FAIL'}] "
+            "finish_login skips marketing consent v2 via POST skip"
+        )
+        if not skipped_v2:
+            failures.append("finish_login marketing v2 skip")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] finish_login marketing v2 skip: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing v2 skip")
+
+    marketing_v2_again = _FakeResponse(200, body="please consent", url=marketing_v2_url)
+    session_marketing_v2_loop = _FakeSession([marketing_v2_again])
+    client_marketing_v2_loop = _client(
+        api, session_marketing_v2_loop, brand, logged_in=False
+    )
+    try:
+        await client_marketing_v2_loop._finish_login(marketing_v2)
+        print("  [FAIL] finish_login should reject a repeated marketing v2 page")
+        failures.append("finish_login marketing v2 loop")
+    except api.AuthError as err:
+        ok_v2_loop = "after it was skipped" in str(err)
+        print(f"  [{'PASS' if ok_v2_loop else 'FAIL'}] marketing v2 loop guard: {err}")
+        if not ok_v2_loop:
+            failures.append("finish_login marketing v2 loop")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected marketing v2 loop: {type(err).__name__}: {err}")
+        failures.append("finish_login marketing v2 loop")
+
+    marketing_v2_open = _FakeResponse(
+        200,
+        url="https://identity.vwgroup.io/v2/login/ui/marketing-consent",
+    )
+    try:
+        await client_login._finish_login(marketing_v2_open)
+        print("  [FAIL] finish_login should reject marketing v2 without relayState/state")
+        failures.append("finish_login marketing v2 missing params")
+    except api.AuthError as err:
+        ok_v2_missing = "relayState/state" in str(err)
+        print(
+            f"  [{'PASS' if ok_v2_missing else 'FAIL'}] "
+            f"marketing v2 missing params: {err}"
+        )
+        if not ok_v2_missing:
+            failures.append("finish_login marketing v2 missing params")
+    except Exception as err:  # noqa: BLE001
+        print(
+            f"  [FAIL] unexpected marketing v2 missing params: "
+            f"{type(err).__name__}: {err}"
+        )
+        failures.append("finish_login marketing v2 missing params")
+
     auth0_login_url = (
         "https://identity.vwgroup.io/u/login?state=hKFo2SBteststatevalue"
     )
