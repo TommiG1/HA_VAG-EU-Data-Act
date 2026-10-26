@@ -1,5 +1,26 @@
 # Release notes
 
+## v0.6.51-beta.1 — Skip new marketing consent SPA (#76)
+
+### Summary
+
+SEAT (and likely other brands) now land on
+`/v2/login/ui/marketing-consent` after Auth0 login. That page has no
+`callback` query parameter, so the v0.6.47 skip never ran and login stopped
+there. This beta posts to the SPA skip endpoint the same way the browser
+Skip button does.
+
+### Changes
+
+- Detect `/login/ui/marketing-consent` and POST `relayState` / `state` to
+  `…/marketing-consent/skip`.
+- Keep the classic `/consent/marketing/` + `callback` GET path.
+
+### Tests
+
+- API mock covers v2 skip, loop guard, and missing query params.
+- Offline, API mock, brand and pytest suites pass.
+
 ## v0.6.50 — Hassfest / HACS default submission prep
 
 ### Summary

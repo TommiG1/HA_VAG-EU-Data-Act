@@ -9,5 +9,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/TommiG1/HA_VAG-EU-Data-Act/issues",
   "requirements": [],
-  "version": "0.6.50"
+  "version": "0.6.51-beta.1"
 }
