@@ -416,6 +416,72 @@ async def main() -> int:
         print(f"  [FAIL] unexpected marketing off-host: {type(err).__name__}: {err}")
         failures.append("finish_login marketing off-host")
 
+    auth0_login_url = (
+        "https://identity.vwgroup.io/u/login?state=hKFo2SBteststatevalue"
+    )
+    auth0_html = (
+        '<form method="POST" data-form-primary="true">'
+        '<input type="hidden" name="state" value="hKFo2SBteststatevalue">'
+        '<input name="username" value="">'
+        '<input name="password" value="">'
+        '<button type="submit" name="action" value="default">Continue</button>'
+        "</form>"
+    )
+    auth0_authorize = _FakeResponse(200, body=auth0_html, url=auth0_login_url)
+    auth0_post = _FakeResponse(
+        302,
+        url=auth0_login_url,
+        headers={"Location": f"{portal}/services/callbacklogin?code=auth0"},
+    )
+    auth0_callback = _FakeResponse(
+        302,
+        url=f"{portal}/services/callbacklogin?code=auth0",
+        headers={"Location": f"{portal}/content/euda/de/de/user.html"},
+        cookies={"access_token": "token"},
+    )
+    auth0_session = _FakeSession([auth0_authorize, auth0_post, auth0_callback])
+    auth0_client = _client(api, auth0_session, brand, logged_in=False)
+    try:
+        await auth0_client.async_login()
+        post_req = auth0_session.requests[1]
+        posted = post_req[2]["data"]
+        auth0_ok = (
+            post_req[0] == "POST"
+            and post_req[1][0] == auth0_login_url
+            and posted.get("username") == "test@example.com"
+            and posted.get("password") == "secret"
+            and posted.get("state") == "hKFo2SBteststatevalue"
+            and posted.get("action") == "default"
+            and auth0_client._logged_in is True
+        )
+        print(f"  [{'PASS' if auth0_ok else 'FAIL'}] Auth0 /u/login single-step login")
+        if not auth0_ok:
+            failures.append("auth0 login")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] Auth0 login: {type(err).__name__}: {err}")
+        failures.append("auth0 login")
+
+    auth0_bad = _FakeResponse(
+        400,
+        body=(
+            '<div id="error-element-password" '
+            'data-error-code="wrong-email-or-password">bad</div>'
+        ),
+        url=auth0_login_url,
+    )
+    try:
+        await client_login._finish_login(auth0_bad)
+        print("  [FAIL] finish_login should reject Auth0 wrong password")
+        failures.append("auth0 wrong password")
+    except api.AuthError as err:
+        ok_bad = "password" in str(err).lower() and err.status == 400
+        print(f"  [{'PASS' if ok_bad else 'FAIL'}] Auth0 wrong password: {err}")
+        if not ok_bad:
+            failures.append("auth0 wrong password")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] unexpected Auth0 wrong password: {type(err).__name__}: {err}")
+        failures.append("auth0 wrong password")
+
     print()
     if failures:
         print(f"FAILED: {len(failures)} -> {failures}")
