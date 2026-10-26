@@ -88,6 +88,12 @@ class _FormParser(HTMLParser):
             name = a.get("name")
             if name:
                 self.fields[name] = a.get("value") or ""
+        elif tag == "button" and self._in_form:
+            # Auth0 Universal Login submits ``action=default`` via the
+            # primary submit button rather than a hidden input.
+            name = a.get("name")
+            if name and (a.get("type") or "submit") == "submit":
+                self.fields[name] = a.get("value") or ""
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "form" and self._in_form:
@@ -164,7 +170,32 @@ def _login_error(html: str) -> str | None:
     err = model.get("error") or model.get("errorCode")
     if isinstance(err, dict):
         return err.get("text") or err.get("errorCode") or str(err)
-    return str(err) if err else None
+    if err:
+        return str(err)
+    # Auth0 Universal Login encodes failures as data-error-code attributes.
+    m = re.search(r'data-error-code=["\']([^"\']+)["\']', html)
+    if not m:
+        return None
+    code = m.group(1).strip()
+    if code in {"wrong-email-or-password", "wrong-email-credentials"}:
+        return "Login failed - check email and password"
+    return code.replace("-", " ") if code else None
+
+
+def _is_auth0_login(url: str, fields: dict[str, str]) -> bool:
+    """Return whether the IdP served Auth0 Universal Login (``/u/login``).
+
+    CUPRA/SEAT currently land here; other brands still use the classic
+    signin-service pages with ``hmac`` / ``_csrf`` / ``relayState``.
+    """
+    if "/u/login" in urlparse(url).path:
+        return True
+    return (
+        "username" in fields
+        and "password" in fields
+        and "state" in fields
+        and "hmac" not in fields
+    )
 
 
 def _accept_language(language: str, country: str | None = None) -> str:
@@ -385,15 +416,61 @@ class EudaApiClient:
             signin_status = resp.status
         _LOGGER.debug("login step2: signin page = %s (%d bytes)", signin_url, len(signin_html))
 
-        # 2. POST the email (identifier step). Fields come from HTML inputs
-        #    and/or the JS templateModel (hmac, _csrf, relayState).
         fields, action = _login_fields(signin_html)
         _LOGGER.debug("login step2: action=%s fields=%s", action, sorted(fields))
+
+        # Auth0 Universal Login (CUPRA/SEAT): one page with username+password.
+        # Classic VW identity: email identifier step, then password step.
+        if _is_auth0_login(signin_url, fields):
+            await self._do_auth0_login(signin_url, fields, status=signin_status)
+        else:
+            await self._do_classic_login(
+                signin_url, fields, action, status=signin_status
+            )
+
+    async def _do_auth0_login(
+        self,
+        signin_url: str,
+        fields: dict[str, str],
+        *,
+        status: int,
+    ) -> None:
+        """Complete Auth0 Universal Login (``/u/login``) in one POST."""
+        if "state" not in fields:
+            _raise_login_failure(
+                f"Could not parse the Auth0 sign-in form (fields found: {sorted(fields)})",
+                status=status,
+            )
+        fields = dict(fields)
+        fields["username"] = self._email
+        fields["password"] = self._password
+        fields.setdefault("action", "default")
+        # Keep ``?state=`` on the URL; Auth0 expects it there and in the body.
+        _LOGGER.debug("login step3: Auth0 POST credentials to %s", signin_url)
+        async with await self._post_login_form(
+            signin_url,
+            data=fields,
+            referer=signin_url,
+        ) as resp:
+            await self._finish_login(resp)
+
+    async def _do_classic_login(
+        self,
+        signin_url: str,
+        fields: dict[str, str],
+        action: str | None,
+        *,
+        status: int,
+    ) -> None:
+        """Complete the classic two-step VW identity login."""
+        # 2. POST the email (identifier step). Fields come from HTML inputs
+        #    and/or the JS templateModel (hmac, _csrf, relayState).
         if "hmac" not in fields or "_csrf" not in fields:
             _raise_login_failure(
                 f"Could not parse the sign-in form (fields found: {sorted(fields)})",
-                status=signin_status,
+                status=status,
             )
+        fields = dict(fields)
         fields["email"] = self._email
         identifier_action = urljoin(signin_url, action or "")
         async with self._session.post(
@@ -403,9 +480,11 @@ class EudaApiClient:
         ) as resp:
             authenticate_url = str(resp.url)
             authenticate_html = await resp.text()
-            status = resp.status
+            auth_status = resp.status
         _LOGGER.debug(
-            "login step3: after identifier POST status=%s url=%s", status, authenticate_url
+            "login step3: after identifier POST status=%s url=%s",
+            auth_status,
+            authenticate_url,
         )
 
         # 3. The identifier step lands on the password (authenticate) page,
@@ -418,7 +497,7 @@ class EudaApiClient:
                 err
                 or "Identity portal did not return the password form - check the "
                 "email address (or the login flow changed)",
-                status=status,
+                status=auth_status,
             )
         fields2["email"] = self._email
         fields2["password"] = self._password
@@ -533,8 +612,13 @@ class EudaApiClient:
                 await self._finish_login(terms_resp, _after_terms=True)
             return
 
-        if "signin-service" in landing or "/error" in landing:
-            raise AuthError("Login failed - check email and password")
+        if (
+            "signin-service" in landing
+            or "/u/login" in landing
+            or "/error" in landing
+        ):
+            err = _login_error(landing_html)
+            raise AuthError(err or "Login failed - check email and password")
         raise AuthError(f"Login did not complete (ended at {landing})")
 
     @staticmethod

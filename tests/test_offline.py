@@ -1412,6 +1412,46 @@ def main() -> int:
     ft, at = api._login_fields(terms_page)
     check("terms form action", at, "/signin-service/v1/client@apps/terms-and-conditions")
     check("terms countryOfResidence", ft.get("countryOfResidence"), "ES")
+    auth0_page = (
+        '<form method="POST" data-form-primary="true">'
+        '<input type="hidden" name="state" value="AUTH0STATE">'
+        '<input name="username" value="">'
+        '<input name="password" value="">'
+        '<button type="submit" name="action" value="default">Continue</button>'
+        "</form>"
+    )
+    f0, a0 = api._login_fields(auth0_page)
+    check("auth0 form action attribute", a0, None)
+    check("auth0 state", f0.get("state"), "AUTH0STATE")
+    check("auth0 submit action", f0.get("action"), "default")
+    check(
+        "auth0 detected by url",
+        api._is_auth0_login(
+            "https://identity.vwgroup.io/u/login?state=AUTH0STATE", f0
+        ),
+        True,
+    )
+    check(
+        "auth0 detected by fields",
+        api._is_auth0_login("https://identity.vwgroup.io/other", f0),
+        True,
+    )
+    check(
+        "classic not detected as auth0",
+        api._is_auth0_login(
+            "https://identity.vwgroup.io/signin-service/v1/signin/x", fe
+        ),
+        False,
+    )
+    auth0_err = (
+        '<div id="error-element-password" data-error-code="wrong-email-or-password">'
+        "Wrong email or password</div>"
+    )
+    check(
+        "auth0 wrong password error",
+        api._login_error(auth0_err),
+        "Login failed - check email and password",
+    )
     check(
         "login headers accept-language",
         api._login_headers("de", "de", "https://identity.vwgroup.io/signin")[
