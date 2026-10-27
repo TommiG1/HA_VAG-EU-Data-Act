@@ -706,6 +706,9 @@
       },
       "charging": {
         "name": "Carga"
+      },
+      "snapshot_stale": {
+        "name": "Instantánea obsoleta"
       }
     }
   }

@@ -10,7 +10,6 @@ from .const import (
     BASE_URL,
     CONF_NICKNAME,
     DOMAIN,
-    SNAPSHOT_STALE_THRESHOLD,
     SUBSCRIPTION_WARNING_BEFORE,
 )
 from .coordinator import EudaCoordinator
@@ -121,8 +120,7 @@ def _async_update_health_issues(
 
     minutes_since = coordinator.minutes_since_last_snapshot
     stale_issue_id = _issue_id(entry.entry_id, "stale_snapshot")
-    stale_minutes = int(SNAPSHOT_STALE_THRESHOLD.total_seconds() // 60)
-    if minutes_since is not None and minutes_since > stale_minutes:
+    if coordinator.is_snapshot_stale and minutes_since is not None:
         ir.async_create_issue(
             hass,
             DOMAIN,

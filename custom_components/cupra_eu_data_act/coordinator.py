@@ -29,6 +29,7 @@ from .const import (
     POST_DATASET_BUFFER,
     RETRY_INTERVAL,
     SERVER_ERROR_BACKOFF_INTERVALS,
+    SNAPSHOT_STALE_THRESHOLD,
     SUBSCRIPTION_VALIDITY,
     TRANSIENT_HTTP_STATUSES,
 )
@@ -256,10 +257,15 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
 
     @property
     def last_snapshot_at(self) -> datetime | None:
-        """Best-known timestamp of the last real (non-empty) vehicle snapshot."""
+        """When the vehicle itself last contributed telemetry in the loaded data.
+
+        Uses ``car_captured_time`` (and the dataset-wide stamp derived from it).
+        Portal ZIP ``createdOn`` is intentionally excluded: the portal can
+        re-deliver old snapshots in fresh ZIP files (#77), which would make
+        age and the stale-snapshot repair look current while sensors replay
+        yesterday's charge curve.
+        """
         candidates: list[datetime] = []
-        if self.last_listing_content_at is not None:
-            candidates.append(self.last_listing_content_at)
         if self.latest_dataset and self.latest_dataset.captured_at is not None:
             candidates.append(self.latest_dataset.captured_at)
         if ts := latest_captured_time(self.data or {}):
@@ -276,10 +282,18 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
 
     @property
     def minutes_since_last_snapshot(self) -> int | None:
-        """Minutes since the last real snapshot, or None if unknown."""
+        """Minutes since the last real vehicle telemetry, or None if unknown."""
         if (snap := self.last_snapshot_at) is None:
             return None
         return int((dt_util.utcnow() - snap).total_seconds() // 60)
+
+    @property
+    def is_snapshot_stale(self) -> bool | None:
+        """True when vehicle telemetry is older than ``SNAPSHOT_STALE_THRESHOLD``."""
+        minutes = self.minutes_since_last_snapshot
+        if minutes is None:
+            return None
+        return minutes > int(SNAPSHOT_STALE_THRESHOLD.total_seconds() // 60)
 
     def _update_listing_metadata(self, listing: list[dict]) -> None:
         """Track subscription and snapshot timing from the dataset listing."""

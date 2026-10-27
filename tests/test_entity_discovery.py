@@ -71,6 +71,9 @@ async def test_binary_not_created_for_sentinel_only_field(hass) -> None:
 
     coordinator.data = _snapshot("state_of_hood", _HOOD_KEY, "0")
     await binary_sensor.async_setup_entry(hass, entry, added.extend)
+    assert any(
+        getattr(e, "translation_key", None) == "snapshot_stale" for e in added
+    )
     assert not any(
         getattr(e, "_curated", None) and e._curated.field_name == "state_of_hood"
         for e in added

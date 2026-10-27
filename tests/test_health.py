@@ -11,6 +11,9 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.cupra_eu_data_act.binary_sensor import (
+    EudaSnapshotStaleBinarySensor,
+)
 from custom_components.cupra_eu_data_act.const import (
     CONF_IDENTIFIER,
     CONF_VIN,
@@ -87,6 +90,22 @@ def test_minutes_since_last_snapshot_prefers_car_captured_time(hass, monkeypatch
     monkeypatch.setattr(dt_util, "utcnow", lambda: now)
 
     assert coordinator.minutes_since_last_snapshot == 60
+    assert coordinator.is_snapshot_stale is False
+
+
+def test_minutes_since_ignores_fresh_zip_listing(hass, monkeypatch) -> None:
+    """Portal ZIP createdOn must not mask old vehicle telemetry (#77)."""
+    coordinator = _make_coordinator(hass)
+    payload = json.loads(_FIXTURE.read_text())
+    coordinator.latest_dataset = Dataset.from_json(payload)
+    coordinator.data = coordinator.latest_dataset.points
+    now = datetime(2026, 5, 29, 23, 59, 27, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    # Fresh ZIP delivery while car_captured_time is still an hour old.
+    coordinator.last_listing_content_at = now
+
+    assert coordinator.minutes_since_last_snapshot == 60
+    assert coordinator.is_snapshot_stale is False
 
 
 async def test_subscription_expiring_issue(hass, monkeypatch) -> None:
@@ -110,18 +129,60 @@ async def test_stale_snapshot_issue_and_clear(hass, monkeypatch) -> None:
     coordinator = EudaCoordinator(hass, entry, MagicMock())
     now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(dt_util, "utcnow", lambda: now)
-    coordinator.last_listing_content_at = now - SNAPSHOT_STALE_THRESHOLD - timedelta(
-        hours=1
-    )
+    stale_at = now - SNAPSHOT_STALE_THRESHOLD - timedelta(hours=1)
+    coordinator.latest_dataset = MagicMock(captured_at=stale_at)
+    coordinator.data = {}
     coordinator.status_label = "ok"
 
     async_update_issues(hass, entry, coordinator)
     issue_id = f"{entry.entry_id}_stale_snapshot"
     assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
+    assert coordinator.is_snapshot_stale is True
 
-    coordinator.last_listing_content_at = now
+    coordinator.latest_dataset = MagicMock(captured_at=now)
     async_update_issues(hass, entry, coordinator)
     assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+    assert coordinator.is_snapshot_stale is False
+
+
+async def test_stale_snapshot_issue_despite_fresh_zip(hass, monkeypatch) -> None:
+    """Replayed old snapshots in new ZIPs must still raise the repairs issue."""
+    entry = _make_entry(hass)
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    coordinator.last_listing_content_at = now
+    coordinator.latest_dataset = MagicMock(
+        captured_at=now - SNAPSHOT_STALE_THRESHOLD - timedelta(hours=1)
+    )
+    coordinator.data = {}
+    coordinator.status_label = "ok"
+
+    async_update_issues(hass, entry, coordinator)
+    assert (
+        ir.async_get(hass).async_get_issue(
+            DOMAIN, f"{entry.entry_id}_stale_snapshot"
+        )
+        is not None
+    )
+
+
+def test_snapshot_stale_binary_sensor(hass, monkeypatch) -> None:
+    coordinator = _make_coordinator(hass)
+    now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    sensor = EudaSnapshotStaleBinarySensor(coordinator)
+
+    assert sensor.is_on is None
+
+    coordinator.latest_dataset = MagicMock(captured_at=now - timedelta(hours=1))
+    assert sensor.is_on is False
+    assert sensor.extra_state_attributes["stale_threshold_hours"] == 12
+
+    coordinator.latest_dataset = MagicMock(
+        captured_at=now - SNAPSHOT_STALE_THRESHOLD - timedelta(minutes=1)
+    )
+    assert sensor.is_on is True
 
 
 def test_health_sensor_values(hass, monkeypatch) -> None:

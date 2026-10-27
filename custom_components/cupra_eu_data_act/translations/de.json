@@ -706,6 +706,9 @@
       },
       "charging": {
         "name": "Laden"
+      },
+      "snapshot_stale": {
+        "name": "Schnappschuss veraltet"
       }
     }
   }

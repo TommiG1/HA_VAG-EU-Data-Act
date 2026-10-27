@@ -47,6 +47,7 @@ def translation_key_for_unique_id(unique_id: str, vin: str) -> str | None:
         ("last_connected", "last_connected"),
         ("dataset_generated", "dataset_generated"),
         ("uncurated_fields_count", "uncurated_fields_count"),
+        ("snapshot_stale", "snapshot_stale"),
     ):
         if unique_id == f"{vin}_{suffix}":
             return key

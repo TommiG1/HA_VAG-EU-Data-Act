@@ -6,11 +6,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import EudaConfigEntry
+from .const import SNAPSHOT_STALE_THRESHOLD
 from .coordinator import EudaCoordinator
 from .data import (
     CURATED_BINARY_DOTTED,
@@ -37,6 +39,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
+    async_add_entities([EudaSnapshotStaleBinarySensor(coordinator)])
     added: set[str] = set()
     format_state: dict[str, str | None] = {"format": None}
 
@@ -83,6 +86,44 @@ async def async_setup_entry(
 
     _discover()
     entry.async_on_unload(coordinator.async_add_listener(_discover))
+
+
+class EudaSnapshotStaleBinarySensor(EudaEntity, BinarySensorEntity):
+    """On when vehicle telemetry is older than the stale-snapshot threshold.
+
+    Uses car-captured time, not portal ZIP ``createdOn``, so a replay of old
+    snapshots in fresh ZIP files still reports as stale (#77).
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:clock-alert"
+    _attr_translation_key = "snapshot_stale"
+
+    def __init__(self, coordinator: EudaCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.vin}_snapshot_stale"
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.coordinator.is_snapshot_stale
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        attrs: dict = {
+            "stale_threshold_hours": int(
+                SNAPSHOT_STALE_THRESHOLD.total_seconds() // 3600
+            ),
+        }
+        if (minutes := self.coordinator.minutes_since_last_snapshot) is not None:
+            attrs["minutes_since_last_snapshot"] = minutes
+        if snap := self.coordinator.last_snapshot_at:
+            attrs["last_snapshot_at"] = snap.isoformat()
+        return attrs
 
 
 class EudaBinarySensor(EudaEntity, BinarySensorEntity):

@@ -706,6 +706,9 @@
       },
       "charging": {
         "name": "Charging"
+      },
+      "snapshot_stale": {
+        "name": "Snapshot stale"
       }
     }
   }

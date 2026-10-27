@@ -705,6 +705,9 @@
       },
       "charging": {
         "name": "Carica"
+      },
+      "snapshot_stale": {
+        "name": "Snapshot obsoleto"
       }
     }
   }

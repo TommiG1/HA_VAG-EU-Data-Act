@@ -705,6 +705,9 @@
       },
       "charging": {
         "name": "Laden"
+      },
+      "snapshot_stale": {
+        "name": "Snapshot verouderd"
       }
     }
   }
