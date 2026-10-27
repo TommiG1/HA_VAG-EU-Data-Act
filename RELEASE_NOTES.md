@@ -1,5 +1,37 @@
 # Release notes
 
+## v0.6.52-beta.1 — Flag stale snapshots during portal ZIP replay (#77)
+
+### Summary
+
+When the portal re-delivers old vehicle snapshots inside fresh ZIP files,
+sensors still update and look current while `data_captured_at` is hours
+behind. Age tracking and the stale-snapshot repairs issue used ZIP
+`createdOn`, so they stayed quiet during that replay. This beta measures
+age from vehicle capture time instead, and adds a diagnostic binary sensor
+for automations.
+
+### Changes
+
+- `minutes_since_last_snapshot` and the `stale_snapshot` repairs issue use
+  `car_captured_time` / dataset capture stamps only (not listing
+  `createdOn`).
+- New diagnostic binary sensor **Snapshot stale** (`problem` device class,
+  12 h threshold) with age attributes for dashboards and automations.
+
+### Tests
+
+- Health tests cover fresh-ZIP / old-capture replay and the new binary.
+- Offline, API mock, brand and pytest suites pass.
+
+### How to try
+
+In HACS, enable **Show beta versions** for this repository, then update to
+`0.6.52-beta.1`, or install from this release page. Reload the integration
+(or restart Home Assistant). With a long portal lag, check
+`binary_sensor.*_snapshot_stale`, `sensor.*_minutes_since_last_snapshot`,
+and Settings → System → Repairs.
+
 ## v0.6.51-beta.1 — Skip new marketing consent SPA (#76)
 
 ### Summary
