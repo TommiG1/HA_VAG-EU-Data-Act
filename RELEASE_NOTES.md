@@ -1,5 +1,31 @@
 # Release notes
 
+## v0.6.52 — Marketing consent skip + stale snapshot detection (#76, #77)
+
+### Summary
+
+Stable release of the `0.6.51` / `0.6.52` betas. Login continues past the new
+v2 marketing consent SPA (SEAT and similar), and portal ZIP replay no longer
+looks “fresh” when the vehicle capture time is hours old.
+
+### Changes
+
+- Skip `/v2/login/ui/marketing-consent` via the SPA skip endpoint (#76).
+- Snapshot age uses vehicle capture time (`car_captured_*`), then field
+  `timestampUtc` — not ZIP `createdOn` (#77).
+- Prefer fresher `timestampUtc` when `car_captured_*` is frozen.
+- New diagnostic binary sensor **Snapshot stale** (`problem`, 12 h) plus
+  repairs issue when age exceeds the threshold.
+
+### Tests
+
+- Offline, API mock, brand and pytest suites pass (covered in the betas).
+
+### How to update
+
+HACS → update to `0.6.52` (no beta toggle needed) → reload the integration
+or restart Home Assistant.
+
 ## v0.6.52-beta.3 — Fresher timestampUtc beats frozen car_captured (#77)
 
 ### Summary
