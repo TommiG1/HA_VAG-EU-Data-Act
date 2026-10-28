@@ -1,5 +1,30 @@
 # Release notes
 
+## v0.6.52-beta.3 — Fresher timestampUtc beats frozen car_captured (#77)
+
+### Summary
+
+When a dataset still has a `car_captured_*` field that stopped moving, but
+per-field `timestampUtc` values are newer, age tracking used the frozen
+capture marker. Snapshot age, `snapshot_stale`, and `last_vehicle_update`
+now take the newer of the two.
+
+### Changes
+
+- `latest_captured_time` / dataset `captured_at` use
+  `max(car_captured_*, timestampUtc)`.
+- Flat-only and capture-only payloads stay unchanged; ZIP `createdOn` still
+  unused for age.
+
+### Tests
+
+- Offline and health coverage for frozen capture + fresher field stamps.
+- Offline, API mock, brand and pytest suites pass.
+
+### How to try
+
+HACS: enable **Show beta versions**, update to `0.6.52-beta.3`, reload.
+
 ## v0.6.52-beta.2 — Flat/PHEV timestampUtc fallback for snapshot age (#77)
 
 ### Summary
