@@ -1,0 +1,96 @@
+name: Bug report
+description: Something is broken or behaves incorrectly in the integration.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **Setup questions and “how do I …?” belong in the
+        [Home Assistant Community thread](https://community.home-assistant.io/t/beta-vw-group-eu-data-act-vehicle-data-for-vw-audi-skoda-seat-cupra-bentley-official-portal/1013514).**
+        Please redact VIN, email, and tokens before pasting logs or diagnostics.
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      description: From HACS or Devices → VW Group EU Data Act → `manifest.json` (e.g. `0.6.50`).
+      placeholder: "0.6.50"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.10.4"
+    validations:
+      required: true
+  - type: dropdown
+    id: brand
+    attributes:
+      label: Brand
+      description: Brand selected when you set up the integration (must match the portal account).
+      options:
+        - Volkswagen
+        - Volkswagen Commercial Vehicles
+        - Audi
+        - Škoda
+        - SEAT
+        - Cupra
+        - Bentley
+    validations:
+      required: true
+  - type: input
+    id: country_language
+    attributes:
+      label: Country and language
+      description: Values from the integration config (e.g. `de` / `de`).
+      placeholder: "de / de"
+    validations:
+      required: true
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: Expected vs actual behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: >
+        Settings → System → Logs, filter `cupra_eu_data_act`. Paste the full
+        authentication or fetch error (redact VIN and email). For entity/data
+        bugs, a redacted diagnostics download from the device page also helps.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics dump (optional)
+      description: >
+        Device page → Download diagnostics. Redact anything sensitive before
+        attaching. See https://www.home-assistant.io/integrations/diagnostics/
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing Issues for this problem.
+          required: true
+        - label: This is a bug (not a setup question or feature idea).
+          required: true
+        - label: I checked RELEASE_NOTES / HACS for a newer version that might already fix this.
+          required: true

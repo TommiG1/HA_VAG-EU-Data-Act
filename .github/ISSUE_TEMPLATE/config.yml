@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help & questions (Home Assistant Community)
+    url: https://community.home-assistant.io/t/beta-vw-group-eu-data-act-vehicle-data-for-vw-audi-skoda-seat-cupra-bentley-official-portal/1013514
+    about: Setup, login tips, and “how do I …?” — use the forum thread, not Issues.
+  - name: Release notes / changelog
+    url: https://github.com/TommiG1/HA_VAG-EU-Data-Act/blob/main/RELEASE_NOTES.md
+    about: Check whether your problem was already fixed in a newer release.
