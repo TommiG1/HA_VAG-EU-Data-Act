@@ -108,6 +108,35 @@ def test_minutes_since_ignores_fresh_zip_listing(hass, monkeypatch) -> None:
     assert coordinator.is_snapshot_stale is False
 
 
+def test_minutes_since_falls_back_to_field_timestamp_utc(hass, monkeypatch) -> None:
+    """Flat/PHEV payloads without car_captured_* still expose age (#77)."""
+    coordinator = _make_coordinator(hass)
+    captured = datetime(2026, 10, 26, 16, 18, 45, tzinfo=timezone.utc)
+    dataset = Dataset.from_json(
+        {
+            "vin": "VSSZZZTESTVIN0001",
+            "user_id": "u",
+            "Data": [
+                {
+                    "key": "k1",
+                    "dataFieldName": "state_of_charge",
+                    "value": "55",
+                    "timestampUtc": captured.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+        }
+    )
+    coordinator.latest_dataset = dataset
+    coordinator.data = dataset.points
+    now = captured + timedelta(hours=40)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    coordinator.last_listing_content_at = now
+
+    assert dataset.captured_at == captured
+    assert coordinator.minutes_since_last_snapshot == 40 * 60
+    assert coordinator.is_snapshot_stale is True
+
+
 async def test_subscription_expiring_issue(hass, monkeypatch) -> None:
     entry = _make_entry(hass)
     coordinator = EudaCoordinator(hass, entry, MagicMock())

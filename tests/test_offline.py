@@ -1327,6 +1327,50 @@ def main() -> int:
     }
     check("max across captured fields", data.latest_captured_time(points), ts_new)
     check("empty dataset", data.latest_captured_time({}), None)
+    flat_only = {
+        "soc": data.DataPoint(
+            key="soc",
+            field_name="state_of_charge",
+            raw_value="55",
+            timestamp_utc=ts_old.isoformat(),
+        ),
+        "pwr": data.DataPoint(
+            key="pwr",
+            field_name="charging_power",
+            raw_value="0",
+            timestamp_utc=ts_new.isoformat(),
+        ),
+    }
+    check(
+        "falls back to newest timestampUtc (#77)",
+        data.latest_captured_time(flat_only),
+        ts_new,
+    )
+    flat_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "user_id": "u",
+            "Data": [
+                {
+                    "key": "k1",
+                    "dataFieldName": "state_of_charge",
+                    "value": "40",
+                    "timestampUtc": "2026-10-26T16:18:45Z",
+                },
+                {
+                    "key": "k2",
+                    "dataFieldName": "charging_power",
+                    "value": "0",
+                    "timestampUtc": "2026-10-26T15:00:00Z",
+                },
+            ],
+        }
+    )
+    check(
+        "from_json stamps captured_at from timestampUtc (#77)",
+        flat_ds.captured_at,
+        datetime(2026, 10, 26, 16, 18, 45, tzinfo=timezone.utc),
+    )
 
     # --- ApiError carries HTTP status ------------------------------------
     print("api error status:")

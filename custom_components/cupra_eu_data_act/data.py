@@ -312,7 +312,11 @@ class Dataset:
                 timestamp_utc=item.get("timestampUtc") or None,
             )
             points[key] = dp
-        dataset_captured = max(captured) if captured else None
+        # Prefer dedicated car_captured_* markers. Flat/PHEV payloads often
+        # omit them and only stamp per-field timestampUtc (#77).
+        dataset_captured = (
+            max(captured) if captured else latest_field_timestamp_utc(points)
+        )
         for dp in points.values():
             dp.captured_at = dataset_captured
         return cls(
@@ -670,15 +674,30 @@ def latest_captured_point(points: dict[str, "DataPoint"]) -> DataPoint | None:
     return best
 
 
+def latest_field_timestamp_utc(points: dict[str, "DataPoint"]) -> datetime | None:
+    """Newest per-field ``timestampUtc`` across the dataset, if any."""
+    best: datetime | None = None
+    for dp in points.values():
+        ts = dp.timestamp
+        if ts is None:
+            continue
+        if best is None or ts > best:
+            best = ts
+    return best
+
+
 def latest_captured_time(points: dict[str, "DataPoint"]) -> datetime | None:
     """Newest car-to-backend timestamp across all report snapshots in a dataset.
 
-    The portal merges several report snapshots into one payload, each with its
-    own captured time. The maximum is when the vehicle itself was last heard
-    from — distinct from when the portal generated the ZIP file.
+    Prefers dedicated ``car_captured_time`` / ``car_captured_utc_timestamp``
+    fields. When those are absent (common on flat/PHEV payloads), falls back
+    to the newest per-field ``timestampUtc``. Distinct from portal ZIP
+    ``createdOn``.
     """
     dp = latest_captured_point(points)
-    return parse_timestamp(dp.raw_value) if dp else None
+    if dp is not None:
+        return parse_timestamp(dp.raw_value)
+    return latest_field_timestamp_utc(points)
 
 
 _LAST_CONNECTED_BASE_FIELDS = ("mileage.value", "mileage")
