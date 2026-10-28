@@ -1,5 +1,32 @@
 # Release notes
 
+## v0.6.52-beta.2 — Flat/PHEV timestampUtc fallback for snapshot age (#77)
+
+### Summary
+
+On flat Cupra/PHEV payloads without `car_captured_time`, beta.1 left
+`minutes_since_last_snapshot`, `snapshot_stale`, and `last_vehicle_update` as
+`unknown` even though sensors already exposed per-field `timestampUtc` age.
+This beta falls back to the newest field `timestampUtc` when no capture-time
+field is present.
+
+### Changes
+
+- `latest_captured_time` and dataset `captured_at` prefer `car_captured_*`,
+  then the newest per-field `timestampUtc`.
+- ZIP `createdOn` stays unused for age (replay case from beta.1).
+
+### Tests
+
+- Offline and health coverage for flat timestampUtc-only payloads.
+- Offline, API mock, brand and pytest suites pass.
+
+### How to try
+
+HACS: enable **Show beta versions**, update to `0.6.52-beta.2`, reload. With a
+long lag, `snapshot_stale` should turn on and `minutes_since_last_snapshot` /
+`last_vehicle_update` should match sensor `data_captured_at` age.
+
 ## v0.6.52-beta.1 — Flag stale snapshots during portal ZIP replay (#77)
 
 ### Summary
