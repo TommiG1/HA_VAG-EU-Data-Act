@@ -137,6 +137,42 @@ def test_minutes_since_falls_back_to_field_timestamp_utc(hass, monkeypatch) -> N
     assert coordinator.is_snapshot_stale is True
 
 
+def test_minutes_since_prefers_fresher_timestamp_utc_over_frozen_capture(
+    hass, monkeypatch
+) -> None:
+    """A frozen car_captured_* must not mask fresher per-field stamps (#77)."""
+    coordinator = _make_coordinator(hass)
+    frozen = datetime(2026, 9, 28, 9, 49, 6, tzinfo=timezone.utc)
+    fresh = datetime(2026, 10, 3, 17, 0, 10, tzinfo=timezone.utc)
+    dataset = Dataset.from_json(
+        {
+            "vin": "VSSZZZTESTVIN0001",
+            "user_id": "u",
+            "Data": [
+                {
+                    "key": "k0",
+                    "dataFieldName": "car_captured_time",
+                    "value": frozen.isoformat().replace("+00:00", "Z"),
+                },
+                {
+                    "key": "k1",
+                    "dataFieldName": "state_of_charge",
+                    "value": "82",
+                    "timestampUtc": fresh.isoformat().replace("+00:00", "Z"),
+                },
+            ],
+        }
+    )
+    coordinator.latest_dataset = dataset
+    coordinator.data = dataset.points
+    now = fresh + timedelta(hours=1)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+
+    assert dataset.captured_at == fresh
+    assert coordinator.minutes_since_last_snapshot == 60
+    assert coordinator.is_snapshot_stale is False
+
+
 async def test_subscription_expiring_issue(hass, monkeypatch) -> None:
     entry = _make_entry(hass)
     coordinator = EudaCoordinator(hass, entry, MagicMock())

@@ -1346,6 +1346,26 @@ def main() -> int:
         data.latest_captured_time(flat_only),
         ts_new,
     )
+    frozen = datetime(2026, 9, 28, 9, 49, 6, tzinfo=timezone.utc)
+    fresh_point = datetime(2026, 10, 3, 17, 0, 10, tzinfo=timezone.utc)
+    frozen_plus_fresh = {
+        "cap": data.DataPoint(
+            key="cap",
+            field_name="car_captured_time",
+            raw_value=frozen.isoformat().replace("+00:00", "Z"),
+        ),
+        "soc": data.DataPoint(
+            key="soc",
+            field_name="state_of_charge",
+            raw_value="82",
+            timestamp_utc=fresh_point.isoformat().replace("+00:00", "Z"),
+        ),
+    }
+    check(
+        "fresher timestampUtc beats frozen car_captured (#77)",
+        data.latest_captured_time(frozen_plus_fresh),
+        fresh_point,
+    )
     flat_ds = data.Dataset.from_json(
         {
             "vin": "V",
@@ -1370,6 +1390,30 @@ def main() -> int:
         "from_json stamps captured_at from timestampUtc (#77)",
         flat_ds.captured_at,
         datetime(2026, 10, 26, 16, 18, 45, tzinfo=timezone.utc),
+    )
+    mixed_ds = data.Dataset.from_json(
+        {
+            "vin": "V",
+            "user_id": "u",
+            "Data": [
+                {
+                    "key": "k0",
+                    "dataFieldName": "car_captured_time",
+                    "value": "2026-09-28T09:49:06Z",
+                },
+                {
+                    "key": "k1",
+                    "dataFieldName": "state_of_charge",
+                    "value": "82",
+                    "timestampUtc": "2026-10-03T17:00:10Z",
+                },
+            ],
+        }
+    )
+    check(
+        "from_json prefers fresher timestampUtc over frozen capture (#77)",
+        mixed_ds.captured_at,
+        fresh_point,
     )
 
     # --- ApiError carries HTTP status ------------------------------------

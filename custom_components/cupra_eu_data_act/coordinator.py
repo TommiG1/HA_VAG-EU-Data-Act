@@ -259,11 +259,11 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
     def last_snapshot_at(self) -> datetime | None:
         """When the vehicle itself last contributed telemetry in the loaded data.
 
-        Uses ``car_captured_time`` when present, otherwise the newest per-field
-        ``timestampUtc`` (flat/PHEV payloads). Portal ZIP ``createdOn`` is
-        intentionally excluded: the portal can re-deliver old snapshots in
-        fresh ZIP files (#77), which would make age and the stale-snapshot
-        repair look current while sensors replay yesterday's charge curve.
+        Uses the newer of ``car_captured_*`` and per-field ``timestampUtc``.
+        Portal ZIP ``createdOn`` is intentionally excluded: the portal can
+        re-deliver old snapshots in fresh ZIP files (#77), which would make
+        age and the stale-snapshot repair look current while sensors replay
+        yesterday's charge curve.
         """
         candidates: list[datetime] = []
         if self.latest_dataset and self.latest_dataset.captured_at is not None:

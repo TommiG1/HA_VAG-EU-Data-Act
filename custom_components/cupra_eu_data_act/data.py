@@ -283,11 +283,10 @@ class Dataset:
     def from_json(cls, payload: dict) -> "Dataset":
         dictionary = load_dictionary()
         points: dict[str, DataPoint] = {}
-        captured: list[datetime] = []
         # The portal shuffles the array on every export (identical payloads
         # arrive in different orders), so a car_captured_time marker says
         # nothing about the neighbouring fields. Only the dataset-wide newest
-        # capture moment is a defensible stamp for value fields.
+        # vehicle telemetry moment is a defensible stamp for value fields.
         for sequence, item in enumerate(payload.get("Data", [])):
             key = item.get("key")
             if not key:
@@ -297,9 +296,6 @@ class Dataset:
             field_name = normalize_field_name(
                 field_name, meta.get("description") or None
             )
-            if field_name.rsplit(".", 1)[-1] in _CAPTURED_TIME_SUFFIXES:
-                if ts := _parse_timestamp(item.get("value", "")):
-                    captured.append(ts)
             dp = DataPoint(
                 key=key,
                 field_name=field_name,
@@ -312,11 +308,8 @@ class Dataset:
                 timestamp_utc=item.get("timestampUtc") or None,
             )
             points[key] = dp
-        # Prefer dedicated car_captured_* markers. Flat/PHEV payloads often
-        # omit them and only stamp per-field timestampUtc (#77).
-        dataset_captured = (
-            max(captured) if captured else latest_field_timestamp_utc(points)
-        )
+        # Newest among car_captured_* and per-field timestampUtc (#77).
+        dataset_captured = latest_captured_time(points)
         for dp in points.values():
             dp.captured_at = dataset_captured
         return cls(
@@ -687,17 +680,21 @@ def latest_field_timestamp_utc(points: dict[str, "DataPoint"]) -> datetime | Non
 
 
 def latest_captured_time(points: dict[str, "DataPoint"]) -> datetime | None:
-    """Newest car-to-backend timestamp across all report snapshots in a dataset.
+    """Newest vehicle telemetry time across the dataset.
 
-    Prefers dedicated ``car_captured_time`` / ``car_captured_utc_timestamp``
-    fields. When those are absent (common on flat/PHEV payloads), falls back
-    to the newest per-field ``timestampUtc``. Distinct from portal ZIP
-    ``createdOn``.
+    Takes the maximum of dedicated ``car_captured_*`` markers and per-field
+    ``timestampUtc``. A frozen capture field must not win over fresher point
+    stamps (and flat/PHEV payloads often have only ``timestampUtc``). Distinct
+    from portal ZIP ``createdOn``.
     """
+    candidates: list[datetime] = []
     dp = latest_captured_point(points)
     if dp is not None:
-        return parse_timestamp(dp.raw_value)
-    return latest_field_timestamp_utc(points)
+        if ts := parse_timestamp(dp.raw_value):
+            candidates.append(ts)
+    if field_ts := latest_field_timestamp_utc(points):
+        candidates.append(field_ts)
+    return max(candidates) if candidates else None
 
 
 _LAST_CONNECTED_BASE_FIELDS = ("mileage.value", "mileage")
