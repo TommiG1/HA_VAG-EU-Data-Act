@@ -1,5 +1,32 @@
 # Release notes
 
+## v0.6.53-beta.1 — Don't stack “first dataset” repair on cached stale data (#77)
+
+### Summary
+
+After a Home Assistant reboot, a briefly empty portal listing could set
+`waiting_for_portal_data` while the cache still held old vehicle values. That
+raised a misleading **Waiting for first dataset** repairs issue next to the
+correct **No recent vehicle data** one.
+
+### Changes
+
+- Skip the `waiting_for_portal_data` repairs issue when the coordinator already
+  has data (cache or previous refresh). The status sensor still shows the label.
+- `stale_snapshot` is unchanged and remains the right signal for old capture
+  times.
+
+### Tests
+
+- Issues coverage for create / skip / clear of `waiting_for_portal_data`.
+- Offline, API mock, brand and pytest suites pass.
+
+### How to try
+
+HACS: enable **Show beta versions**, update to `0.6.53-beta.1`, reload.
+
+Addresses #77 (dual repairs after reboot).
+
 ## v0.6.52 — Marketing consent skip + stale snapshot detection (#76, #77)
 
 ### Summary
