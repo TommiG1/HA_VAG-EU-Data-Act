@@ -70,6 +70,54 @@ async def test_listing_failed_creates_issue(hass) -> None:
     assert issue.translation_placeholders["retry_minutes"] == "15"
 
 
+async def test_waiting_for_portal_data_creates_issue_without_data(hass) -> None:
+    entry = _make_entry(hass)
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    coordinator.status_label = "waiting_for_portal_data"
+    coordinator.data = None
+
+    async_update_issues(hass, entry, coordinator)
+
+    registry = ir.async_get(hass)
+    assert (
+        registry.async_get_issue(DOMAIN, f"{entry.entry_id}_waiting_for_portal_data")
+        is not None
+    )
+
+
+async def test_waiting_for_portal_data_skipped_when_data_present(hass) -> None:
+    """Cached/previous data must not raise the 'first dataset' repair (#77)."""
+    entry = _make_entry(hass)
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    coordinator.status_label = "waiting_for_portal_data"
+    coordinator.data = {"battery_state_report.soc": MagicMock()}
+
+    async_update_issues(hass, entry, coordinator)
+
+    registry = ir.async_get(hass)
+    assert (
+        registry.async_get_issue(DOMAIN, f"{entry.entry_id}_waiting_for_portal_data")
+        is None
+    )
+
+
+async def test_waiting_for_portal_data_clears_when_data_arrives(hass) -> None:
+    entry = _make_entry(hass)
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    coordinator.status_label = "waiting_for_portal_data"
+    coordinator.data = None
+    async_update_issues(hass, entry, coordinator)
+
+    coordinator.data = {"battery_state_report.soc": MagicMock()}
+    async_update_issues(hass, entry, coordinator)
+
+    registry = ir.async_get(hass)
+    assert (
+        registry.async_get_issue(DOMAIN, f"{entry.entry_id}_waiting_for_portal_data")
+        is None
+    )
+
+
 async def test_unload_clears_all_issues(hass) -> None:
     entry = _make_entry(hass)
     client = MagicMock()

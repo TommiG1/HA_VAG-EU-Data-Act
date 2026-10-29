@@ -51,7 +51,15 @@ def async_update_issues(
 
     for issue_status in _ISSUE_STATUSES:
         issue_id = _issue_id(entry.entry_id, issue_status)
-        if status != issue_status:
+        # After reboot the cache can leave coordinator.data set while the
+        # portal listing briefly has no content files. status_label then
+        # becomes waiting_for_portal_data even though sensors already show
+        # values — the "Waiting for first dataset" repair would be wrong
+        # and would stack with stale_snapshot (#77). Suppress that repair
+        # when we already have data; the status sensor still reports the label.
+        if status != issue_status or (
+            issue_status == "waiting_for_portal_data" and coordinator.data
+        ):
             ir.async_delete_issue(hass, DOMAIN, issue_id)
             continue
 
