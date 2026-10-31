@@ -51,6 +51,19 @@
       "reconfigure_successful": "La reconfiguración se ha realizado correctamente."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Aviso de datos antiguos",
+        "data": {
+          "stale_snapshot_hours": "Desactualizado tras (horas)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 desactiva la comprobación."
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Inicio de sesión correcto — esperando el primer conjunto de datos del vehículo desde el portal EU Data Act. Esto es normal justo después de la configuración y no es un error de inicio de sesión.\n\nEn el portal ({portal_url}), comprueba lo siguiente:\n• Que haya una solicitud continua de datos de 15 minutos activa para este vehículo\n• Que el conjunto de datos sea **All Data** (no solo Charging)\n• Que el vehículo esté vinculado en Data clusters → Vehicle overview\n• Que el vehículo haya estado conectado recientemente (contacto puesto o conexión mediante app móvil)\n\nLos primeros datos reales suelen llegar en un plazo de 15 a 60 minutos, a veces unas pocas horas después de activar la solicitud. Las instantáneas vacías _no_content_found son normales cuando el coche no ha enviado telemetría en un intervalo de 15 minutos; se omiten automáticamente.\n\nHome Assistant reintentará cada {retry_minutes} minuto(s). No es necesario eliminar y volver a añadir la integración."

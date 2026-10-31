@@ -50,6 +50,19 @@
       "reauth_successful": "Réauthentification réussie."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Alerte données anciennes",
+        "data": {
+          "stale_snapshot_hours": "Obsolète après (heures)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 désactive la vérification."
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Connexion réussie — en attente de la première livraison de données du véhicule depuis le portail EU Data Act. C'est normal juste après la configuration et ce n'est pas une erreur de connexion.\n\nSur le portail ({portal_url}), veuillez vérifier :\n• Une demande de données continue de 15 minutes est active pour ce véhicule\n• Le véhicule est lié sous Data clusters → Vehicle overview\n• La voiture a été en ligne récemment (contact allumage ou application mobile)\n\nLes premières données réelles arrivent souvent sous 15 à 60 minutes, parfois quelques heures après l'activation de la demande. Les instantanés vides _no_content_found sont normaux lorsque la voiture n'a envoyé aucune télémétrie dans une fenêtre de 15 minutes ; ils sont ignorés automatiquement.\n\nHome Assistant réessaie toutes les {retry_minutes} minute(s). Il n'est pas nécessaire de supprimer et de réajouter l'intégration."
