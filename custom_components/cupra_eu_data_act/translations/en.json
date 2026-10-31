@@ -51,6 +51,16 @@
       "reconfigure_successful": "Reconfiguration was successful."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Snapshot age warning",
+        "data": {
+          "stale_snapshot_hours": "Stale after (hours)"
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Login successful — waiting for the first vehicle dataset from the EU Data Act portal. This is expected right after setup and is not a login error.\n\nOn the portal ({portal_url}), please check:\n• A continuous 15-minute data request is active for this vehicle\n• The dataset is **All Data** (not only Charging)\n• The vehicle is linked under Data clusters → Vehicle overview\n• The car has been online recently (ignition on or mobile app contact)\n\nFirst real data often arrives within 15–60 minutes, sometimes a few hours after enabling the request. Empty _no_content_found snapshots are normal when the car sent no telemetry in a 15-minute window; they are skipped automatically.\n\nHome Assistant retries every {retry_minutes} minute(s). You do not need to remove and re-add the integration."

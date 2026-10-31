@@ -100,3 +100,10 @@ MAX_CACHE_BYTES_PER_VIN = 50_000_000
 SUBSCRIPTION_VALIDITY = timedelta(days=365)
 SUBSCRIPTION_WARNING_BEFORE = timedelta(days=30)
 SNAPSHOT_STALE_THRESHOLD = timedelta(hours=12)
+
+# Options: hours before the snapshot counts as stale. A parked car that is
+# asleep sends nothing, so some users want a longer window; 0 turns the stale
+# check (binary sensor and repairs issue) off.
+CONF_STALE_SNAPSHOT_HOURS = "stale_snapshot_hours"
+DEFAULT_STALE_SNAPSHOT_HOURS = int(SNAPSHOT_STALE_THRESHOLD.total_seconds() // 3600)
+MAX_STALE_SNAPSHOT_HOURS = 24 * 14

@@ -50,6 +50,16 @@
       "reauth_successful": "Riautenticazione riuscita."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Avviso dati vecchi",
+        "data": {
+          "stale_snapshot_hours": "Non aggiornato dopo (ore)"
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Accesso riuscito — in attesa della prima consegna di dati del veicolo dal portale EU Data Act. È normale subito dopo la configurazione e non è un errore di accesso.\n\nSul portale ({portal_url}), verifica che:\n• Una richiesta dati continua di 15 minuti sia attiva per questo veicolo\n• Il veicolo sia collegato in Data clusters → Vehicle overview\n• L'auto sia stata online di recente (contatto accensione o app mobile)\n\nI primi dati reali arrivano spesso entro 15–60 minuti, a volte alcune ore dopo l'attivazione della richiesta. Gli snapshot vuoti _no_content_found sono normali quando l'auto non ha inviato telemetria in una finestra di 15 minuti; vengono ignorati automaticamente.\n\nHome Assistant riprova ogni {retry_minutes} minuto/i. Non è necessario rimuovere e aggiungere di nuovo l'integrazione."

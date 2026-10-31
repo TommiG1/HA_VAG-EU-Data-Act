@@ -19,8 +19,10 @@ from .const import (
     BASE_URL,
     CACHE_DIR_NAME,
     CONF_IDENTIFIER,
+    CONF_STALE_SNAPSHOT_HOURS,
     CONF_VIN,
     DATASET_INTERVAL,
+    DEFAULT_STALE_SNAPSHOT_HOURS,
     DOMAIN,
     MAX_CACHE_BYTES_PER_VIN,
     MAX_CACHED_DATASETS,
@@ -29,7 +31,6 @@ from .const import (
     POST_DATASET_BUFFER,
     RETRY_INTERVAL,
     SERVER_ERROR_BACKOFF_INTERVALS,
-    SNAPSHOT_STALE_THRESHOLD,
     SUBSCRIPTION_VALIDITY,
     TRANSIENT_HTTP_STATUSES,
 )
@@ -288,12 +289,24 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         return int((dt_util.utcnow() - snap).total_seconds() // 60)
 
     @property
+    def stale_threshold(self) -> timedelta | None:
+        """Configured stale-snapshot threshold, or None when the check is off."""
+        hours = self.entry.options.get(
+            CONF_STALE_SNAPSHOT_HOURS, DEFAULT_STALE_SNAPSHOT_HOURS
+        )
+        return timedelta(hours=hours) if hours else None
+
+    @property
     def is_snapshot_stale(self) -> bool | None:
-        """True when vehicle telemetry is older than ``SNAPSHOT_STALE_THRESHOLD``."""
+        """True when vehicle telemetry is older than ``stale_threshold``.
+
+        None when the age is unknown or the check is turned off in the options.
+        """
+        threshold = self.stale_threshold
         minutes = self.minutes_since_last_snapshot
-        if minutes is None:
+        if threshold is None or minutes is None:
             return None
-        return minutes > int(SNAPSHOT_STALE_THRESHOLD.total_seconds() // 60)
+        return minutes > int(threshold.total_seconds() // 60)
 
     def _update_listing_metadata(self, listing: list[dict]) -> None:
         """Track subscription and snapshot timing from the dataset listing."""

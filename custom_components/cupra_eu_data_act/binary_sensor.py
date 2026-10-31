@@ -12,7 +12,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import EudaConfigEntry
-from .const import SNAPSHOT_STALE_THRESHOLD
 from .coordinator import EudaCoordinator
 from .data import (
     CURATED_BINARY_DOTTED,
@@ -114,9 +113,11 @@ class EudaSnapshotStaleBinarySensor(EudaEntity, BinarySensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict:
+        threshold = self.coordinator.stale_threshold
         attrs: dict = {
-            "stale_threshold_hours": int(
-                SNAPSHOT_STALE_THRESHOLD.total_seconds() // 3600
+            # 0 = stale check turned off in the integration options.
+            "stale_threshold_hours": (
+                int(threshold.total_seconds() // 3600) if threshold else 0
             ),
         }
         if (minutes := self.coordinator.minutes_since_last_snapshot) is not None:

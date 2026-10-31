@@ -7,8 +7,17 @@ from typing import Any
 import aiohttp
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -24,10 +33,13 @@ from .const import (
     CONF_LANGUAGE,
     CONF_NICKNAME,
     CONF_PASSWORD,
+    CONF_STALE_SNAPSHOT_HOURS,
     CONF_VIN,
     DEFAULT_COUNTRY,
     DEFAULT_LANGUAGE,
+    DEFAULT_STALE_SNAPSHOT_HOURS,
     DOMAIN,
+    MAX_STALE_SNAPSHOT_HOURS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,6 +67,11 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the config flow."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return EudaOptionsFlow()
 
     def __init__(self) -> None:
         self._brand: str = DEFAULT_BRAND
@@ -302,3 +319,40 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
                 vin,
             )
         return identifier, meta.get("Name")
+
+
+class EudaOptionsFlow(OptionsFlow):
+    """Tune how old vehicle data may get before it counts as stale."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(
+                data={
+                    CONF_STALE_SNAPSHOT_HOURS: int(
+                        user_input[CONF_STALE_SNAPSHOT_HOURS]
+                    )
+                }
+            )
+        current = self.config_entry.options.get(
+            CONF_STALE_SNAPSHOT_HOURS, DEFAULT_STALE_SNAPSHOT_HOURS
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_STALE_SNAPSHOT_HOURS, default=current
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0,
+                            max=MAX_STALE_SNAPSHOT_HOURS,
+                            step=1,
+                            mode=NumberSelectorMode.BOX,
+                            unit_of_measurement="h",
+                        )
+                    ),
+                }
+            ),
+        )

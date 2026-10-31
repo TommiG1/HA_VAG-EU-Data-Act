@@ -51,6 +51,16 @@
       "reconfigure_successful": "Neukonfiguration erfolgreich."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Warnung bei alten Fahrzeugdaten",
+        "data": {
+          "stale_snapshot_hours": "Veraltet nach (Stunden)"
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Anmeldung erfolgreich — es wird auf die erste Fahrzeugdaten-Lieferung vom EU-Data-Act-Portal gewartet. Das ist direkt nach der Einrichtung normal und kein Anmeldefehler.\n\nBitte auf dem Portal ({portal_url}) prüfen:\n• Eine kontinuierliche 15-Minuten-Datenanfrage ist für dieses Fahrzeug aktiv\n• Das Fahrzeug ist unter Data clusters → Vehicle overview verknüpft\n• Das Auto war kürzlich online (Zündung an oder Kontakt über die App)\n\nErste echte Daten kommen oft innerhalb von 15–60 Minuten, manchmal erst einige Stunden nach Aktivierung der Anfrage. Leere _no_content_found-Schnappschüsse sind normal, wenn das Auto in einem 15-Minuten-Fenster keine Telemetrie gesendet hat; sie werden automatisch übersprungen.\n\nHome Assistant versucht es alle {retry_minutes} Minute(n) erneut. Die Integration muss nicht entfernt und neu hinzugefügt werden."

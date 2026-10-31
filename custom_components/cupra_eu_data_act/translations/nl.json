@@ -50,6 +50,16 @@
       "reauth_successful": "Opnieuw aanmelden geslaagd."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Waarschuwing oude voertuiggegevens",
+        "data": {
+          "stale_snapshot_hours": "Verouderd na (uren)"
+        }
+      }
+    }
+  },
   "exceptions": {
     "waiting_for_portal_data": {
       "message": "Aanmelding geslaagd — wachten op de eerste voertuiggegevens van het EU Data Act-portaal. Dit is normaal direct na de installatie en is geen aanmeldingsfout.\n\nControleer op het portaal ({portal_url}):\n• Een continue gegevensaanvraag van 15 minuten is actief voor dit voertuig\n• Het voertuig is gekoppeld onder Data clusters → Vehicle overview\n• De auto was recent online (contact aan of mobiele app)\n\nEchte gegevens komen vaak binnen 15–60 minuten, soms pas enkele uren na het activeren van de aanvraag. Lege _no_content_found-momentopnames zijn normaal wanneer de auto in een venster van 15 minuten geen telemetrie heeft verzonden; ze worden automatisch overgeslagen.\n\nHome Assistant probeert het elke {retry_minutes} minuut/minuten opnieuw. Je hoeft de integratie niet te verwijderen en opnieuw toe te voegen."

@@ -20,6 +20,7 @@ from custom_components.cupra_eu_data_act.const import (
     CONF_IDENTIFIER,
     CONF_LANGUAGE,
     CONF_PASSWORD,
+    CONF_STALE_SNAPSHOT_HOURS,
     CONF_VIN,
     DEFAULT_COUNTRY,
     DEFAULT_LANGUAGE,
@@ -193,3 +194,22 @@ async def test_user_step_passes_locale_to_client(hass) -> None:
     assert captured["language"] == "es"
     assert flow._country == "es"
     assert flow._language == "es"
+
+
+async def test_options_flow_sets_stale_hours(hass) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_VIN: "WVWZZZTESTVIN0001", CONF_IDENTIFIER: "ident-1"},
+        unique_id="WVWZZZTESTVIN0001",
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == "form"
+    assert result["step_id"] == "init"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_STALE_SNAPSHOT_HOURS: 36}
+    )
+    assert result["type"] == "create_entry"
+    assert entry.options == {CONF_STALE_SNAPSHOT_HOURS: 36}
