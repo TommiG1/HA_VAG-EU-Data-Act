@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.util import dt as dt_util
@@ -301,6 +301,57 @@ async def test_stale_check_off_clears_issue(hass, monkeypatch) -> None:
     sensor = EudaSnapshotStaleBinarySensor(coordinator)
     assert sensor.is_on is None
     assert sensor.extra_state_attributes["stale_threshold_hours"] == 0
+
+
+async def test_options_update_applies_without_refresh(hass, monkeypatch) -> None:
+    """Saving 0 clears the repair at once, not on the next coordinator update."""
+    from custom_components.cupra_eu_data_act import async_setup_entry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_VIN: "WVWZZZTESTVIN0001",
+            CONF_IDENTIFIER: "ident-1",
+            "email": "user@example.com",
+            "password": "secret",
+        },
+        unique_id="WVWZZZTESTVIN0001",
+    )
+    entry.add_to_hass(hass)
+    monkeypatch.setattr(
+        "custom_components.cupra_eu_data_act.EudaApiClient", MagicMock()
+    )
+    now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    issue_id = f"{entry.entry_id}_stale_snapshot"
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    coordinator.latest_dataset = MagicMock(captured_at=now - timedelta(days=3))
+    coordinator.data = {}
+    coordinator.status_label = "ok"
+    async_update_issues(hass, entry, coordinator)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
+
+    listeners = []
+    monkeypatch.setattr(
+        entry, "add_update_listener", lambda cb: listeners.append(cb) or (lambda: None)
+    )
+    monkeypatch.setattr(
+        "custom_components.cupra_eu_data_act.EudaCoordinator",
+        lambda *a, **k: coordinator,
+    )
+    monkeypatch.setattr(
+        hass.config_entries, "async_forward_entry_setups", AsyncMock()
+    )
+    monkeypatch.setattr(coordinator, "async_restore_from_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr(coordinator, "async_refresh", AsyncMock())
+    await async_setup_entry(hass, entry)
+    assert listeners
+
+    hass.config_entries.async_update_entry(
+        entry, options={CONF_STALE_SNAPSHOT_HOURS: 0}
+    )
+    await listeners[0](hass, entry)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
 
 
 def test_health_sensor_values(hass, monkeypatch) -> None:

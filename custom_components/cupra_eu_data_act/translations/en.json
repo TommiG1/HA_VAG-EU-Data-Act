@@ -57,6 +57,9 @@
         "title": "Snapshot age warning",
         "data": {
           "stale_snapshot_hours": "Stale after (hours)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 turns the check off."
         }
       }
     }

@@ -125,6 +125,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: EudaConfigEntry) -> bool
         entry.async_on_unload(coordinator.async_add_listener(_on_coordinator_update))
         _on_coordinator_update()
 
+        async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+            # Apply a new stale threshold right away instead of on the next refresh.
+            async_update_issues(hass, entry, coordinator)
+            coordinator.async_update_listeners()
+
+        entry.async_on_unload(entry.add_update_listener(_async_options_updated))
+
         # Kick off the first refresh after platform setup so the discovery
         # listeners are already wired up when data arrives. Failures are not
         # propagated to async_setup_entry — they are surfaced via the status

@@ -56,6 +56,9 @@
         "title": "Alerte données anciennes",
         "data": {
           "stale_snapshot_hours": "Obsolète après (heures)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 désactive la vérification."
         }
       }
     }

@@ -57,6 +57,9 @@
         "title": "Aviso de datos antiguos",
         "data": {
           "stale_snapshot_hours": "Desactualizado tras (horas)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 desactiva la comprobación."
         }
       }
     }

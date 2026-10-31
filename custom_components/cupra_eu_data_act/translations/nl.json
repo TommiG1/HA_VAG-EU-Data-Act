@@ -56,6 +56,9 @@
         "title": "Waarschuwing oude voertuiggegevens",
         "data": {
           "stale_snapshot_hours": "Verouderd na (uren)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 schakelt de controle uit."
         }
       }
     }

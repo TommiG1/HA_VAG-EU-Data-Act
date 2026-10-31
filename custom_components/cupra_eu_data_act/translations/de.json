@@ -57,6 +57,9 @@
         "title": "Warnung bei alten Fahrzeugdaten",
         "data": {
           "stale_snapshot_hours": "Veraltet nach (Stunden)"
+        },
+        "data_description": {
+          "stale_snapshot_hours": "0 schaltet die Prüfung ab."
         }
       }
     }
