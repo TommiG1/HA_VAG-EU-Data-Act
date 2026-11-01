@@ -9,6 +9,14 @@ body:
         Loose ideas are often easier to discuss in the
         [Home Assistant Community thread](https://community.home-assistant.io/t/beta-vw-group-eu-data-act-vehicle-data-for-vw-audi-skoda-seat-cupra-bentley-official-portal/1013514).
         Open an Issue here when you already have a concrete proposal.
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      description: From HACS or Devices → VW Group EU Data Act → `manifest.json` (e.g. `0.6.52`). Needed so we can tell whether the behaviour you want is already in a newer release.
+      placeholder: "0.6.52"
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
