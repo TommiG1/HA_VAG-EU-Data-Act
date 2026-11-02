@@ -2701,6 +2701,7 @@ CURATED_BINARY_FLAT: tuple[CuratedBinary, ...] = (
         "lock_state",
         "Central lock",
         "lock",
+        invert=True,
         icon="mdi:lock",
         encoding="string_lock",
     ),

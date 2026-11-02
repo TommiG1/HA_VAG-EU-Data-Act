@@ -1236,6 +1236,16 @@ def main() -> int:
         data.decode_binary_state("unlocked", encoding="string_lock"),
         False,
     )
+    check(
+        "string_lock locked invert -> False (HA lock off)",
+        data.decode_binary_state("locked", encoding="string_lock", invert=True),
+        False,
+    )
+    check(
+        "string_lock unlocked invert -> True (HA lock on)",
+        data.decode_binary_state("unlocked", encoding="string_lock", invert=True),
+        True,
+    )
 
     # --- hood/tailgate "safe" sensors removed (permanent false alarm) ----
     # The dictionary documents no "safe" value for tailgate/bonnet (only
@@ -1270,6 +1280,14 @@ def main() -> int:
             "lock_state",
         }.issubset({b.field_name for b in data.CURATED_BINARY_FLAT}),
         True,
+    )
+    _lock_state = next(
+        b for b in data.CURATED_BINARY_FLAT if b.field_name == "lock_state"
+    )
+    check(
+        "lock_state uses string_lock + invert (#83)",
+        (_lock_state.encoding, _lock_state.invert, _lock_state.device_class),
+        ("string_lock", True, "lock"),
     )
     check(
         "PHEV flat enum sensors registered",
