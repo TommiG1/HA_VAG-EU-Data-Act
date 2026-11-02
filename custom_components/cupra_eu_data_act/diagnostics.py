@@ -57,7 +57,9 @@ async def async_get_config_entry_diagnostics(
             "brand": entry.data.get(CONF_BRAND),
             "country": entry.data.get(CONF_COUNTRY),
             "language": entry.data.get(CONF_LANGUAGE),
-            "nickname": entry.data.get(CONF_NICKNAME),
+            "nickname": redact_dataset_filename(
+                entry.data.get(CONF_NICKNAME), vin
+            ),
         },
         "status": {
             "label": coordinator.status_label,
@@ -85,7 +87,7 @@ async def async_get_config_entry_diagnostics(
         ),
         "config_entry": {
             "entry_id": entry.entry_id,
-            "title": entry.title,
+            "title": redact_dataset_filename(entry.title, vin),
             CONF_VIN: entry.data.get(CONF_VIN),
             CONF_IDENTIFIER: entry.data.get(CONF_IDENTIFIER),
             CONF_EMAIL: entry.data.get(CONF_EMAIL),
@@ -95,7 +97,14 @@ async def async_get_config_entry_diagnostics(
     if dataset or coordinator.latest_dataset_name or coordinator.last_download_attempts:
         latest_dataset: dict[str, Any] = {
             "name": redact_dataset_filename(coordinator.latest_dataset_name, vin),
-            "last_download_attempts": coordinator.last_download_attempts,
+            "last_download_attempts": [
+                {
+                    **item,
+                    "name": redact_dataset_filename(item.get("name"), vin),
+                    "error": redact_dataset_filename(item.get("error"), vin),
+                }
+                for item in coordinator.last_download_attempts
+            ],
         }
         if dataset:
             latest_dataset.update(

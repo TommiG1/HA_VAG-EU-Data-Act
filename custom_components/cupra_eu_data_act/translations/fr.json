@@ -53,12 +53,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Alerte données anciennes",
+        "title": "Options de l'intégration",
         "data": {
-          "stale_snapshot_hours": "Obsolète après (heures)"
+          "stale_snapshot_hours": "Obsolète après (heures)",
+          "create_utility_meters": "Créer des helpers utility meter mensuels"
         },
         "data_description": {
-          "stale_snapshot_hours": "0 désactive la vérification."
+          "stale_snapshot_hours": "0 désactive la vérification.",
+          "create_utility_meters": "Une fois activé, crée une fois des helpers mensuels pour l'énergie chargée et le kilométrage. Les helpers supprimés ne sont pas recréés."
         }
       }
     }

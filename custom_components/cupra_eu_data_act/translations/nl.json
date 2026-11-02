@@ -53,12 +53,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Waarschuwing oude voertuiggegevens",
+        "title": "Integratie-opties",
         "data": {
-          "stale_snapshot_hours": "Verouderd na (uren)"
+          "stale_snapshot_hours": "Verouderd na (uren)",
+          "create_utility_meters": "Maandelijkse utility meter-helpers aanmaken"
         },
         "data_description": {
-          "stale_snapshot_hours": "0 schakelt de controle uit."
+          "stale_snapshot_hours": "0 schakelt de controle uit.",
+          "create_utility_meters": "Indien ingeschakeld, maakt eenmalig maandelijkse helpers voor geladen energie en kilometerstand. Verwijderde helpers worden niet opnieuw aangemaakt."
         }
       }
     }

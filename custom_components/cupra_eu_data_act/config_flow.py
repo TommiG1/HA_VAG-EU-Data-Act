@@ -28,6 +28,7 @@ from .brands import DEFAULT_BRAND, brand_options, get_brand
 from .const import (
     CONF_BRAND,
     CONF_COUNTRY,
+    CONF_CREATE_UTILITY_METERS,
     CONF_EMAIL,
     CONF_IDENTIFIER,
     CONF_LANGUAGE,
@@ -36,6 +37,7 @@ from .const import (
     CONF_STALE_SNAPSHOT_HOURS,
     CONF_VIN,
     DEFAULT_COUNTRY,
+    DEFAULT_CREATE_UTILITY_METERS,
     DEFAULT_LANGUAGE,
     DEFAULT_STALE_SNAPSHOT_HOURS,
     DOMAIN,
@@ -66,7 +68,7 @@ def _normalize_locale(country: str, language: str | None) -> tuple[str, str]:
 class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     @staticmethod
     @callback
@@ -322,7 +324,7 @@ class EudaConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class EudaOptionsFlow(OptionsFlow):
-    """Tune how old vehicle data may get before it counts as stale."""
+    """Tune stale-snapshot warning and optional utility meter helpers."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -330,13 +332,20 @@ class EudaOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(
                 data={
+                    **dict(self.config_entry.options),
                     CONF_STALE_SNAPSHOT_HOURS: int(
                         user_input[CONF_STALE_SNAPSHOT_HOURS]
-                    )
+                    ),
+                    CONF_CREATE_UTILITY_METERS: bool(
+                        user_input[CONF_CREATE_UTILITY_METERS]
+                    ),
                 }
             )
         current = self.config_entry.options.get(
             CONF_STALE_SNAPSHOT_HOURS, DEFAULT_STALE_SNAPSHOT_HOURS
+        )
+        create_meters = self.config_entry.options.get(
+            CONF_CREATE_UTILITY_METERS, DEFAULT_CREATE_UTILITY_METERS
         )
         return self.async_show_form(
             step_id="init",
@@ -353,6 +362,9 @@ class EudaOptionsFlow(OptionsFlow):
                             unit_of_measurement="h",
                         )
                     ),
+                    vol.Required(
+                        CONF_CREATE_UTILITY_METERS, default=create_meters
+                    ): bool,
                 }
             ),
         )

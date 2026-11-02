@@ -160,11 +160,11 @@ def entity_registry_updates(
     key = translation_key_for_unique_id(reg_entry.unique_id, vin)
     if not key:
         return updates or None
-    if reg_entry.translation_key == key and reg_entry.name is None:
-        return updates or None
-    updates["translation_key"] = key
-    updates["name"] = None
-    return updates
+    # Never clear registry ``name``: that is the user override. Wiping it on
+    # every setup discarded custom names (HACS default review).
+    if reg_entry.translation_key != key:
+        updates["translation_key"] = key
+    return updates or None
 
 
 async def async_migrate_entity_translations(

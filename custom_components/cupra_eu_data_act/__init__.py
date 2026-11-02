@@ -18,11 +18,13 @@ from .brands import DEFAULT_BRAND, get_brand
 from .const import (
     CONF_BRAND,
     CONF_COUNTRY,
+    CONF_CREATE_UTILITY_METERS,
     CONF_EMAIL,
     CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_VIN,
     DEFAULT_COUNTRY,
+    DEFAULT_CREATE_UTILITY_METERS,
     DEFAULT_LANGUAGE,
     DOMAIN,
     raw_unique_id,
@@ -51,6 +53,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_unload(hass: HomeAssistant) -> bool:
     """Unload the integration."""
     async_unload_services(hass)
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate config entry storage version.
+
+    v1 → v2: one-time entity-registry cleanup (disable legacy duplicates, set
+    translation_key). Must not run on every setup so user enables/names stick.
+    """
+    if entry.version < 2:
+        await async_migrate_entity_translations(hass, entry)
+        hass.config_entries.async_update_entry(entry, version=2)
     return True
 
 
@@ -105,11 +119,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EudaConfigEntry) -> bool
         # so they survive the namespacing fix that lets multiple vehicles work.
         await _async_migrate_raw_unique_ids(hass, entry)
 
-        # Before platforms register entities: rename legacy unique_ids (e.g.
-        # mileage.value.timestamp -> last_connected) so restored orphans are
-        # adopted instead of duplicated.
-        await async_migrate_entity_translations(hass, entry)
-
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
         if cached_points := await coordinator.async_restore_from_cache():
@@ -120,7 +129,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EudaConfigEntry) -> bool
         def _on_coordinator_update() -> None:
             async_update_issues(hass, entry, coordinator)
             async_sync_distance_registry_units(hass, entry, coordinator.data or {})
-            hass.async_create_task(async_ensure_utility_meters(hass, entry))
+            # Opt-in only; source sensors may appear after the first dataset.
+            if entry.options.get(
+                CONF_CREATE_UTILITY_METERS, DEFAULT_CREATE_UTILITY_METERS
+            ):
+                hass.async_create_task(async_ensure_utility_meters(hass, entry))
 
         entry.async_on_unload(coordinator.async_add_listener(_on_coordinator_update))
         _on_coordinator_update()
@@ -129,6 +142,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EudaConfigEntry) -> bool
             # Apply a new stale threshold right away instead of on the next refresh.
             async_update_issues(hass, entry, coordinator)
             coordinator.async_update_listeners()
+            if entry.options.get(
+                CONF_CREATE_UTILITY_METERS, DEFAULT_CREATE_UTILITY_METERS
+            ):
+                await async_ensure_utility_meters(hass, entry)
 
         entry.async_on_unload(entry.add_update_listener(_async_options_updated))
 

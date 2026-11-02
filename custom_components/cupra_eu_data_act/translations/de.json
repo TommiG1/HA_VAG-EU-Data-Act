@@ -54,12 +54,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Warnung bei alten Fahrzeugdaten",
+        "title": "Integrationsoptionen",
         "data": {
-          "stale_snapshot_hours": "Veraltet nach (Stunden)"
+          "stale_snapshot_hours": "Veraltet nach (Stunden)",
+          "create_utility_meters": "Monatliche Utility-Meter-Helfer anlegen"
         },
         "data_description": {
-          "stale_snapshot_hours": "0 schaltet die Prüfung ab."
+          "stale_snapshot_hours": "0 schaltet die Prüfung ab.",
+          "create_utility_meters": "Wenn aktiviert, werden einmalig monatliche Helfer für geladene Energie und Kilometerstand angelegt. Gelöschte Helfer werden nicht erneut erstellt."
         }
       }
     }

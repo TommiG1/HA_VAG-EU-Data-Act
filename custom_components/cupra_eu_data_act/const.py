@@ -107,3 +107,8 @@ SNAPSHOT_STALE_THRESHOLD = timedelta(hours=12)
 CONF_STALE_SNAPSHOT_HOURS = "stale_snapshot_hours"
 DEFAULT_STALE_SNAPSHOT_HOURS = int(SNAPSHOT_STALE_THRESHOLD.total_seconds() // 3600)
 MAX_STALE_SNAPSHOT_HOURS = 24 * 14
+
+# Opt-in monthly utility_meter helpers (off by default; never recreate after delete).
+CONF_CREATE_UTILITY_METERS = "create_utility_meters"
+CONF_UTILITY_METERS_PROVISIONED = "utility_meters_provisioned"
+DEFAULT_CREATE_UTILITY_METERS = False

@@ -16,6 +16,7 @@ from custom_components.cupra_eu_data_act.config_flow import EudaConfigFlow
 from custom_components.cupra_eu_data_act.const import (
     CONF_BRAND,
     CONF_COUNTRY,
+    CONF_CREATE_UTILITY_METERS,
     CONF_EMAIL,
     CONF_IDENTIFIER,
     CONF_LANGUAGE,
@@ -209,7 +210,12 @@ async def test_options_flow_sets_stale_hours(hass) -> None:
     assert result["step_id"] == "init"
 
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_STALE_SNAPSHOT_HOURS: 36}
+        result["flow_id"],
+        {
+            CONF_STALE_SNAPSHOT_HOURS: 36,
+            CONF_CREATE_UTILITY_METERS: True,
+        },
     )
     assert result["type"] == "create_entry"
-    assert entry.options == {CONF_STALE_SNAPSHOT_HOURS: 36}
+    assert entry.options[CONF_STALE_SNAPSHOT_HOURS] == 36
+    assert entry.options[CONF_CREATE_UTILITY_METERS] is True

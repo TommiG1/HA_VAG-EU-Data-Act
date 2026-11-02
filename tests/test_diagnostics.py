@@ -10,6 +10,7 @@ from custom_components.cupra_eu_data_act import EudaRuntimeData
 from custom_components.cupra_eu_data_act.const import (
     CONF_EMAIL,
     CONF_IDENTIFIER,
+    CONF_NICKNAME,
     CONF_PASSWORD,
     CONF_VIN,
     DOMAIN,
@@ -95,11 +96,13 @@ async def test_diagnostics_includes_uncurated_sample(hass) -> None:
 async def test_diagnostics_redacts_vin_in_dataset_filenames(hass) -> None:
     entry = MockConfigEntry(
         domain=DOMAIN,
+        title="WVWZZZSECRETVIN01",
         data={
             CONF_VIN: "WVWZZZSECRETVIN01",
             CONF_IDENTIFIER: "secret-id",
             CONF_EMAIL: "user@example.com",
             CONF_PASSWORD: "hunter2",
+            CONF_NICKNAME: "WVWZZZSECRETVIN01",
         },
         unique_id="WVWZZZSECRETVIN01",
     )
@@ -108,6 +111,14 @@ async def test_diagnostics_redacts_vin_in_dataset_filenames(hass) -> None:
     coordinator = EudaCoordinator(hass, entry, client)
     coordinator.status_label = "ok"
     coordinator.latest_dataset_name = "20260721195554_WVWZZZSECRETVIN01.zip"
+    coordinator.last_download_attempts = [
+        {
+            "name": "20260721195554_WVWZZZSECRETVIN01.zip",
+            "success": False,
+            "error": "download failed for WVWZZZSECRETVIN01",
+            "at": "2026-07-21T19:55:54+00:00",
+        }
+    ]
     coordinator._cached_dataset_meta = [
         {
             "name": "20260721195554_WVWZZZSECRETVIN01.zip",
@@ -123,3 +134,8 @@ async def test_diagnostics_redacts_vin_in_dataset_filenames(hass) -> None:
     assert "WVWZZZSECRETVIN01" not in dumped
     assert result["latest_dataset"]["name"] == "20260721195554_REDACTED.zip"
     assert result["cached_datasets"][0]["name"] == "20260721195554_REDACTED.zip"
+    attempt = result["latest_dataset"]["last_download_attempts"][0]
+    assert attempt["name"] == "20260721195554_REDACTED.zip"
+    assert attempt["error"] == "download failed for REDACTED"
+    assert result["integration"]["nickname"] == "REDACTED"
+    assert result["config_entry"]["title"] == "REDACTED"

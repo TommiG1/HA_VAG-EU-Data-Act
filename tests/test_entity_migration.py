@@ -225,3 +225,33 @@ def test_migration_does_not_blind_clear_km_at_setup() -> None:
         vin,
     )
     assert updates is None
+
+
+def test_migration_preserves_user_set_name() -> None:
+    vin = "WVWZZZTESTVIN0001"
+    updates = entity_registry_updates(
+        _entry(
+            unique_id=f"{vin}_mileage.value",
+            translation_key="mileage_value",
+            entity_category=None,
+            name="Mein Kilometerstand",
+        ),
+        vin,
+    )
+    assert updates is None
+
+
+def test_migration_sets_translation_key_without_clearing_name() -> None:
+    vin = "WVWZZZTESTVIN0001"
+    updates = entity_registry_updates(
+        _entry(
+            unique_id=f"{vin}_battery_state_report.soc",
+            translation_key=None,
+            entity_category=None,
+            original_name="Battery state of charge",
+            name="Mein SOC",
+        ),
+        vin,
+    )
+    assert updates == {"translation_key": "battery_state_report_soc"}
+    assert "name" not in updates

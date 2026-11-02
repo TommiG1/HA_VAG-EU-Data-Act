@@ -1,5 +1,36 @@
 # Release notes
 
+## v0.6.53-beta.2 — HACS default review: opt-in meters, one-time migration, VIN redaction
+
+### Summary
+
+Addresses Frenck’s review on the HACS default submission
+([hacs/default#12742](https://github.com/hacs/default/pull/12742)):
+integrations must not create helpers on their own, must not overwrite user
+entity names/disables on every setup, and must not leak the VIN in diagnostics.
+
+### Changes
+
+- Monthly `utility_meter` helpers are opt-in (`create_utility_meters`, off by
+  default). Each helper suffix is recorded after first provision so a helper
+  the user deletes is not recreated.
+- Entity-registry cleanup (legacy disables, `translation_key`) runs once via
+  `async_migrate_entry` (config entry version 2). Registry `name` is never
+  cleared; that remains the user’s override.
+- Diagnostics redact the VIN in `last_download_attempts` (name and error), and
+  in `config_entry.title` / `integration.nickname` when they contain the VIN.
+
+### Tests
+
+- Diagnostics, entity-migration, options-flow and utility-meter coverage
+  updated. Offline, API mock, brand and full pytest suites pass.
+
+### How to try
+
+HACS: enable **Show beta versions**, update to `0.6.53-beta.2`, reload.
+Existing utility meters keep working; new ones only appear if you enable the
+option under Configure.
+
 ## v0.6.53-beta.1 — Don't stack “first dataset” repair on cached stale data (#77)
 
 ### Summary

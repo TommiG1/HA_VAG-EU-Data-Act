@@ -54,12 +54,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Snapshot age warning",
+        "title": "Integration options",
         "data": {
-          "stale_snapshot_hours": "Stale after (hours)"
+          "stale_snapshot_hours": "Stale after (hours)",
+          "create_utility_meters": "Create monthly utility meter helpers"
         },
         "data_description": {
-          "stale_snapshot_hours": "0 turns the check off."
+          "stale_snapshot_hours": "0 turns the check off.",
+          "create_utility_meters": "When enabled once, creates monthly helpers for charged energy and mileage. Helpers you delete are not recreated."
         }
       }
     }

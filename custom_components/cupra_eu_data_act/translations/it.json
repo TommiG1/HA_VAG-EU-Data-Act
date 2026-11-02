@@ -53,12 +53,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Avviso dati vecchi",
+        "title": "Opzioni integrazione",
         "data": {
-          "stale_snapshot_hours": "Non aggiornato dopo (ore)"
+          "stale_snapshot_hours": "Non aggiornato dopo (ore)",
+          "create_utility_meters": "Crea helper utility meter mensili"
         },
         "data_description": {
-          "stale_snapshot_hours": "0 disattiva il controllo."
+          "stale_snapshot_hours": "0 disattiva il controllo.",
+          "create_utility_meters": "Se attivato, crea una volta helper mensili per energia caricata e chilometraggio. Gli helper eliminati non vengono ricreati."
         }
       }
     }

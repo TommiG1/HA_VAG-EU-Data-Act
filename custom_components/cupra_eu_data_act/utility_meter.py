@@ -1,4 +1,4 @@
-"""Utility meter helper auto-provisioning for curated EU Data Act sensors."""
+"""Opt-in utility meter helper provisioning for curated EU Data Act sensors."""
 
 from __future__ import annotations
 
@@ -24,7 +24,13 @@ from homeassistant.components.utility_meter.const import (
     MONTHLY,
 )
 
-from .const import CONF_NICKNAME, CONF_VIN
+from .const import (
+    CONF_CREATE_UTILITY_METERS,
+    CONF_NICKNAME,
+    CONF_UTILITY_METERS_PROVISIONED,
+    CONF_VIN,
+    DEFAULT_CREATE_UTILITY_METERS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,7 +88,15 @@ async def async_ensure_utility_meters(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> None:
-    """Create monthly utility_meter helpers for key curated sensors if missing."""
+    """Create monthly utility_meter helpers when the user opted in.
+
+    Helpers the user removed are never recreated: each suffix is recorded in
+    ``utility_meters_provisioned`` after the first successful provision (or when
+    an equivalent helper already exists).
+    """
+    if not entry.options.get(CONF_CREATE_UTILITY_METERS, DEFAULT_CREATE_UTILITY_METERS):
+        return
+
     registry = er.async_get(hass)
     sensor_entries = er.async_entries_for_config_entry(registry, entry.entry_id)
     entities_by_unique_id = {
@@ -91,14 +105,22 @@ async def async_ensure_utility_meters(
         if reg_entry.domain == Platform.SENSOR
     }
     vin = entry.data[CONF_VIN]
+    provisioned = list(entry.options.get(CONF_UTILITY_METERS_PROVISIONED, []))
+    provisioned_changed = False
 
     for spec in _AUTO_METERS:
+        key = spec.helper_name_suffix
+        if key in provisioned:
+            continue
+
         source_entity_id = _source_entity_id(entities_by_unique_id, vin, spec)
         if not source_entity_id:
             continue
 
         helper_name = utility_meter_helper_name(entry, spec.helper_name_suffix)
         if _already_exists(hass, helper_name, source_entity_id, MONTHLY):
+            provisioned.append(key)
+            provisioned_changed = True
             continue
 
         flow_data = {
@@ -126,6 +148,19 @@ async def async_ensure_utility_meters(
                 helper_name,
                 result.get("type"),
             )
+            continue
+
+        provisioned.append(key)
+        provisioned_changed = True
+
+    if provisioned_changed:
+        hass.config_entries.async_update_entry(
+            entry,
+            options={
+                **entry.options,
+                CONF_UTILITY_METERS_PROVISIONED: provisioned,
+            },
+        )
 
 
 def utility_meter_helper_object_id(entry: ConfigEntry, helper_name_suffix: str) -> str:
