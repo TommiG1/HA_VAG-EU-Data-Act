@@ -1,6 +1,9 @@
-# Testing guide (beta testers)
+# Testing guide
 
 Thank you for helping test **VW Group EU Data Act** for Home Assistant.
+
+Installation and portal setup are documented in the [README](README.md). This
+page is for smoke tests and what to report.
 
 ## Supported brands
 
@@ -14,22 +17,17 @@ Thank you for helping test **VW Group EU Data Act** for Home Assistant.
 | `cupra` | Cupra | Cupra ID / MyCupra credentials |
 | `bentley` | Bentley | Bentley credentials |
 
-**Important:** Choose the brand that matches your account. VW credentials with the Cupra brand (or vice versa) will fail login.
+Choose the brand that matches your account. VW credentials with the Cupra brand
+(or vice versa) will fail login.
 
-## Portal setup (required)
+**EU(27) only:** the portal is intended for residents and vehicles registered in
+the EU(27). Accounts from outside the EU (e.g. Switzerland) may log in but often
+get no data delivery.
 
-1. Log in at [eu-data-act.drivesomethinggreater.com](https://eu-data-act.drivesomethinggreater.com/)
-2. Connect your vehicle under **Data clusters → Vehicle overview**
-3. Create a **continuous 15-minute** data request
-4. Select **All Data** as the dataset — not only **Charging** (charging-only requests miss most sensors)
-5. Wait for ZIP files (first real data can take one or more intervals)
-
-**EU(27) only:** the portal service is intended for residents and vehicles registered in the EU(27). Accounts from outside the EU (e.g. Switzerland) may log in but often get no data delivery.
-
-**VW Connect Plus:** not required for the portal or this integration (see README FAQ).
-If you test **without** Connect Plus and still get real ZIPs, please mention that in
-your report — model, country, and whether basic VW Connect / trial connectivity is
-active.
+**VW Connect Plus** is not required (see
+[Troubleshooting](docs/TROUBLESHOOTING.md)). If you test without it and still get
+real ZIPs, please mention model, country, and whether basic Connect / trial
+connectivity is active.
 
 ## Quick smoke test (no Home Assistant)
 
@@ -48,21 +46,6 @@ python3 -m venv .venv && .venv/bin/pip install aiohttp
 | `0` | Login OK + real dataset downloaded |
 | `1` | Error — wrong brand/credentials or portal issue |
 | `2` | Login OK, waiting for portal data (`_no_content_found` is normal at first) |
-
-## Home Assistant installation
-
-### HACS
-
-Add custom repository: `https://github.com/TommiG1/HA_VAG-EU-Data-Act`  
-Install **VW Group EU Data Act** → restart HA.
-
-### Config flow
-
-1. **Settings → Devices & Services → Add Integration**
-2. Search **VW Group EU Data Act**
-3. Select your **brand**, enter email/password, pick vehicle
-
-While waiting for the first real ZIP, the integration shows as **not loaded** and retries — this is expected.
 
 ## What to report
 

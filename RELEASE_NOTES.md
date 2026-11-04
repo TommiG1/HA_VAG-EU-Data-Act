@@ -1,5 +1,44 @@
 # Release notes
 
+## v0.6.53 — HACS review fixes, configurable stale threshold, lock invert
+
+### Summary
+
+Stable release of the `0.6.53` betas, plus a flat-format central-lock fix that
+landed on main after beta.2. Utility meters are opt-in, entity-registry cleanup
+runs once, diagnostics redact the VIN, the stale-snapshot threshold is
+configurable, and flat `lock_state` matches the HA lock device class.
+
+### Changes
+
+- Monthly `utility_meter` helpers are opt-in (`create_utility_meters`, off by
+  default). A helper the user deletes is not recreated.
+- Entity-registry cleanup runs once via `async_migrate_entry` (config entry
+  version 2). Registry `name` is never cleared.
+- Diagnostics redact the VIN in download attempts, title, and nickname.
+- Skip the “Waiting for first dataset” repairs issue when cached data already
+  exists after reboot (#77).
+- Stale-snapshot threshold is configurable under Configure (#81).
+- Invert flat `lock_state` for the HA lock device class so locked cars show as
+  locked (#83).
+- README trimmed to a Marketplace landing page; FAQ, automations, and energy
+  helpers moved to `docs/`. Installation uses the Marketplace My link.
+
+### Tests
+
+- Diagnostics, entity-migration, options-flow, utility-meter, issues, health
+  and offline coverage updated. Offline, API mock, brand and full pytest suites
+  pass.
+
+### How to update
+
+Marketplace / HACS → update to `0.6.53` (no beta toggle needed) → reload the
+integration or restart Home Assistant. Existing utility meters keep working;
+new ones only appear if you enable the option under Configure.
+
+Addresses Frenck’s review on
+[hacs/default#12742](https://github.com/hacs/default/pull/12742).
+
 ## v0.6.53-beta.2 — HACS default review: opt-in meters, one-time migration, VIN redaction
 
 ### Summary
