@@ -6,6 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+import aiohttp
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
@@ -31,9 +33,13 @@ class _FakeResponse:
         self.released = False
 
     async def text(self) -> str:
+        if self.released:
+            raise aiohttp.ClientConnectionError("Connection closed")
         return self._body
 
     async def read(self) -> bytes:
+        if self.released:
+            raise aiohttp.ClientConnectionError("Connection closed")
         return self._body.encode()
 
     def release(self) -> None:
@@ -49,6 +55,7 @@ class _FakeResponse:
         return self
 
     async def __aexit__(self, *args):
+        self.release()
         return False
 
 
@@ -113,6 +120,36 @@ async def main() -> int:
     client2 = _client(api, session2, brand)
     client2._get = _get_200.__get__(client2, api.EudaApiClient)
     await _run("HTTP 200 -> parsed list", client2.async_list_datasets("WVWZZZTESTVIN0001", "abc123"), failures)
+
+    # Session expiry: first GET is 401, re-login succeeds, retry returns 200.
+    # FakeResponse releases on context exit (like aiohttp); the body must be
+    # read inside that block or ClientConnectionError is raised.
+    list_calls: list[int] = []
+    logins: list[int] = []
+
+    async def _get_401_then_200(self, req_url, **kwargs):
+        list_calls.append(1)
+        if len(list_calls) == 1:
+            return _FakeResponse(401, "unauthorized", url=req_url)
+        return _FakeResponse(200, json.dumps(payload), url=req_url)
+
+    async def _login_ok(self):
+        logins.append(1)
+        self._logged_in = True
+
+    session3 = _FakeSession([])
+    client3 = _client(api, session3, brand)
+    client3._get = _get_401_then_200.__get__(client3, api.EudaApiClient)
+    client3.async_login = _login_ok.__get__(client3, api.EudaApiClient)
+    try:
+        got = await client3.async_list_datasets("WVWZZZTESTVIN0001", "abc123")
+        retry_ok = got == payload and len(list_calls) == 2 and len(logins) == 1
+        print(f"  [{'PASS' if retry_ok else 'FAIL'}] HTTP 401 -> re-login -> list: {got!r}")
+        if not retry_ok:
+            failures.append("HTTP 401 retry list")
+    except Exception as err:  # noqa: BLE001
+        print(f"  [FAIL] HTTP 401 -> re-login -> list: {type(err).__name__}: {err}")
+        failures.append("HTTP 401 retry list")
 
     print("content filtering:")
     listing = [

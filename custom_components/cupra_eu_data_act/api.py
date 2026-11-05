@@ -757,21 +757,24 @@ class EudaApiClient:
         # The list endpoint requires the data-request type header (matching
         # metadata/partial); without it the backend returns HTTP 500.
         headers = {"type": "partial"}
-        try:
+
+        async def _fetch() -> tuple[int, str]:
+            # Read body before the response context exits; assigning the
+            # response to an outer variable and reading after release fails.
             async with await self._get(url, headers=headers) as resp:
-                if resp.status in (401, 403):
-                    self._logged_in = False
-                    await self.async_login()
-                    async with await self._get(url, headers=headers) as resp2:
-                        resp = resp2
-                if resp.status == 404:
-                    # No ZIPs delivered yet for this subscription.
-                    return []
-                if resp.status >= 400:
-                    raise ApiError(
-                        f"GET {url} -> HTTP {resp.status}", status=resp.status
-                    )
-                text = await resp.text()
+                return resp.status, await resp.text()
+
+        try:
+            status, text = await _fetch()
+            if status in (401, 403):
+                self._logged_in = False
+                await self.async_login()
+                status, text = await _fetch()
+            if status == 404:
+                # No ZIPs delivered yet for this subscription.
+                return []
+            if status >= 400:
+                raise ApiError(f"GET {url} -> HTTP {status}", status=status)
         except aiohttp.ClientError as err:
             raise ApiError(f"Connection error for {url}: {err}") from err
         try:
