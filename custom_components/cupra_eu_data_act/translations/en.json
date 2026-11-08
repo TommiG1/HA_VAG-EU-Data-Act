@@ -76,6 +76,9 @@
     "delivery_not_ready": {
       "message": "Login successful — data delivery is not ready yet (HTTP 400). If you just created the continuous 15-minute request on the portal ({portal_url}), the backend can take a few hours to start delivering ZIP files.\n\nHome Assistant retries every {retry_minutes} minute(s). This is not a credential problem."
     },
+    "authentication_failed": {
+      "message": "Sign-in to the EU Data Act portal failed. Check email and password, then try again."
+    },
     "config_entry_not_found": {
       "message": "No VW Group EU Data Act config entry matches the selected vehicle."
     },

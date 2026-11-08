@@ -1,0 +1,66 @@
+# VW Group EU Data Act — portal subscription reminder.
+blueprint:
+  name: "Subscription expiring — notify"
+  description: >
+    Notify when estimated days until the EU Data Act continuous request expires
+    fall below a threshold. Renew the request on the portal, not in Home
+    Assistant.
+  domain: automation
+  author: TommiG1
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    days_sensor:
+      name: Days until subscription expires
+      description: Diagnostic sensor days_until_subscription_expires.
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: sensor
+    days_threshold:
+      name: Warn when days remaining below
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 90
+          step: 1
+          unit_of_measurement: "d"
+          mode: slider
+    notify_service:
+      name: Mobile notify service
+      description: e.g. notify.mobile_app_iphone (with or without notify. prefix).
+      selector:
+        text:
+    car_name:
+      name: Car name
+      default: Car
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input days_sensor
+    below: !input days_threshold
+
+variables:
+  days_sensor: !input days_sensor
+  notify_service: !input notify_service
+  car_name: !input car_name
+  svc: "{{ (notify_service | default('', true)) | replace('notify.', '') }}"
+  days: "{{ states(days_sensor) }}"
+
+action:
+  - service: "notify.{{ svc }}"
+    data:
+      title: "{{ car_name }} — portal subscription"
+      message: >
+        Estimated {{ days }} day(s) left on the EU Data Act continuous request
+        for {{ car_name }}. Renew it on the portal.
+      data:
+        tag: "euda_sub_{{ car_name | slugify }}"
+        notification_icon: "mdi:calendar-alert"

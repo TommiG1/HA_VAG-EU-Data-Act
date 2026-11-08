@@ -1,0 +1,101 @@
+# VW Group EU Data Act — charge complete notification.
+blueprint:
+  name: "Charge complete — notify"
+  description: >
+    Notify your phone when charging stops, or when SoC reaches a target while
+    still charging. Portal data can lag by about 15 minutes.
+  domain: automation
+  author: TommiG1
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    charging_sensor:
+      name: Charging sensor
+      description: Charging binary sensor (device class battery_charging).
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: binary_sensor
+              device_class: battery_charging
+    battery_sensor:
+      name: Battery level sensor
+      description: Battery / SoC sensor used for the threshold and message.
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: sensor
+              device_class: battery
+    target_level:
+      name: Notify at battery level (%)
+      description: >
+        Also notify when SoC reaches this level while charging. Set to 100 to
+        mainly rely on charging stopping.
+      default: 80
+      selector:
+        number:
+          min: 50
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    notify_service:
+      name: Mobile notify service
+      description: e.g. notify.mobile_app_iphone (with or without notify. prefix).
+      selector:
+        text:
+    car_name:
+      name: Car name
+      description: Shown in the notification.
+      default: Car
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input charging_sensor
+    from: "on"
+    to: "off"
+    id: stopped
+  - platform: numeric_state
+    entity_id: !input battery_sensor
+    above: !input target_level
+    id: target
+
+variables:
+  battery_sensor: !input battery_sensor
+  notify_service: !input notify_service
+  car_name: !input car_name
+  svc: "{{ (notify_service | default('', true)) | replace('notify.', '') }}"
+  soc: "{{ states(battery_sensor) | int(0) }}"
+
+condition:
+  - condition: or
+    conditions:
+      - condition: trigger
+        id: stopped
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: target
+          - condition: state
+            entity_id: !input charging_sensor
+            state: "on"
+
+action:
+  - service: "notify.{{ svc }}"
+    data:
+      title: "{{ car_name }} — charging"
+      message: >
+        {% if trigger.id == 'stopped' %}
+        {{ car_name }} finished charging at {{ soc }}%.
+        {% else %}
+        {{ car_name }} reached {{ soc }}% while charging.
+        {% endif %}
+      data:
+        tag: "euda_charge_done_{{ car_name | slugify }}"
+        notification_icon: "mdi:battery-charging"

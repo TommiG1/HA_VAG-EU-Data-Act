@@ -132,6 +132,9 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         self._listing_failed: bool = False
         # Consecutive refresh cycles that ended in a portal 5xx without new data.
         self._consecutive_server_errors: int = 0
+        # Portal reachability for once-offline / once-online logging. Entities
+        # keep last-known values across outages; this flag only gates log noise.
+        self._portal_reachable: bool = True
 
     def cached_datasets(self) -> list[dict]:
         """Return cached ZIP metadata (in-memory; safe in the event loop)."""
@@ -165,6 +168,22 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
     def _reset_server_error_backoff(self) -> None:
         """Restore normal scheduling after a successful dataset load."""
         self._consecutive_server_errors = 0
+
+    def _mark_portal_unreachable(self, reason: object) -> None:
+        """Log once when the portal becomes unreachable (entities stay sticky)."""
+        if self._portal_reachable:
+            _LOGGER.warning(
+                "EU Data Act portal unreachable for %s (%s); keeping last known values",
+                self.vin,
+                reason,
+            )
+            self._portal_reachable = False
+
+    def _mark_portal_reachable(self) -> None:
+        """Log once when the portal is reachable again after an outage."""
+        if not self._portal_reachable:
+            _LOGGER.info("EU Data Act portal reachable again for %s", self.vin)
+        self._portal_reachable = True
 
     def _store_in_cache(self, name: str, data: bytes) -> list[dict]:
         """Write a ZIP and return fresh listing metadata (executor only)."""
@@ -337,15 +356,18 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         try:
             listing = await self._async_list_with_refresh()
         except UpdateFailed as err:
+            if self.data or cached_points:
+                self._mark_portal_unreachable(err)
             if cached_points:
                 self.status_label = "listing_failed"
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Portal listing failed (%s); using last cached dataset %s",
                     err,
                     self.latest_dataset_name,
                 )
                 return cached_points
             raise
+        self._mark_portal_reachable()
         self._update_listing_metadata(listing)
 
         # content datasets, oldest -> newest by createdOn
@@ -455,7 +477,10 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
                 except AuthError as err:
                     # Session expired or credentials invalidated by the portal;
                     # trigger the HA reauth flow instead of silently retrying.
-                    raise ConfigEntryAuthFailed(str(err)) from err
+                    raise ConfigEntryAuthFailed(
+                        translation_domain=DOMAIN,
+                        translation_key="authentication_failed",
+                    ) from err
                 except ApiError as err:
                     entry_error = err
                     is_server_error = _is_server_error(err)
@@ -607,7 +632,10 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
                     # Surface as ConfigEntryAuthFailed so HA prompts the user
                     # to re-enter credentials (with the brand preserved from
                     # the entry).
-                    raise ConfigEntryAuthFailed(str(err)) from err
+                    raise ConfigEntryAuthFailed(
+                        translation_domain=DOMAIN,
+                        translation_key="authentication_failed",
+                    ) from err
 
                 except ApiError as err:
                     last_error = err

@@ -75,6 +75,9 @@
     "delivery_not_ready": {
       "message": "Aanmelding geslaagd — gegevenslevering is nog niet gereed (HTTP 400). Als je de continue 15-minuten-aanvraag op het portaal ({portal_url}) net hebt aangemaakt, kan het backend enkele uren duren voordat ZIP-bestanden worden geleverd.\n\nHome Assistant probeert het elke {retry_minutes} minuut/minuten opnieuw. Dit is geen probleem met inloggegevens."
     },
+    "authentication_failed": {
+      "message": "Aanmelden bij het EU Data Act-portaal is mislukt. Controleer e-mailadres en wachtwoord en probeer opnieuw."
+    },
     "config_entry_not_found": {
       "message": "Geen VW Group EU Data Act-configuratie gevonden voor het geselecteerde voertuig."
     },

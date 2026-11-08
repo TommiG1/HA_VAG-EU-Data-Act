@@ -9,6 +9,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import EudaConfigEntry
 from .entity import EudaEntity
 
+# Coordinator owns all portal I/O; entities never call the API directly.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

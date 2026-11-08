@@ -1,0 +1,502 @@
+{
+  "entity": {
+    "button": {
+      "refresh": {
+        "default": "mdi:cloud-sync"
+      }
+    },
+    "sensor": {
+      "actual_charge_rate": {
+        "default": "mdi:speedometer"
+      },
+      "additional_consumptions_interior_climatization_consumption": {
+        "default": "mdi:thermometer"
+      },
+      "additional_consumptions_residual_consumption": {
+        "default": "mdi:car-info"
+      },
+      "auto_unlock_ac": {
+        "default": "mdi:lock-open"
+      },
+      "battery_care_mode_charge_bcam_threshold": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_charge_bulk_threshold": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_charge_energy": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_charge_power": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_charge_rate": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_remaining_charging_time_bulk": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_remaining_charging_time_complete": {
+        "default": "mdi:battery"
+      },
+      "battery_state_report_soc": {
+        "default": "mdi:battery"
+      },
+      "bcam_activation": {
+        "default": "mdi:battery-heart"
+      },
+      "bem_level": {
+        "default": "mdi:information"
+      },
+      "boardnet_battery_voltage_indication": {
+        "default": "mdi:battery"
+      },
+      "car_captured_time": {
+        "default": "mdi:clock-outline"
+      },
+      "charge_mode": {
+        "default": "mdi:ev-station"
+      },
+      "charge_mode_selection": {
+        "default": "mdi:cog"
+      },
+      "charge_state": {
+        "default": "mdi:ev-station"
+      },
+      "charge_type": {
+        "default": "mdi:power-plug"
+      },
+      "charged_energy": {
+        "default": "mdi:lightning-bolt-circle"
+      },
+      "charging_mode": {
+        "default": "mdi:ev-station"
+      },
+      "charging_power": {
+        "default": "mdi:flash"
+      },
+      "charging_reason_trigger": {
+        "default": "mdi:timer-outline"
+      },
+      "charging_scenario": {
+        "default": "mdi:ev-station"
+      },
+      "charging_state": {
+        "default": "mdi:ev-station"
+      },
+      "charging_state_report_error_code": {
+        "default": "mdi:car-info"
+      },
+      "charging_timer_reachability": {
+        "default": "mdi:timer-outline"
+      },
+      "cng_gas_level": {
+        "default": "mdi:gas-cylinder"
+      },
+      "cruising_range_combined": {
+        "default": "mdi:map-marker-distance"
+      },
+      "cruising_range_primary_engine": {
+        "default": "mdi:gas-station"
+      },
+      "cruising_range_secondary_engine": {
+        "default": "mdi:ev-station"
+      },
+      "dataset_generated": {
+        "default": "mdi:database-clock"
+      },
+      "days_until_subscription_expires": {
+        "default": "mdi:calendar-clock"
+      },
+      "energy_contents_current_energy_content_physical_value": {
+        "default": "mdi:flash"
+      },
+      "energy_contents_maximal_energy_content_physical_value": {
+        "default": "mdi:car-info"
+      },
+      "fuel_level_accuracy": {
+        "default": "mdi:oil"
+      },
+      "fuel_level_current_level": {
+        "default": "mdi:gas-station"
+      },
+      "hv_battery_level": {
+        "default": "mdi:battery"
+      },
+      "immediate_action_state": {
+        "default": "mdi:ev-station"
+      },
+      "inspection_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "inspection_due_date": {
+        "default": "mdi:calendar-clock"
+      },
+      "instrument_cluster_time": {
+        "default": "mdi:car-clock"
+      },
+      "integration_status": {
+        "default": "mdi:cloud-sync-outline"
+      },
+      "last_battery_charger_update_trigger": {
+        "default": "mdi:flash"
+      },
+      "last_charge_kwh": {
+        "default": "mdi:battery-charging-wireless"
+      },
+      "last_connected": {
+        "default": "mdi:clock"
+      },
+      "last_vehicle_update": {
+        "default": "mdi:car-clock"
+      },
+      "long_term_data_average_electr_engine_consumption": {
+        "default": "mdi:lightning-bolt"
+      },
+      "long_term_data_average_fuel_consumption": {
+        "default": "mdi:gas-station"
+      },
+      "long_term_data_average_speed": {
+        "default": "mdi:speedometer"
+      },
+      "long_term_data_mileage": {
+        "default": "mdi:map-marker-distance"
+      },
+      "long_term_data_range_gain_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "long_term_data_start_mileage": {
+        "default": "mdi:counter"
+      },
+      "long_term_data_travel_time": {
+        "default": "mdi:clock-outline"
+      },
+      "long_term_data_zero_emission_distance": {
+        "default": "mdi:leaf"
+      },
+      "maintenance_interval_distance_until_inspection": {
+        "default": "mdi:car-wrench"
+      },
+      "maintenance_interval_distance_until_oil_change": {
+        "default": "mdi:oil"
+      },
+      "maintenance_interval_time_until_inspection": {
+        "default": "mdi:clock-outline"
+      },
+      "maintenance_interval_time_until_oil_change": {
+        "default": "mdi:oil"
+      },
+      "max_ac_charge_current": {
+        "default": "mdi:current-ac"
+      },
+      "max_temperature": {
+        "default": "mdi:thermometer"
+      },
+      "mileage": {
+        "default": "mdi:counter"
+      },
+      "mileage_timestamp": {
+        "default": "mdi:map-marker-distance"
+      },
+      "mileage_value": {
+        "default": "mdi:map-marker-distance"
+      },
+      "mileage_value_timestamp": {
+        "default": "mdi:map-marker-distance"
+      },
+      "min_temperature": {
+        "default": "mdi:thermometer"
+      },
+      "minutes_since_last_snapshot": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "oil_change_due_date": {
+        "default": "mdi:oil"
+      },
+      "oil_level_actual_level": {
+        "default": "mdi:oil"
+      },
+      "oil_level_additional_oil_level": {
+        "default": "mdi:oil"
+      },
+      "oil_level_dipstick_indicator_function": {
+        "default": "mdi:gauge"
+      },
+      "oil_level_total_max": {
+        "default": "mdi:oil"
+      },
+      "outdoor_temperature": {
+        "default": "mdi:car-door"
+      },
+      "outside_temperature": {
+        "default": "mdi:thermometer"
+      },
+      "outside_temperature_indication": {
+        "default": "mdi:thermometer"
+      },
+      "position_front_left_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "position_front_right_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "position_rear_left_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "position_rear_right_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "position_sunroof_motor_hood_1": {
+        "default": "mdi:car-convertible"
+      },
+      "range": {
+        "default": "mdi:map-marker-distance"
+      },
+      "range_value": {
+        "default": "mdi:map-marker-distance"
+      },
+      "remaining_charging_time": {
+        "default": "mdi:battery-clock"
+      },
+      "remaining_climate_time": {
+        "default": "mdi:thermometer"
+      },
+      "residual_energy_in_percent": {
+        "default": "mdi:battery"
+      },
+      "scr_range": {
+        "default": "mdi:map-marker-distance"
+      },
+      "settings_target_soc": {
+        "default": "mdi:battery"
+      },
+      "short_term_data_average_electr_engine_consumption": {
+        "default": "mdi:lightning-bolt"
+      },
+      "short_term_data_average_fuel_consumption": {
+        "default": "mdi:gas-station"
+      },
+      "short_term_data_mileage": {
+        "default": "mdi:map-marker-distance"
+      },
+      "short_term_data_range_gain_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "short_term_data_start_mileage": {
+        "default": "mdi:counter"
+      },
+      "short_term_data_travel_time": {
+        "default": "mdi:clock-outline"
+      },
+      "short_term_data_zero_emission_distance": {
+        "default": "mdi:leaf"
+      },
+      "slope_consumption_values_ascent_slope_consumption_physical_value": {
+        "default": "mdi:car-info"
+      },
+      "slope_consumption_values_descent_slope_consumption_physical_value": {
+        "default": "mdi:car-info"
+      },
+      "state_of_charge": {
+        "default": "mdi:battery"
+      },
+      "tyre_pressure_actual_front_left": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_actual_front_right": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_actual_rear_left": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_actual_rear_right": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_actual_spare_tyre": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_differential_front_left": {
+        "default": "mdi:gauge"
+      },
+      "tyre_pressure_differential_front_right": {
+        "default": "mdi:gauge"
+      },
+      "tyre_pressure_differential_rear_left": {
+        "default": "mdi:gauge"
+      },
+      "tyre_pressure_differential_rear_right": {
+        "default": "mdi:gauge"
+      },
+      "tyre_pressure_differential_spare_tyre": {
+        "default": "mdi:gauge"
+      },
+      "tyre_pressure_required_front_left": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_required_front_right": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_required_rear_left": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_required_rear_right": {
+        "default": "mdi:car-tire-alert"
+      },
+      "tyre_pressure_required_spare_tyre": {
+        "default": "mdi:car-tire-alert"
+      },
+      "uncurated_fields_count": {
+        "default": "mdi:format-list-numbered"
+      },
+      "value_of_the_primary_range": {
+        "default": "mdi:map-marker-distance"
+      },
+      "window_heating_state": {
+        "default": "mdi:car-defrost-rear"
+      }
+    },
+    "binary_sensor": {
+      "charge_mode_selection_options_home_storage_charging": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_immediate_charging": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_immediate_discharging": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_only_own_current": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_preferred_charging_times": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_timer_charging": {
+        "default": "mdi:battery"
+      },
+      "charge_mode_selection_options_timer_charging_climatization": {
+        "default": "mdi:battery"
+      },
+      "charging": {
+        "default": "mdi:battery-charging"
+      },
+      "energy_flow": {
+        "default": "mdi:transmission-tower"
+      },
+      "led_state": {
+        "default": "mdi:led-outline"
+      },
+      "lock_state": {
+        "default": "mdi:lock"
+      },
+      "locked": {
+        "default": "mdi:car-door"
+      },
+      "locked_state_front_engine_bonnet": {
+        "default": "mdi:car-door-lock"
+      },
+      "locked_state_front_left_door": {
+        "default": "mdi:car-door-lock"
+      },
+      "locked_state_front_right_door": {
+        "default": "mdi:car-door-lock"
+      },
+      "locked_state_rear_left_door": {
+        "default": "mdi:car-door"
+      },
+      "locked_state_rear_right_door": {
+        "default": "mdi:car-door-lock"
+      },
+      "locked_state_tailgate": {
+        "default": "mdi:car-door-lock"
+      },
+      "open": {
+        "default": "mdi:car-door-open"
+      },
+      "open_state_front_engine_bonnet": {
+        "default": "mdi:car-door"
+      },
+      "open_state_front_left_door": {
+        "default": "mdi:car-door"
+      },
+      "open_state_front_right_door": {
+        "default": "mdi:car-door"
+      },
+      "open_state_rear_left_door": {
+        "default": "mdi:car-door"
+      },
+      "open_state_rear_right_door": {
+        "default": "mdi:car-door"
+      },
+      "open_state_tailgate": {
+        "default": "mdi:car-door"
+      },
+      "parking_brake": {
+        "default": "mdi:car-brake-parking"
+      },
+      "parking_light_left": {
+        "default": "mdi:car-parking-lights"
+      },
+      "parking_light_right": {
+        "default": "mdi:car-parking-lights"
+      },
+      "parking_lights": {
+        "default": "mdi:car-parking-lights"
+      },
+      "plug_state": {
+        "default": "mdi:ev-plug-type2"
+      },
+      "safe_state_front_engine_bonnet": {
+        "default": "mdi:car"
+      },
+      "safe_state_front_right_door": {
+        "default": "mdi:shield-car"
+      },
+      "safe_state_rear_left_door": {
+        "default": "mdi:shield-car"
+      },
+      "safe_state_rear_right_door": {
+        "default": "mdi:shield-car"
+      },
+      "safe_state_tailgate": {
+        "default": "mdi:car"
+      },
+      "snapshot_stale": {
+        "default": "mdi:clock-alert"
+      },
+      "state_front_left_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "state_front_right_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "state_of_hood": {
+        "default": "mdi:car"
+      },
+      "state_rear_left_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "state_rear_right_door_window_lifter": {
+        "default": "mdi:window-open-variant"
+      },
+      "state_service_hatch": {
+        "default": "mdi:car"
+      },
+      "state_spoiler": {
+        "default": "mdi:oil"
+      },
+      "state_sunroof_motor_hood_1": {
+        "default": "mdi:car-convertible"
+      },
+      "state_sunroof_motor_hood_3": {
+        "default": "mdi:car-convertible"
+      },
+      "window_heating_state_front": {
+        "default": "mdi:car-defrost-rear"
+      },
+      "window_heating_state_rear": {
+        "default": "mdi:car-defrost-rear"
+      }
+    }
+  }
+}

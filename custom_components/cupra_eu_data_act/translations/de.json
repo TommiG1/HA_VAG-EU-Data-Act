@@ -76,6 +76,9 @@
     "delivery_not_ready": {
       "message": "Anmeldung erfolgreich — die Datenlieferung ist noch nicht bereit (HTTP 400). Wenn die kontinuierliche 15-Minuten-Anfrage auf dem Portal ({portal_url}) gerade erst erstellt wurde, kann es einige Stunden dauern, bis ZIP-Dateien geliefert werden.\n\nHome Assistant versucht es alle {retry_minutes} Minute(n) erneut. Das ist kein Zugangsdaten-Problem."
     },
+    "authentication_failed": {
+      "message": "Anmeldung am EU-Data-Act-Portal fehlgeschlagen. E-Mail und Passwort prüfen und erneut versuchen."
+    },
     "config_entry_not_found": {
       "message": "Kein VW Group EU Data Act-Eintrag für das gewählte Fahrzeug gefunden."
     },

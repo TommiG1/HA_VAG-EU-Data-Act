@@ -1,0 +1,64 @@
+# VW Group EU Data Act — stale telemetry notification.
+blueprint:
+  name: "Stale snapshot — notify"
+  description: >
+    Notify when the integration marks vehicle telemetry as stale (older than
+    your Stale after hours option). Useful when the car has been asleep and the
+    portal stopped delivering fresh captures.
+  domain: automation
+  author: TommiG1
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    stale_sensor:
+      name: Stale snapshot binary sensor
+      description: Usually binary_sensor.*_snapshot_stale.
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: binary_sensor
+    age_sensor:
+      name: Minutes since last snapshot
+      description: Diagnostic sensor used in the notification text.
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: sensor
+    notify_service:
+      name: Mobile notify service
+      description: e.g. notify.mobile_app_iphone (with or without notify. prefix).
+      selector:
+        text:
+    car_name:
+      name: Car name
+      default: Car
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input stale_sensor
+    to: "on"
+
+variables:
+  age_sensor: !input age_sensor
+  notify_service: !input notify_service
+  car_name: !input car_name
+  svc: "{{ (notify_service | default('', true)) | replace('notify.', '') }}"
+  age: "{{ states(age_sensor) }}"
+
+action:
+  - service: "notify.{{ svc }}"
+    data:
+      title: "{{ car_name }} — stale data"
+      message: >
+        {{ car_name }} portal telemetry looks stale
+        (about {{ age }} minutes since last snapshot).
+      data:
+        tag: "euda_stale_{{ car_name | slugify }}"
+        notification_icon: "mdi:clock-alert"

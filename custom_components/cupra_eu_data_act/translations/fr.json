@@ -75,6 +75,9 @@
     "delivery_not_ready": {
       "message": "Connexion réussie — la livraison des données n'est pas encore prête (HTTP 400). Si vous venez de créer la demande continue de 15 minutes sur le portail ({portal_url}), le backend peut mettre quelques heures avant de commencer à livrer des fichiers ZIP.\n\nHome Assistant réessaie toutes les {retry_minutes} minute(s). Ce n'est pas un problème d'identifiants."
     },
+    "authentication_failed": {
+      "message": "La connexion au portail EU Data Act a échoué. Vérifiez l'e-mail et le mot de passe, puis réessayez."
+    },
     "config_entry_not_found": {
       "message": "Aucune entrée VW Group EU Data Act ne correspond au véhicule sélectionné."
     },

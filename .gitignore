@@ -5,6 +5,10 @@ __pycache__/
 .env
 *.har
 WVWZZZTESTVIN*.json
+.coverage
+coverage.json
+htmlcov/
+.pytest_cache/
 
 # Private brainstorming / roadmap notes (not for publication)
 IDEAS.local.md

@@ -19,21 +19,34 @@ These are the fast feedback loop for refactors that don't touch Home Assistant.
 
 ## HA-harness tests (full Home Assistant)
 
-`test_coordinator.py` and `test_config_flow.py` use
+Pytest under `tests/` (except the offline scripts above) uses
 [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component)
 to spin up a real `hass` instance and load the integration the same way Home
-Assistant does at runtime. They cover the two things you can't test offline:
-
-- Authentication failures must surface as `ConfigEntryAuthFailed` so HA shows
-  the reauth dialog, not as a silent retry.
-- The reauth step must restore `CONF_BRAND` from the stored entry so non-VW
-  users (Škoda, Cupra, …) log in against the right OIDC client.
+Assistant does at runtime.
 
 Install and run from a Python 3.13+ venv:
 
 ```bash
 pip install -r requirements_test.txt
-pytest tests/test_coordinator.py tests/test_config_flow.py -v
+pytest tests/ --ignore=tests/test_offline.py -v
+```
+
+## Coverage (Silver floor)
+
+Silver requires **≥95% line coverage in every module**. CI combines offline
+scripts and the HA harness:
+
+```bash
+coverage erase
+coverage run --source=custom_components/cupra_eu_data_act tests/test_offline.py
+coverage run -a --source=custom_components/cupra_eu_data_act tests/test_api_mock.py
+coverage run -a --source=custom_components/cupra_eu_data_act tests/test_brands.py
+coverage run -a --source=custom_components/cupra_eu_data_act tests/test_cache.py
+coverage run -a --source=custom_components/cupra_eu_data_act \
+  -m pytest tests/ --ignore=tests/test_offline.py -q
+coverage report --fail-under=95
+coverage json -o coverage.json
+python scripts/check_module_coverage.py --min 95
 ```
 
 On Windows, run the harness from WSL or a Linux container — HA's test

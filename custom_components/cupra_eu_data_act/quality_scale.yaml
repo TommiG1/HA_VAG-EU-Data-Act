@@ -1,0 +1,248 @@
+# VW Group EU Data Act — Integration Quality Scale
+# See: https://developers.home-assistant.io/docs/core/integration-quality-scale/
+# Self-assessment for this custom integration. Official Core tiers apply only
+# after a Core merge; the manifest quality_scale reflects this checklist.
+
+rules:
+
+  # ── Bronze ────────────────────────────────────────────────────────────────
+  action-setup:
+    status: done
+    comment: refresh_now registered once in async_setup via async_setup_services().
+
+  appropriate-polling:
+    status: done
+    comment: |
+      Portal cadence is ~15 minutes (DATASET_INTERVAL). Coordinator reschedules
+      adaptively with POST_DATASET_BUFFER; does not hammer the portal.
+
+  brands:
+    status: done
+    comment: brand/ ships icon.png, logo.png and dark variants for HACS/custom.
+
+  common-modules:
+    status: done
+    comment: coordinator.py + entity.py (EudaEntity) shared by all platforms.
+
+  config-flow-test-coverage:
+    status: done
+    comment: tests/test_config_flow.py covers setup, errors, reauth, options.
+
+  config-flow:
+    status: done
+    comment: |
+      UI flow with brand, credentials, locale, vehicle pick; data_description
+      in strings; ConfigEntry.data for secrets, options for preferences.
+
+  dependency-transparency:
+    status: done
+    comment: No PyPI requirements; portal client is in-tree aiohttp code.
+
+  docs-actions:
+    status: done
+    comment: services.yaml + README / strings document refresh_now.
+
+  docs-conditions:
+    status: exempt
+    comment: Integration exposes no entity conditions.
+
+  docs-high-level-description:
+    status: done
+    comment: README explains EU Data Act portal purpose and brand coverage.
+
+  docs-installation-instructions:
+    status: done
+    comment: README Marketplace/HACS and manual install steps with prerequisites.
+
+  docs-removal-instructions:
+    status: done
+    comment: README documents how to remove the integration and what remains.
+
+  docs-triggers:
+    status: exempt
+    comment: Integration exposes no device/entity triggers.
+
+  entity-event-setup:
+    status: done
+    comment: CoordinatorEntity handles subscribe/unsubscribe lifecycle.
+
+  entity-unique-id:
+    status: done
+    comment: VIN-namespaced unique_ids for curated, raw, and diagnostic entities.
+
+  has-entity-name:
+    status: done
+    comment: _attr_has_entity_name = True on EudaEntity.
+
+  runtime-data:
+    status: done
+    comment: entry.runtime_data is EudaRuntimeData (coordinator + session).
+
+  test-before-configure:
+    status: done
+    comment: Config flow logs in and lists vehicles before creating the entry.
+
+  test-before-setup:
+    status: done
+    comment: |
+      First refresh runs after platforms load; auth failures raise
+      ConfigEntryAuthFailed; portal wait states use translated UpdateFailed.
+
+  unique-config-entry:
+    status: done
+    comment: async_set_unique_id(vin) + _abort_if_unique_id_configured().
+
+  # ── Silver ────────────────────────────────────────────────────────────────
+  action-exceptions:
+    status: done
+    comment: refresh_now raises ServiceValidationError with translation keys.
+
+  config-entry-unloading:
+    status: done
+    comment: async_unload_entry unloads platforms, clears issues, closes session.
+
+  docs-configuration-parameters:
+    status: done
+    comment: README Options section documents stale threshold and utility meters.
+
+  docs-installation-parameters:
+    status: done
+    comment: README documents brand, credentials, country/language, vehicle.
+
+  entity-unavailable:
+    status: done
+    comment: |
+      Entities are unavailable until the first dataset exists. After that they
+      intentionally keep last-known portal values across transient outages
+      (15-minute portal cadence); connection loss is logged once instead of
+      flipping every entity to unavailable.
+
+  integration-owner:
+    status: done
+    comment: "@TommiG1 in manifest.json codeowners."
+
+  log-when-unavailable:
+    status: done
+    comment: |
+      Coordinator logs WARNING once when the portal becomes unreachable and
+      INFO once when it is reachable again (_portal_reachable flag).
+
+  parallel-updates:
+    status: done
+    comment: PARALLEL_UPDATES = 0 on sensor, binary_sensor, and button platforms.
+
+  reauthentication-flow:
+    status: done
+    comment: async_step_reauth + reauth_confirm in config_flow.py.
+
+  test-coverage:
+    status: done
+    comment: |
+      Combined offline + HA pytest suite covers ≥95% of every module
+      (verified via coverage report). CI runs coverage with --fail-under=95
+      and scripts/check_module_coverage.py for the per-module floor.
+
+  # ── Gold ──────────────────────────────────────────────────────────────────
+  devices:
+    status: done
+    comment: One DeviceInfo per VIN (manufacturer, model, serial_number).
+
+  diagnostics:
+    status: done
+    comment: diagnostics.py with async_redact_data for credentials and identifiers.
+
+  discovery:
+    status: exempt
+    comment: Cloud portal account; no local network discovery.
+
+  discovery-update-info:
+    status: exempt
+    comment: No discovery / no local host to update.
+
+  docs-data-update:
+    status: done
+    comment: README + AUTOMATIONS.md explain ~15 min portal delivery and freshness.
+
+  docs-examples:
+    status: done
+    comment: |
+      docs/EXAMPLES.md plus blueprints/automation/cupra_eu_data_act/
+      (low battery, charge complete, stale snapshot, subscription, unlocked).
+
+  docs-known-limitations:
+    status: done
+    comment: README Limitations section (read-only, latency, Porsche, EU scope).
+
+  docs-supported-devices:
+    status: done
+    comment: docs/SUPPORTED_DEVICES.md brands, layouts, exclusions, examples.
+
+  docs-supported-functions:
+    status: done
+    comment: docs/SUPPORTED_FUNCTIONS.md entity catalogue and services.
+
+  docs-troubleshooting:
+    status: done
+    comment: docs/TROUBLESHOOTING.md for portal and login issues.
+
+  docs-use-cases:
+    status: done
+    comment: docs/USE_CASES.md for dashboard, energy, notify, stale, evcc read path.
+
+  dynamic-devices:
+    status: exempt
+    comment: One VIN per config entry; new fields appear via entity discovery.
+
+  entity-category:
+    status: done
+    comment: Diagnostic entities use EntityCategory.DIAGNOSTIC.
+
+  entity-device-class:
+    status: done
+    comment: Device classes set on curated sensors/binaries where applicable.
+
+  entity-disabled-by-default:
+    status: done
+    comment: Raw diagnostic sensors disabled by default; curated stay enabled.
+
+  entity-translations:
+    status: done
+    comment: Entity names via strings.json / translations (en de fr es it nl).
+
+  exception-translations:
+    status: done
+    comment: |
+      Services, portal-wait UpdateFailed keys, and ConfigEntryAuthFailed use
+      translation_domain/translation_key (authentication_failed).
+
+  icon-translations:
+    status: done
+    comment: icons.json maps entity translation keys to mdi icons.
+
+  reconfiguration-flow:
+    status: done
+    comment: async_step_reconfigure updates credentials and locale.
+
+  repair-issues:
+    status: done
+    comment: issues.py raises user-fixable portal/subscription/stale repairs.
+
+  stale-devices:
+    status: exempt
+    comment: Single device per entry tied to VIN; no multi-device churn.
+
+  # ── Platinum ──────────────────────────────────────────────────────────────
+  async-dependency:
+    status: done
+    comment: In-tree async aiohttp client; no blocking third-party I/O library.
+
+  inject-websession:
+    status: done
+    comment: |
+      EudaApiClient accepts an injected ClientSession. Setup uses a dedicated
+      session with its own CookieJar (portal auth is cookie-based) while
+      reusing Home Assistant's shared connector (connector_owner=False).
+
+  strict-typing:
+    status: todo
+    comment: Mostly typed; no strict mypy CI / .strict-typing listing yet.

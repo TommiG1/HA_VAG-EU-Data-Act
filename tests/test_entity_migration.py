@@ -111,6 +111,13 @@ def test_migration_disables_car_captured_time_curated() -> None:
     assert updates == {"disabled_by": er.RegistryEntryDisabler.INTEGRATION}
 
 
+def test_migration_renames_legacy_timestamp() -> None:
+    vin = "WVWZZZTESTVIN0001"
+    assert entity_registry_updates(
+        _entry(unique_id=f"{vin}_mileage.value.timestamp"), vin
+    ) == {"new_unique_id": f"{vin}_last_connected"}
+
+
 def test_migration_disables_bare_instrument_cluster_when_dotted_exists() -> None:
     vin = "WVWZZZTESTVIN0001"
     updates = entity_registry_updates(

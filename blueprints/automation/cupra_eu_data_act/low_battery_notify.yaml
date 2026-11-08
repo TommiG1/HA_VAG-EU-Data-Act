@@ -1,0 +1,93 @@
+# VW Group EU Data Act — low battery notification (read-only portal data).
+blueprint:
+  name: "Low battery — notify"
+  description: >
+    Notify your phone when the vehicle battery drops below a level you set and
+    the car is not charging. Uses EU Data Act entities you pick from this
+    integration.
+  domain: automation
+  author: TommiG1
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    battery_sensor:
+      name: Battery level sensor
+      description: Curated battery / SoC sensor (device class battery).
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: sensor
+              device_class: battery
+    charging_sensor:
+      name: Charging sensor
+      description: Charging binary sensor (device class battery_charging).
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: binary_sensor
+              device_class: battery_charging
+    low_level:
+      name: Low battery level (%)
+      description: Notify when the battery drops below this value.
+      default: 20
+      selector:
+        number:
+          min: 5
+          max: 60
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    debounce_minutes:
+      name: Debounce (minutes)
+      description: Battery must stay below the level this long before notifying.
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: "min"
+    notify_service:
+      name: Mobile notify service
+      description: e.g. notify.mobile_app_iphone (with or without notify. prefix).
+      selector:
+        text:
+    car_name:
+      name: Car name
+      description: Shown in the notification.
+      default: Car
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input battery_sensor
+    below: !input low_level
+    for:
+      minutes: !input debounce_minutes
+
+variables:
+  battery_sensor: !input battery_sensor
+  notify_service: !input notify_service
+  car_name: !input car_name
+  svc: "{{ (notify_service | default('', true)) | replace('notify.', '') }}"
+  soc: "{{ states(battery_sensor) | int(0) }}"
+
+condition:
+  - condition: state
+    entity_id: !input charging_sensor
+    state: "off"
+
+action:
+  - service: "notify.{{ svc }}"
+    data:
+      title: "{{ car_name }} — low battery"
+      message: "{{ car_name }} is at {{ soc }}% and not charging."
+      data:
+        tag: "euda_low_batt_{{ car_name | slugify }}"
+        notification_icon: "mdi:battery-alert"

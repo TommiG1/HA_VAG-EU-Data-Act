@@ -28,6 +28,9 @@ from .data import (
 )
 from .entity import EudaEntity
 
+# Coordinator owns all portal I/O; entities never call the API directly.
+PARALLEL_UPDATES = 0
+
 # Synthetic curated field — not present in portal payloads.
 _DERIVED_CHARGING_FIELD = "charging"
 

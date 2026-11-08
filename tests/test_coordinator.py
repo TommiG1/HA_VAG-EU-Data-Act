@@ -25,6 +25,7 @@ from custom_components.cupra_eu_data_act.const import (
     SERVER_ERROR_BACKOFF_INTERVALS,
 )
 from custom_components.cupra_eu_data_act.coordinator import EudaCoordinator, EudaUpdateNotReady
+from custom_components.cupra_eu_data_act.coordinator import _created_on, _filename_timestamp
 from custom_components.cupra_eu_data_act.data import DataPoint
 
 
@@ -451,3 +452,74 @@ async def test_empty_identifier_refreshed_before_listing(hass) -> None:
     )
     assert coordinator.identifier == "new-ident"
     assert entry.data[CONF_IDENTIFIER] == "new-ident"
+
+
+def test_coordinator_helper_and_diagnostic_edges(hass) -> None:
+    assert _filename_timestamp("not_a_timestamp.zip") is None
+    assert _created_on({"name": "x_20260101000000.zip"}) is not None
+    assert _created_on({"name": "bad.zip", "createdOn": "bad"}) is None
+    coordinator = _make_coordinator(hass, MagicMock())
+    coordinator._consecutive_server_errors = 999
+    assert coordinator._server_error_backoff_interval() == SERVER_ERROR_BACKOFF_INTERVALS[-1]
+    coordinator._portal_reachable = False
+    coordinator._mark_portal_reachable()
+    assert coordinator._portal_reachable
+    for index in range(7):
+        coordinator._record_download_attempt(f"{index}.zip", success=False, error="x")
+    assert len(coordinator.last_download_attempts) == 5
+
+
+async def test_empty_snapshot_first_load_error(hass) -> None:
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        return_value=[{"name": "x_no_content_found.zip"}]
+    )
+    coordinator = _make_coordinator(hass, client)
+    with pytest.raises(EudaUpdateNotReady) as exc:
+        await coordinator._async_update_data()
+    assert exc.value.translation_key == "waiting_for_portal_data_empty_snapshots"
+
+
+async def test_download_server_error_fallback_and_existing_data(hass, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "custom_components.cupra_eu_data_act.coordinator.asyncio.sleep", AsyncMock()
+    )
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        return_value=[
+            {"name": "old_20260101000000.zip"},
+            {"name": "new_20260102000000.zip"},
+        ]
+    )
+    client.async_download_dataset_raw = AsyncMock(
+        side_effect=ApiError("HTTP 503", status=503)
+    )
+    coordinator = _make_coordinator(hass, client)
+    previous = {"k": DataPoint("k", "mileage", "1")}
+    coordinator.data = previous
+    result = await coordinator._async_update_data()
+    assert result is previous
+    assert len(coordinator.last_download_attempts) == 2
+
+
+async def test_download_nonserver_error_first_load(hass) -> None:
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        return_value=[{"name": "x_20260101000000.zip"}]
+    )
+    client.async_download_dataset_raw = AsyncMock(
+        side_effect=ApiError("HTTP 400", status=400)
+    )
+    coordinator = _make_coordinator(hass, client)
+    with pytest.raises(UpdateFailed, match="Failed to download"):
+        await coordinator._async_update_data()
+
+
+async def test_empty_downloaded_dataset_paths(hass) -> None:
+    client = MagicMock()
+    client.async_list_datasets = AsyncMock(
+        return_value=[{"name": "x_20260101000000.zip"}]
+    )
+    _mock_client_with_zip(client, {"Data": []})
+    coordinator = _make_coordinator(hass, client)
+    assert await coordinator._async_update_data() == {}

@@ -71,7 +71,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 @dataclass
 class EudaRuntimeData:
     coordinator: EudaCoordinator
-    session: object
+    session: aiohttp.ClientSession
 
 
 type EudaConfigEntry = ConfigEntry[EudaRuntimeData]

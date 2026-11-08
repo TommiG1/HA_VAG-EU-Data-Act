@@ -22,8 +22,10 @@ jobs:
         run: python tests/test_api_mock.py
       - name: Brand registry tests
         run: python tests/test_brands.py
+      - name: Cache tests
+        run: python tests/test_cache.py
 
-  ha-harness:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -36,5 +38,15 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements_test.txt
-      - name: Coordinator and config-flow tests
-        run: pytest tests/test_coordinator.py tests/test_config_flow.py -v
+      - name: Combined coverage (offline + HA harness)
+        run: |
+          coverage erase
+          coverage run --source=custom_components/cupra_eu_data_act tests/test_offline.py
+          coverage run -a --source=custom_components/cupra_eu_data_act tests/test_api_mock.py
+          coverage run -a --source=custom_components/cupra_eu_data_act tests/test_brands.py
+          coverage run -a --source=custom_components/cupra_eu_data_act tests/test_cache.py
+          coverage run -a --source=custom_components/cupra_eu_data_act \
+            -m pytest tests/ --ignore=tests/test_offline.py -q --tb=short
+          coverage report --precision=1 --fail-under=95
+          coverage json -o coverage.json
+          python scripts/check_module_coverage.py --min 95

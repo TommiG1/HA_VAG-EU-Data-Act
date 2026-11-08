@@ -5,6 +5,11 @@
 </p>
 
 [![Test](https://github.com/TommiG1/HA_VAG-EU-Data-Act/actions/workflows/test.yml/badge.svg)](https://github.com/TommiG1/HA_VAG-EU-Data-Act/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/TommiG1/HA_VAG-EU-Data-Act?include_prereleases)](https://github.com/TommiG1/HA_VAG-EU-Data-Act/releases)
+[![Quality scale](https://img.shields.io/badge/quality_scale-gold-FFD700)](https://www.home-assistant.io/docs/quality_scale/)
+[![Home Assistant](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FTommiG1%2FHA_VAG-EU-Data-Act%2Fmain%2Fhacs.json&query=%24.homeassistant&label=Home%20Assistant&prefix=%E2%89%A5&color=blue)](https://www.home-assistant.io)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Home Assistant Community](https://img.shields.io/badge/Forum-Home%20Assistant-41BDF5?logo=homeassistant&logoColor=white)](https://community.home-assistant.io/t/beta-vw-group-eu-data-act-vehicle-data-for-vw-audi-skoda-seat-cupra-bentley-official-portal/1013514)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/tommigraf)
 
@@ -84,11 +89,54 @@ ZIP with real content arrives. No reload needed.
 Details and common portal issues:
 [Troubleshooting](docs/TROUBLESHOOTING.md).
 
+## Setup parameters
+
+During setup the integration asks for:
+
+| Field | Meaning |
+|-------|---------|
+| Brand | Account brand (VW ID, myAudi, Cupra ID, …) |
+| Email / password | Same credentials as on the EU Data Act portal |
+| Country / language | Two-letter codes matching the account (for example `de`, `es`) |
+| Vehicle | VIN from the portal vehicle list |
+
+Wrong country/language can still log in but fail later with HTTP 503 on vehicle data.
+
+## Options
+
+After setup: **Settings → Devices & services → VW Group EU Data Act → Configure**
+
+| Option | Meaning |
+|--------|---------|
+| Stale after (hours) | When vehicle telemetry is older than this, the stale binary sensor and repair issue activate. `0` turns that check off (useful for cars that sleep for days). |
+| Create monthly utility meter helpers | Opt-in. Creates monthly helpers for charged energy and mileage when matching sensors exist. Helpers you delete are not recreated. |
+
+You can also **reconfigure** credentials or locale from the integration’s three-dot menu without removing the entry.
+
+## Removing the integration
+
+**Settings → Devices & services → VW Group EU Data Act → three-dot menu → Delete**.
+
+That removes the Home Assistant config entry, entities, and repair issues. It does **not** cancel the continuous data request on the EU Data Act portal; turn that off on the portal if you no longer want VW to deliver ZIPs. Local ZIP cache under Home Assistant’s config directory may remain until you delete it manually.
+
+## Use cases and examples
+
+Common goals (dashboard, Energy, notifications, stale data, subscription
+reminders): [docs/USE_CASES.md](docs/USE_CASES.md).
+
+Importable automation blueprints:
+[blueprints/automation/cupra_eu_data_act/](blueprints/automation/cupra_eu_data_act/)
+(how to import: [docs/EXAMPLES.md](docs/EXAMPLES.md)).
+
 ## Further reading
 
 | Topic | Doc |
 |-------|-----|
 | FAQ and portal problems | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
+| Supported brands and models | [docs/SUPPORTED_DEVICES.md](docs/SUPPORTED_DEVICES.md) |
+| Entities and functions | [docs/SUPPORTED_FUNCTIONS.md](docs/SUPPORTED_FUNCTIONS.md) |
+| Use cases | [docs/USE_CASES.md](docs/USE_CASES.md) |
+| Blueprints and YAML examples | [docs/EXAMPLES.md](docs/EXAMPLES.md) |
 | Automation states and freshness | [docs/AUTOMATIONS.md](docs/AUTOMATIONS.md) |
 | Energy dashboard and utility meters | [docs/ENERGY.md](docs/ENERGY.md) |
 | Dashboard entity hints | [dashboards/README.md](dashboards/README.md) |

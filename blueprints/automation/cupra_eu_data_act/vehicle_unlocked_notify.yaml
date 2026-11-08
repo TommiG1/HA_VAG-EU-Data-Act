@@ -1,0 +1,65 @@
+# VW Group EU Data Act — unlocked vehicle notification.
+blueprint:
+  name: "Vehicle unlocked — notify"
+  description: >
+    Notify when the curated vehicle-locked binary turns off (reported unlocked).
+    Portal latency is about 15 minutes, so this is a convenience alert, not a
+    real-time security system.
+  domain: automation
+  author: TommiG1
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    locked_sensor:
+      name: Vehicle locked binary sensor
+      description: Curated locked binary (on = locked).
+      selector:
+        entity:
+          filter:
+            - integration: cupra_eu_data_act
+              domain: binary_sensor
+              device_class: lock
+    debounce_minutes:
+      name: Debounce (minutes)
+      description: Must stay unlocked this long before notifying.
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: "min"
+    notify_service:
+      name: Mobile notify service
+      description: e.g. notify.mobile_app_iphone (with or without notify. prefix).
+      selector:
+        text:
+    car_name:
+      name: Car name
+      default: Car
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input locked_sensor
+    to: "off"
+    for:
+      minutes: !input debounce_minutes
+
+variables:
+  notify_service: !input notify_service
+  car_name: !input car_name
+  svc: "{{ (notify_service | default('', true)) | replace('notify.', '') }}"
+
+action:
+  - service: "notify.{{ svc }}"
+    data:
+      title: "{{ car_name }} — unlocked"
+      message: "{{ car_name }} is reported unlocked (portal data)."
+      data:
+        tag: "euda_unlock_{{ car_name | slugify }}"
+        notification_icon: "mdi:car-door"
