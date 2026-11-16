@@ -54,7 +54,7 @@ def main() -> int:
         qs = parse_qs(urlparse(url).query)
         check(f"{slug} client_id", qs.get("client_id", [""])[0], brand.client_id)
         check(f"{slug} state", qs.get("state", [""])[0], brand.oidc_state())
-        check(f"{slug} redirect", qs.get("redirect_uri", [""])[0], "https://eu-data-act.drivesomethinggreater.com/login")
+        check(f"{slug} redirect", qs.get("redirect_uri", [""])[0], "https://eu-data-act.vwgroup-datahub.com/login")
 
     cupra = brands.get_brand("cupra")
     es_url = api.EudaApiClient._build_authorize_url(cupra, country="es", language="es")

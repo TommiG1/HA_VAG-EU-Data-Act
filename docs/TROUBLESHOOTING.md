@@ -7,13 +7,13 @@ live in the [README](../README.md#portal-setup-required).
 
 **No.** VW Connect Plus is a paid package for remote app features (climate,
 charge control, and similar). It is not required for the EU Data Act portal.
-The [official portal FAQ](https://eu-data-act.drivesomethinggreater.com/pl/en/service/faq.html)
+The [official portal FAQ](https://eu-data-act.vwgroup-datahub.com/de/en/service/faq.html)
 states that access to your vehicle data is free under the EU Data Act. You only
 need a Volkswagen Group brand account linked to the vehicle.
 
 Do not confuse that with the portal’s own **continuous data request** (the
 15-minute subscription under **Data clusters** on
-[eu-data-act.drivesomethinggreater.com](https://eu-data-act.drivesomethinggreater.com/),
+[eu-data-act.vwgroup-datahub.com](https://eu-data-act.vwgroup-datahub.com/),
 not in the brand app). That request is free and is what this integration
 downloads. It is unrelated to Connect Plus.
 
@@ -70,7 +70,7 @@ On the portal, confirm:
 3. Real ZIP files appear for the VIN. First delivery can take 15–60 minutes,
    sometimes several hours, occasionally 1–3 days after creating the request.
 4. Only **one** customised data request can be active at a time
-   ([portal FAQ](https://eu-data-act.drivesomethinggreater.com/pl/en/service/faq.html)).
+   ([portal FAQ](https://eu-data-act.vwgroup-datahub.com/de/en/service/faq.html)).
    A pending one-time export blocks a new continuous request until it finishes
    (up to 24 hours). The portal often has no cancel button. Wait or contact
    portal support via the Contact section.

@@ -203,7 +203,7 @@ async def test_classic_login_happy_path() -> None:
     )
     callback = Response(
         status=302,
-        url="https://eu-data-act.drivesomethinggreater.com/services/callbacklogin",
+        url="https://eu-data-act.vwgroup-datahub.com/services/callbacklogin",
     )
     callback.cookies["access_token"] = "token"
     api = client(Session(identifier_response, callback))

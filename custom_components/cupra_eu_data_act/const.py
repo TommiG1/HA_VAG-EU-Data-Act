@@ -42,7 +42,7 @@ def raw_unique_id(vin: str, key: str) -> str:
     return f"{vin}_{key}"
 
 # --- Portal / OIDC endpoints ---------------------------------------------
-BASE_URL = "https://eu-data-act.drivesomethinggreater.com"
+BASE_URL = "https://eu-data-act.vwgroup-datahub.com"
 IDENTITY_BASE = "https://identity.vwgroup.io"
 CALLBACK_LOGIN_PATH = "/services/callbacklogin"
 

@@ -1,7 +1,7 @@
 # Supported devices
 
 This integration talks to the official
-[VW Group EU Data Act portal](https://eu-data-act.drivesomethinggreater.com/).
+[VW Group EU Data Act portal](https://eu-data-act.vwgroup-datahub.com/).
 Support means: you can sign in with that brand’s account, select a VIN, and
 receive portal ZIP datasets when a continuous 15-minute **All Data** request is
 active.

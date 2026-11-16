@@ -14,7 +14,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/tommigraf)
 
 A Home Assistant custom integration that reads vehicle data from the official
-[Volkswagen Group EU Data Act portal](https://eu-data-act.drivesomethinggreater.com/).
+[Volkswagen Group EU Data Act portal](https://eu-data-act.vwgroup-datahub.com/).
 
 Supports Volkswagen, Volkswagen Commercial Vehicles, Audi, Škoda, SEAT, Cupra,
 and Bentley.
@@ -41,7 +41,7 @@ The continuous **15-minute** request is created on the official Volkswagen Group
 **EU Data Act portal** only. It is not in myAudi, the VW/Cupra/Škoda app, or
 Home Assistant. Brand apps are only for signing in.
 
-1. Open [eu-data-act.drivesomethinggreater.com](https://eu-data-act.drivesomethinggreater.com/)
+1. Open [eu-data-act.vwgroup-datahub.com](https://eu-data-act.vwgroup-datahub.com/)
 2. Sign in with your brand account and connect the vehicle under
    **Data clusters → Vehicle overview**
 3. Create a **continuous** (not one-time) data request with frequency
