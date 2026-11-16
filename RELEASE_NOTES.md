@@ -1,5 +1,42 @@
 # Release notes
 
+## v0.6.54 — Portal moved to eu-data-act.vwgroup-datahub.com (#87)
+
+### Summary
+
+Stable release of `0.6.54-beta.1`. On 16 Nov 2026 the VW Group EU Data Act
+portal moved from `eu-data-act.drivesomethinggreater.com` to
+`eu-data-act.vwgroup-datahub.com`. The old host only redirects, so API calls
+returned HTTP 404 and the login callback was no longer recognised. Users saw
+"Waiting for data", `listing_failed`, or a reauth prompt claiming wrong
+credentials. This release also ships the gold quality-scale work and a 401
+retry fix that landed on main before the beta.
+
+### Changes
+
+- `BASE_URL` (and with it the OIDC `redirect_uri`, callback check and all API
+  paths) now points to `https://eu-data-act.vwgroup-datahub.com` (#87).
+- README and docs link to the new portal host; FAQ link updated to a path that
+  exists there.
+- `async_list_datasets` reads the list response inside the `aiohttp` context
+  before a 401 retry, so a reconnect no longer looks like a connection error
+  (#84).
+- Quality scale claimed as gold: coverage gate in CI, `icons.json`,
+  `PARALLEL_UPDATES`, auth translations, Gold docs, and notification
+  blueprints.
+
+### Tests
+
+- Brand and API coverage tests use the new host. Offline, API mock, brand and
+  full pytest suites pass. Verified live with a CUPRA account (login, listing
+  and download).
+
+### How to update
+
+Marketplace / HACS → update to `0.6.54` (no beta toggle needed) → restart Home
+Assistant. If a reauth prompt appeared around the portal move, you can dismiss
+it once the integration loads again; your credentials were fine.
+
 ## v0.6.54-beta.1 — Portal moved to eu-data-act.vwgroup-datahub.com (#87)
 
 ### Summary
