@@ -20,6 +20,7 @@ from custom_components.cupra_eu_data_act.const import (
     CONF_VIN,
     DOMAIN,
     NO_CONTENT_SUFFIX,
+    PORTAL_DELIVERY_STALLED_THRESHOLD,
     SNAPSHOT_STALE_THRESHOLD,
     SUBSCRIPTION_VALIDITY,
 )
@@ -72,6 +73,31 @@ def test_listing_metadata_tracks_subscription_and_content(hass) -> None:
     assert coordinator.last_listing_content_at == datetime(
         2025, 6, 1, tzinfo=timezone.utc
     )
+    assert coordinator.last_listing_at == datetime(2025, 6, 1, tzinfo=timezone.utc)
+
+
+def test_last_listing_counts_empty_snapshots_and_survives_empty_listing(
+    hass,
+) -> None:
+    """A parked car's _no_content_found ZIPs still count as delivery (#90)."""
+    coordinator = _make_coordinator(hass)
+    coordinator._update_listing_metadata(
+        [
+            {
+                "name": "WVWZZZTESTVIN0001_20250601000000.zip",
+                "createdOn": "2025-06-01T00:00:00Z",
+            },
+            {
+                "name": f"WVWZZZTESTVIN0001_20250603000000{NO_CONTENT_SUFFIX}",
+                "createdOn": "2025-06-03T00:00:00Z",
+            },
+        ]
+    )
+    expected = datetime(2025, 6, 3, tzinfo=timezone.utc)
+    assert coordinator.last_listing_at == expected
+
+    coordinator._update_listing_metadata([])
+    assert coordinator.last_listing_at == expected
 
 
 def test_days_until_subscription_expires(hass, monkeypatch) -> None:
@@ -301,6 +327,68 @@ async def test_stale_check_off_clears_issue(hass, monkeypatch) -> None:
     sensor = EudaSnapshotStaleBinarySensor(coordinator)
     assert sensor.is_on is None
     assert sensor.extra_state_attributes["stale_threshold_hours"] == 0
+
+
+async def test_portal_delivery_stalled_issue_and_clear(hass, monkeypatch) -> None:
+    """No new listing entry for hours raises its own repair, even with the stale check off."""
+    entry = _make_entry(hass, {CONF_STALE_SNAPSHOT_HOURS: 0})
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    coordinator.data = {}
+    coordinator.status_label = "ok"
+    issue_id = f"{entry.entry_id}_portal_delivery_stalled"
+
+    async_update_issues(hass, entry, coordinator)
+    assert coordinator.is_portal_delivery_stalled is False
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+    coordinator.last_listing_at = now - PORTAL_DELIVERY_STALLED_THRESHOLD + timedelta(
+        minutes=1
+    )
+    async_update_issues(hass, entry, coordinator)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+    coordinator.last_listing_at = now - PORTAL_DELIVERY_STALLED_THRESHOLD - timedelta(
+        hours=1
+    )
+    async_update_issues(hass, entry, coordinator)
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, issue_id)
+    assert issue is not None
+    assert issue.severity == ir.IssueSeverity.WARNING
+    assert issue.translation_placeholders["hours_since"] == "7"
+    assert (
+        ir.async_get(hass).async_get_issue(DOMAIN, f"{entry.entry_id}_stale_snapshot")
+        is None
+    )
+
+    coordinator.last_listing_at = now
+    async_update_issues(hass, entry, coordinator)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+
+async def test_portal_delivery_stalled_not_stacked_on_status_issue(
+    hass, monkeypatch
+) -> None:
+    """listing_failed / delivery_not_ready already explain the gap."""
+    entry = _make_entry(hass)
+    coordinator = EudaCoordinator(hass, entry, MagicMock())
+    now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(dt_util, "utcnow", lambda: now)
+    coordinator.data = {}
+    coordinator.last_listing_at = now - timedelta(days=1)
+    issue_id = f"{entry.entry_id}_portal_delivery_stalled"
+
+    for status in ("listing_failed", "delivery_not_ready"):
+        coordinator.status_label = status
+        async_update_issues(hass, entry, coordinator)
+        assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+    # Empty listing with cached data (e.g. expired subscription) is not covered
+    # by the status repairs, so the delivery repair must show up there.
+    coordinator.status_label = "waiting_for_portal_data"
+    async_update_issues(hass, entry, coordinator)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
 
 
 async def test_options_update_applies_without_refresh(hass, monkeypatch) -> None:

@@ -124,7 +124,11 @@
     },
     "stale_snapshot": {
       "title": "Keine aktuellen Fahrzeugdaten für {vehicle}",
-      "description": "Der letzte echte Fahrzeugschnappschuss ist etwa {hours_since} Stunde(n) alt ({minutes_since} Minuten). Das Auto ist möglicherweise offline oder das Portal liefert keine neuen Datensätze.\n\nAuto aktivieren (fahren, Zündung oder App) und die kontinuierliche Anfrage im Portal ({portal_url}) prüfen."
+      "description": "Das Auto hat zuletzt vor etwa {hours_since} Stunde(n) Daten gemeldet ({minutes_since} Minuten). Solange das Auto parkt, ist das normal, denn ein schlafendes Auto sendet nichts.\n\nWurde das Auto seitdem gefahren oder geladen, im Portal ({portal_url}) prüfen, ob die kontinuierliche Anfrage aktiv ist. Erscheint der Hinweis bei jeder Standzeit, „Veraltet nach (Stunden)“ in den Optionen der Integration erhöhen oder auf 0 setzen."
+    },
+    "portal_delivery_stalled": {
+      "title": "Portal liefert keine Datensätze mehr für {vehicle}",
+      "description": "Das EU-Data-Act-Portal hat seit etwa {hours_since} Stunde(n) keinen Datensatz mehr bereitgestellt, auch keinen leeren. Normalerweise kommt alle 15 Minuten eine neue Datei, auch wenn das Auto parkt.\n\nIm Portal ({portal_url}) prüfen, ob die kontinuierliche Anfrage noch aktiv und das Abo nicht abgelaufen ist. Die zuletzt bekannten Fahrzeugwerte bleiben erhalten."
     }
   },
   "entity": {

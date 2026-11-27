@@ -41,6 +41,11 @@ When the car sleeps, telemetry can freeze. The `snapshot_stale` binary sensor
 and the repair issue use your **Stale after (hours)** option. Automate on that
 binary, or import the **Stale snapshot — notify** blueprint.
 
+A parked car with old telemetry is normal. If the portal stops adding datasets
+altogether (not even empty `_no_content_found` ones) for 6 hours, a separate
+**Portal stopped delivering datasets** repair appears. It does not depend on
+**Stale after (hours)**, so it stays active when you set that option to 0.
+
 ## 6. Automate on lock / door state
 
 Use curated binary sensors such as `locked` or door/window entities when the

@@ -100,6 +100,10 @@ MAX_CACHE_BYTES_PER_VIN = 50_000_000
 SUBSCRIPTION_VALIDITY = timedelta(days=365)
 SUBSCRIPTION_WARNING_BEFORE = timedelta(days=30)
 SNAPSHOT_STALE_THRESHOLD = timedelta(hours=12)
+# The portal adds a ZIP per window even for a sleeping car (_no_content_found),
+# so no new listing entry at all for this long means delivery itself stopped.
+# Fixed on purpose and independent of the stale-snapshot option (#90).
+PORTAL_DELIVERY_STALLED_THRESHOLD = timedelta(hours=6)
 
 # Options: hours before the snapshot counts as stale. A parked car that is
 # asleep sends nothing, so some users want a longer window; 0 turns the stale

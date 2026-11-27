@@ -28,6 +28,7 @@ from .const import (
     MAX_CACHED_DATASETS,
     MIN_INTERVAL,
     NO_CONTENT_SUFFIX,
+    PORTAL_DELIVERY_STALLED_THRESHOLD,
     POST_DATASET_BUFFER,
     RETRY_INTERVAL,
     SERVER_ERROR_BACKOFF_INTERVALS,
@@ -114,6 +115,9 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         self.listing_identifier: str | None = entry.data.get(CONF_IDENTIFIER)
         # Newest createdOn among content (non-empty) listing entries.
         self.last_listing_content_at: datetime | None = None
+        # Newest createdOn among all listing entries, empty snapshots included.
+        # Kept when a later listing comes back empty.
+        self.last_listing_at: datetime | None = None
         # When the portal generated the currently loaded dataset ZIP.
         self.dataset_created_at: datetime | None = None
         self.latest_dataset_name: str | None = None
@@ -327,6 +331,25 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
             return None
         return minutes > int(threshold.total_seconds() // 60)
 
+    @property
+    def minutes_since_last_delivery(self) -> int | None:
+        """Minutes since the portal last added any dataset, or None if unknown."""
+        if self.last_listing_at is None:
+            return None
+        return int((dt_util.utcnow() - self.last_listing_at).total_seconds() // 60)
+
+    @property
+    def is_portal_delivery_stalled(self) -> bool:
+        """True when the portal has added no dataset (not even an empty one) for a while.
+
+        Unlike ``is_snapshot_stale`` this ignores vehicle telemetry age, so a
+        parked car with regular deliveries never trips it (#90).
+        """
+        minutes = self.minutes_since_last_delivery
+        if minutes is None:
+            return False
+        return minutes > int(PORTAL_DELIVERY_STALLED_THRESHOLD.total_seconds() // 60)
+
     def _update_listing_metadata(self, listing: list[dict]) -> None:
         """Track subscription and snapshot timing from the dataset listing."""
         self.listing_identifier = self.identifier
@@ -337,6 +360,7 @@ class EudaCoordinator(DataUpdateCoordinator[dict[str, DataPoint]]):
         ]
         if timestamps:
             self.subscription_created_on = min(timestamps)
+            self.last_listing_at = max(timestamps)
         content_timestamps = [
             ts
             for entry in listing

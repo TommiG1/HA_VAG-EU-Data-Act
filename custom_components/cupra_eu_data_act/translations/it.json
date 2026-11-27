@@ -123,7 +123,11 @@
     },
     "stale_snapshot": {
       "title": "Nessun dato recente del veicolo per {vehicle}",
-      "description": "L'ultimo snapshot reale del veicolo risale a circa {hours_since} ora/e fa ({minutes_since} minuti). L'auto potrebbe essere offline o il portale non sta consegnando nuovi dataset.\n\nAttiva l'auto (guida, accensione o app) e verifica che la richiesta continua sia attiva sul portale ({portal_url})."
+      "description": "L'auto ha inviato dati l'ultima volta circa {hours_since} ora/e fa ({minutes_since} minuti). È normale finché l'auto è parcheggiata, perché un'auto in standby non invia nulla.\n\nSe da allora l'auto è stata guidata o ricaricata, apri il portale ({portal_url}) e verifica che la richiesta continua sia attiva. Se questo avviso compare a ogni sosta, aumenta “Non aggiornato dopo (ore)” nelle opzioni dell'integrazione o impostalo a 0."
+    },
+    "portal_delivery_stalled": {
+      "title": "Il portale non consegna più dataset per {vehicle}",
+      "description": "Il portale EU Data Act non ha aggiunto alcun dataset, nemmeno vuoto, da circa {hours_since} ora/e. Di solito arriva un nuovo file ogni 15 minuti, anche con l'auto parcheggiata.\n\nApri il portale ({portal_url}) e verifica che la richiesta continua sia ancora attiva e che l'abbonamento non sia scaduto. Gli ultimi valori noti del veicolo vengono mantenuti."
     }
   },
   "entity": {

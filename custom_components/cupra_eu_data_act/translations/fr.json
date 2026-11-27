@@ -123,7 +123,11 @@
     },
     "stale_snapshot": {
       "title": "Pas de données récentes du véhicule pour {vehicle}",
-      "description": "Le dernier instantané réel du véhicule date d'environ {hours_since} heure(s) ({minutes_since} minutes). La voiture est peut-être hors ligne ou le portail ne livre plus de nouveaux jeux de données.\n\nRéveillez la voiture (conduire, contact ou application) et vérifiez que la demande continue est active sur le portail ({portal_url})."
+      "description": "La voiture a transmis des données pour la dernière fois il y a environ {hours_since} heure(s) ({minutes_since} minutes). C'est normal tant que la voiture est garée, car une voiture en veille n'envoie rien.\n\nSi la voiture a roulé ou chargé depuis, ouvrez le portail ({portal_url}) et vérifiez que la demande continue est active. Si cet avis apparaît à chaque stationnement, augmentez « Obsolète après (heures) » dans les options de l'intégration ou mettez-le à 0."
+    },
+    "portal_delivery_stalled": {
+      "title": "Le portail ne livre plus de jeux de données pour {vehicle}",
+      "description": "Le portail EU Data Act n'a ajouté aucun jeu de données, même vide, depuis environ {hours_since} heure(s). Normalement, un nouveau fichier arrive toutes les 15 minutes, même quand la voiture est garée.\n\nOuvrez le portail ({portal_url}) et vérifiez que la demande continue est toujours active et que l'abonnement n'a pas expiré. Les dernières valeurs connues du véhicule sont conservées."
     }
   },
   "entity": {

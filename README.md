@@ -108,7 +108,7 @@ After setup: **Settings → Devices & services → VW Group EU Data Act → Conf
 
 | Option | Meaning |
 |--------|---------|
-| Stale after (hours) | When vehicle telemetry is older than this, the stale binary sensor and repair issue activate. `0` turns that check off (useful for cars that sleep for days). |
+| Stale after (hours) | When vehicle telemetry is older than this, the stale binary sensor and repair issue activate. `0` turns that check off (useful for cars that sleep for days). The separate “portal stopped delivering” repair (no new dataset for 6 h) stays active. |
 | Create monthly utility meter helpers | Opt-in. Creates monthly helpers for charged energy and mileage when matching sensors exist. Helpers you delete are not recreated. |
 
 You can also **reconfigure** credentials or locale from the integration’s three-dot menu without removing the entry.

@@ -28,7 +28,14 @@ _HEALTH_ISSUE_KEYS: frozenset[str] = frozenset(
     {
         "subscription_expiring_soon",
         "stale_snapshot",
+        "portal_delivery_stalled",
     }
+)
+
+# These status repairs already explain a delivery problem; a second one about
+# missing datasets would only stack on top of them.
+_DELIVERY_STATUS_ISSUES: frozenset[str] = frozenset(
+    {"listing_failed", "delivery_not_ready"}
 )
 
 _ALL_ISSUE_KEYS: frozenset[str] = _ISSUE_STATUSES | _HEALTH_ISSUE_KEYS
@@ -100,7 +107,7 @@ def _async_update_health_issues(
     coordinator: EudaCoordinator,
     vehicle: str,
 ) -> None:
-    """Create or clear subscription-expiry and stale-snapshot health issues."""
+    """Create or clear subscription, stale-snapshot and delivery health issues."""
     days_until = coordinator.days_until_subscription_expires
     sub_issue_id = _issue_id(entry.entry_id, "subscription_expiring_soon")
     if (
@@ -148,6 +155,32 @@ def _async_update_health_issues(
         )
     else:
         ir.async_delete_issue(hass, DOMAIN, stale_issue_id)
+
+    delivery_minutes = coordinator.minutes_since_last_delivery
+    delivery_issue_id = _issue_id(entry.entry_id, "portal_delivery_stalled")
+    if (
+        coordinator.is_portal_delivery_stalled
+        and delivery_minutes is not None
+        and coordinator.status_label not in _DELIVERY_STATUS_ISSUES
+    ):
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            delivery_issue_id,
+            data={"entry_id": entry.entry_id},
+            is_fixable=False,
+            issue_domain=DOMAIN,
+            learn_more_url=BASE_URL,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="portal_delivery_stalled",
+            translation_placeholders={
+                "portal_url": BASE_URL,
+                "vehicle": vehicle,
+                "hours_since": str(delivery_minutes // 60),
+            },
+        )
+    else:
+        ir.async_delete_issue(hass, DOMAIN, delivery_issue_id)
 
 
 @callback

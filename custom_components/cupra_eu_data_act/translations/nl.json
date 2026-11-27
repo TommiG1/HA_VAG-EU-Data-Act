@@ -123,7 +123,11 @@
     },
     "stale_snapshot": {
       "title": "Geen recente voertuiggegevens voor {vehicle}",
-      "description": "De laatste echte voertuigmomentopname is ongeveer {hours_since} uur oud ({minutes_since} minuten). De auto is mogelijk offline of het portaal levert geen nieuwe datasets meer.\n\nActiveer de auto (rijden, contact of app) en controleer of het continue verzoek actief is op het portaal ({portal_url})."
+      "description": "De auto heeft ongeveer {hours_since} uur geleden voor het laatst gegevens gestuurd ({minutes_since} minuten). Dat is normaal zolang de auto geparkeerd staat, want een slapende auto stuurt niets.\n\nIs de auto sindsdien gereden of geladen, open dan het portaal ({portal_url}) en controleer of het continue verzoek actief is. Verschijnt deze melding bij elke parkeerperiode, verhoog dan “Verouderd na (uren)” in de opties van de integratie of zet het op 0."
+    },
+    "portal_delivery_stalled": {
+      "title": "Portaal levert geen datasets meer voor {vehicle}",
+      "description": "Het EU Data Act-portaal heeft al ongeveer {hours_since} uur geen dataset meer toegevoegd, ook geen lege. Normaal komt er elke 15 minuten een nieuw bestand, ook als de auto geparkeerd staat.\n\nOpen het portaal ({portal_url}) en controleer of het continue verzoek nog actief is en het abonnement niet is verlopen. De laatst bekende voertuigwaarden blijven behouden."
     }
   },
   "entity": {

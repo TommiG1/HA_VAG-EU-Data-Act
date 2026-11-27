@@ -124,7 +124,11 @@
     },
     "stale_snapshot": {
       "title": "No recent vehicle data for {vehicle}",
-      "description": "The last real vehicle snapshot is about {hours_since} hour(s) old ({minutes_since} minutes). The car may be offline or the portal may not be delivering new datasets.\n\nWake the car (drive, ignition, or mobile app) and confirm the continuous request is active on the portal ({portal_url})."
+      "description": "The car last reported data about {hours_since} hour(s) ago ({minutes_since} minutes). This is normal while the car is parked, because a sleeping car sends nothing.\n\nIf the car has been driven or charged since then, open the portal ({portal_url}) and confirm the continuous request is active. If this notice shows up every time the car is parked, raise “Stale after (hours)” in the integration options or set it to 0."
+    },
+    "portal_delivery_stalled": {
+      "title": "Portal stopped delivering datasets for {vehicle}",
+      "description": "The EU Data Act portal has not added any dataset for about {hours_since} hour(s), not even an empty one. Normally a new file arrives every 15 minutes, even while the car is parked.\n\nOpen the portal ({portal_url}) and check that the continuous request is still active and the subscription has not expired. Your last known vehicle values are kept."
     }
   },
   "entity": {

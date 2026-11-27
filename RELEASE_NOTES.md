@@ -1,5 +1,42 @@
 # Release notes
 
+## v0.6.55-beta.1 — Separate “portal stopped delivering” repair, calmer stale notice (#90)
+
+### Summary
+
+A parked car keeps receiving fresh portal datasets that all contain the last
+snapshot from its final trip. After 12 h the **No recent vehicle data** repair
+appeared, and the only way to silence it (`Stale after (hours)` = 0) also hid
+any warning if the portal itself stopped delivering. The two cases are now
+split: the stale notice explains that a parked car is normal, and a new repair
+watches the delivery on its own.
+
+### Changes
+
+- New repair **Portal stopped delivering datasets** when the dataset listing has
+  had no new entry for 6 hours. Empty `_no_content_found` snapshots count as
+  delivery, so a sleeping car never trips it. The threshold is fixed and does
+  not depend on `Stale after (hours)`.
+- The new repair stays quiet while `listing_failed` or `delivery_not_ready` is
+  already shown, so repairs do not stack. It does cover an empty listing with
+  cached data (for example an expired subscription), which previously raised
+  no repair at all.
+- **No recent vehicle data** keeps its logic, threshold and `WARNING` severity.
+  Its text now says that old telemetry is normal while the car is parked and
+  points to the options for cars that sleep for days.
+
+### Tests
+
+- Empty snapshots count as delivery; an empty listing keeps the last delivery
+  time; the repair is raised and cleared, works with the stale check set to 0,
+  and is not stacked on `listing_failed` / `delivery_not_ready`. Offline, API
+  mock, brand and full pytest suites pass.
+
+### How to try
+
+HACS: enable **Show beta versions**, update to `0.6.55-beta.1`, restart Home
+Assistant. No options need to change.
+
 ## v0.6.54 — Portal moved to eu-data-act.vwgroup-datahub.com (#87)
 
 ### Summary

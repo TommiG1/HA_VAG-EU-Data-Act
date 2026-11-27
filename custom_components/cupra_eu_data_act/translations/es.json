@@ -124,7 +124,11 @@
     },
     "stale_snapshot": {
       "title": "Sin datos recientes del vehículo para {vehicle}",
-      "description": "La última instantánea real del vehículo tiene una antigüedad aproximada de {hours_since} hora(s) ({minutes_since} minutos). Es posible que el coche esté sin conexión o que el portal no esté entregando nuevos datos.\n\nDespierta el coche (conduciendo, dando el contacto o abriendo la app móvil) y confirma que la solicitud continua está activa en el portal ({portal_url})."
+      "description": "El coche envió datos por última vez hace unas {hours_since} hora(s) ({minutes_since} minutos). Es normal mientras el coche está aparcado, porque un coche en reposo no envía nada.\n\nSi el coche se ha conducido o cargado desde entonces, abre el portal ({portal_url}) y confirma que la solicitud continua está activa. Si este aviso aparece cada vez que aparcas, aumenta “Desactualizado tras (horas)” en las opciones de la integración o ponlo a 0."
+    },
+    "portal_delivery_stalled": {
+      "title": "El portal ha dejado de entregar datos para {vehicle}",
+      "description": "El portal EU Data Act no ha añadido ningún conjunto de datos, ni siquiera uno vacío, desde hace unas {hours_since} hora(s). Normalmente llega un archivo nuevo cada 15 minutos, también con el coche aparcado.\n\nAbre el portal ({portal_url}) y comprueba que la solicitud continua sigue activa y que la suscripción no ha caducado. Se conservan los últimos valores conocidos del vehículo."
     }
   },
   "entity": {
